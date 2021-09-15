@@ -1,0 +1,13 @@
+#pragma once
+
+#include "co_type.h"
+
+// 栈
+class co_stack
+{
+public:
+    virtual size_t   stack_size() const = 0; // 栈大小
+    virtual co_byte* stack() const      = 0; // 栈内存（低地址）
+    virtual co_byte* stack_top() const  = 0; // 栈内存（高地址）
+    virtual ~co_stack() {}
+};

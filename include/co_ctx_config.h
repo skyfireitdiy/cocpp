@@ -1,0 +1,28 @@
+#pragma once
+#include "co_default_entry.h"
+#include "co_define.h"
+#include "co_stack_factory.h"
+#include <any>
+#include <functional>
+
+struct co_ctx_config
+{
+    std::function<void(std::any&)> entry;                              // 协程执行入口，该入口是被上层调用者使用函数对象或者lambda表达式封装的对象，直接调用
+    size_t                         stack_size = CO_DEFAULT_STACK_SIZE; // 栈大小
+    co_startup_functype            startup    = co_default_entry;      // 协程真实的入口函数，协程启动时，pc指针将会调到这里
+    std::string                    name;                               // 协程名称
+};
+
+// 以下宏代码生成 with_xxx 的配置选项
+#define CO_GEN_CTX_CONFIG_OPTION(type, name)                                \
+    inline std::function<void(co_ctx_config&)> with_##name(                 \
+        type p##name)                                                       \
+    {                                                                       \
+        return [p##name](co_ctx_config& config) { config.name = p##name; }; \
+    }
+
+// 以下注释的两项配置由实现自动生成，不需要用户配置，所以将配置接口注释掉
+// CO_GEN_CTX_CONFIG_OPTION(std::function<void(std::any&)>, entry)
+CO_GEN_CTX_CONFIG_OPTION(size_t, stack_size)
+// CO_GEN_CTX_CONFIG_OPTION(co_startup_functype, startup)
+CO_GEN_CTX_CONFIG_OPTION(std::string, name)
