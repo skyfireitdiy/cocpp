@@ -44,9 +44,17 @@ std::string co::name()
     return current_env__->current_ctx()->config().name;
 }
 
-void co::convert_this_thread_to_schedule_thread()
+void co::convert_to_schedule_thread()
 {
     co::manager__->current_env()->schedule_in_this_thread();
+}
+
+co::~co()
+{
+    if (ctx__ != nullptr && !ctx__->detach())
+    {
+        wait<void>();
+    }
 }
 
 thread_local co::co_env_destoryer env_destoryer__;

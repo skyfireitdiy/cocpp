@@ -75,7 +75,7 @@ void test6()
 {
     std::thread([]() {
         printf("this is thread context: %d\n", std::this_thread::get_id());
-        co::convert_this_thread_to_schedule_thread();
+        co::convert_to_schedule_thread();
     }).detach();
 
     std::this_thread::sleep_for(std::chrono::seconds(1));

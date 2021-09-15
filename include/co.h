@@ -32,7 +32,7 @@ public:
     static void        schedule_switch();            // 主动让出cpu
     static co_id       id();                         // 协程id
     static std::string name();                       // 协程名称
-    static void        convert_this_thread_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
+    static void        convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
 
     // 构造一个协程，自动开始调度，参数为可调用对象与参数列表，如：co c(add, 1, 2);
     template <typename Func, typename... Args>
@@ -79,6 +79,8 @@ public:
 
     // 分离协程，之后此协程就不再受到co对象的管理了
     void detach();
+
+    ~co();
 
     friend class co_env_destoryer;
 };
