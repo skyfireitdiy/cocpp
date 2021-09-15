@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <future>
+#include <iterator>
 
 #ifdef _MSC_VER
 #ifdef _WIN64
@@ -160,11 +161,8 @@ void co_default_env::remove_ctx(co_ctx* ctx)
     std::unique_lock<std::shared_mutex> lck(mu_all_ctx__);
     all_ctx__.erase(std::remove(all_ctx__.begin(), all_ctx__.end(), ctx));
     manager__->ctx_factory()->destroy_ctx(ctx);
-    // 只有一个ctx的时候，是idle_ctx，所以设置为空闲状态
-    if (all_ctx__.size() == 1)
-    {
-        state__ = co_env_state::idle;
-    }
+
+    update_state__();
 }
 
 void co_default_env::switch_to__(co_byte** curr, co_byte** next)
@@ -180,10 +178,7 @@ void co_default_env::switch_to__(co_byte** curr, co_byte** next)
 
 co_ctx* co_default_env::current_ctx() const
 {
-    if (all_ctx__.empty())
-    {
-        return idle_ctx__;
-    }
+    assert(!all_ctx__.empty());
     return all_ctx__[current_index__];
 }
 
@@ -213,22 +208,8 @@ void co_default_env::start_schedule_routine__()
         schedule_switch();
     }
 
-    // todo clean env
-    {
-        std::unique_lock<std::shared_mutex> lck(mu_all_ctx__);
-        // 不销毁idle_ctx，idle_ctx应该与env一起销毁
-        for (int i = 1; i < all_ctx__.size(); ++i)
-        {
-            all_ctx__[i]->set_env(nullptr);
-            manager__->ctx_factory()->destroy_ctx(all_ctx__[i]);
-        }
-        all_ctx__.clear();
-    }
-    if (current_env__ != nullptr)
-    {
-        manager__->remove_env(current_env__);
-        current_env__ = nullptr;
-    }
+    remove_all_ctx__();
+    remove_current_env__();
 }
 
 void co_default_env::schedule_in_this_thread()
@@ -244,4 +225,42 @@ void co_default_env::set_manager(co_manager* manager)
 co_manager* co_default_env::manager() const
 {
     return manager__;
+}
+
+void co_default_env::remove_all_ctx__()
+{
+    std::unique_lock<std::shared_mutex> lck(mu_all_ctx__);
+    // 不销毁idle_ctx，idle_ctx应该与env一起销毁
+    for (int i = 1; i < all_ctx__.size(); ++i)
+    {
+        all_ctx__[i]->set_env(nullptr);
+        manager__->ctx_factory()->destroy_ctx(all_ctx__[i]);
+    }
+    // 删除除idle以外的ctx
+    all_ctx__.resize(1);
+    // env要销毁了，是否更新状态不重要，为了保证一致性，此处更新一下
+    update_state__();
+}
+
+void co_default_env::remove_current_env__()
+{
+    if (current_env__ != nullptr)
+    {
+        manager__->remove_env(current_env__);
+        current_env__ = nullptr;
+    }
+}
+
+void co_default_env::update_state__()
+{
+    // 如果当前是待销毁状态，不更新
+    if (state__ == co_env_state::destorying)
+    {
+        return;
+    }
+    // 只有一个ctx的时候，是idle_ctx，所以设置为空闲状态
+    if (all_ctx__.size() <= 1)
+    {
+        state__ = co_env_state::idle;
+    }
 }

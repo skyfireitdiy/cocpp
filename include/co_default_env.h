@@ -32,6 +32,9 @@ private:
 
     void        start_schedule_routine__();
     void        remove_detached_ctx__();
+    void        update_state__();
+    void        remove_all_ctx__();
+    void        remove_current_env__();
     static void switch_to__(co_byte** curr_regs, co_byte** next_regs);
 
 public:
