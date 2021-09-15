@@ -44,7 +44,7 @@ void co_default_env::add_ctx(co_ctx* ctx)
 {
     assert(state__ != co_env_state::created);
     ctx->set_env(this);
-    std::unique_lock<std::shared_mutex> lck(mu_all_ctx__);
+    std::lock_guard<std::mutex> lck(mu_all_ctx__);
     all_ctx__.push_back(ctx);
     state__ = co_env_state::busy;
 }
@@ -81,7 +81,7 @@ co_ret co_default_env::wait_ctx(co_ctx*& ctx)
 
 int co_default_env::workload() const
 {
-    std::shared_lock<std::shared_mutex> lck(mu_all_ctx__);
+    std::lock_guard<std::mutex> lck(mu_all_ctx__);
     return all_ctx__.size();
 }
 
@@ -102,7 +102,7 @@ void co_default_env::set_state(co_env_state state)
 
 void co_default_env::remove_detached_ctx__()
 {
-    std::shared_lock<std::shared_mutex> lck(mu_all_ctx__);
+    std::lock_guard<std::mutex> lck(mu_all_ctx__);
 
     auto pos = std::remove_if(
         all_ctx__.begin(),
@@ -128,7 +128,7 @@ void co_default_env::schedule_switch()
     co_ctx* next = nullptr;
 
     {
-        std::shared_lock<std::shared_mutex> lck(mu_all_ctx__);
+        std::lock_guard<std::mutex> lck(mu_all_ctx__);
         do
         {
             current_index__ = (current_index__ + 1) % all_ctx__.size();
@@ -158,7 +158,7 @@ void co_default_env::schedule_switch()
 void co_default_env::remove_ctx(co_ctx* ctx)
 {
     ctx->set_env(nullptr);
-    std::unique_lock<std::shared_mutex> lck(mu_all_ctx__);
+    std::lock_guard<std::mutex> lck(mu_all_ctx__);
     all_ctx__.erase(std::remove(all_ctx__.begin(), all_ctx__.end(), ctx));
     manager__->ctx_factory()->destroy_ctx(ctx);
 
@@ -229,7 +229,7 @@ co_manager* co_default_env::manager() const
 
 void co_default_env::remove_all_ctx__()
 {
-    std::unique_lock<std::shared_mutex> lck(mu_all_ctx__);
+    std::lock_guard<std::mutex> lck(mu_all_ctx__);
     // 不销毁idle_ctx，idle_ctx应该与env一起销毁
     for (int i = 1; i < all_ctx__.size(); ++i)
     {

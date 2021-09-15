@@ -34,4 +34,19 @@ void co::detach()
     ctx__->set_detach();
 }
 
+co_id co::id()
+{
+    return reinterpret_cast<co_id>(co::manager__->current_env()->current_ctx());
+}
+
+std::string co::name()
+{
+    return current_env__->current_ctx()->config().name;
+}
+
+void co::convert_this_thread_to_schedule_thread()
+{
+    co::manager__->current_env()->schedule_in_this_thread();
+}
+
 thread_local co::co_env_destoryer env_destoryer__;

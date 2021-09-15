@@ -4,7 +4,7 @@
 #include <atomic>
 #include <bitset>
 #include <future>
-#include <shared_mutex>
+#include <mutex>
 
 class co_manager;
 
@@ -21,8 +21,8 @@ private:
     co_manager*                        manager__ = nullptr;
 
     // 所有ctx集合以及其对应的保护锁
-    std::vector<co_ctx*>      all_ctx__;
-    mutable std::shared_mutex mu_all_ctx__;
+    std::vector<co_ctx*> all_ctx__;
+    mutable std::mutex   mu_all_ctx__;
 
     size_t current_index__ = 0;
 

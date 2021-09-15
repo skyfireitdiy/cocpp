@@ -10,7 +10,7 @@ struct co_ctx_config
     std::function<void(std::any&)> entry;                              // 协程执行入口，该入口是被上层调用者使用函数对象或者lambda表达式封装的对象，直接调用
     size_t                         stack_size = CO_DEFAULT_STACK_SIZE; // 栈大小
     co_startup_functype            startup    = co_default_entry;      // 协程真实的入口函数，协程启动时，pc指针将会调到这里
-    std::string                    name;                               // 协程名称
+    std::string                    name       = "__unknown__";         // 协程名称
 };
 
 // 以下宏代码生成 with_xxx 的配置选项

@@ -17,7 +17,7 @@ class co_default_manager : public co_manager,
 {
 private:
     std::list<co_env*> env_list__;
-    std::mutex         mu_env_list__;
+    std::recursive_mutex mu_env_list__;
 
     std::atomic<bool> need_clean__ = { false };
 

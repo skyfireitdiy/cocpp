@@ -62,13 +62,37 @@ void test4()
     c1.detach();
 }
 
+void test5()
+{
+    co c1([]() {
+        printf("%s %llu\n", co::name().c_str(), co::id());
+    });
+    printf("%s %llu\n", co::name().c_str(), co::id());
+    c1.wait<void>();
+}
+
+void test6()
+{
+    std::thread([]() {
+        printf("this is thread context: %d\n", std::this_thread::get_id());
+        co::convert_this_thread_to_schedule_thread();
+    }).detach();
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    co c1([]() {
+        printf("this is co context, thread: %d\n", std::this_thread::get_id());
+    });
+
+    c1.wait<void>();
+}
+
 int main()
 {
     co::init_co(co_default_manager::instance());
 
     CO_DEBUG("thread %d", std::this_thread::get_id());
 
-    test4();
+    test6();
 
     getchar();
 

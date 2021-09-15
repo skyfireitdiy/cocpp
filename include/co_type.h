@@ -4,6 +4,7 @@ class co_ctx;
 
 using co_byte             = unsigned char;
 using co_startup_functype = void (*)(co_ctx*);
+using co_id               = unsigned long long;
 
 enum class co_state : unsigned char
 {

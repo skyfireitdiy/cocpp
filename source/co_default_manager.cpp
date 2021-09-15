@@ -6,7 +6,7 @@
 
 co_env* co_default_manager::get_best_env()
 {
-    std::lock_guard<std::mutex> lck(mu_env_list__);
+    std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     if (env_list__.empty())
     {
         return create_env__();
@@ -86,7 +86,7 @@ co_stack_factory* co_default_manager::stack_factory()
 void co_default_manager::remove_env(co_env* env)
 {
     {
-        std::lock_guard<std::mutex> lck(mu_env_list__);
+        std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
         env_list__.remove(env);
     }
     {
@@ -98,7 +98,7 @@ void co_default_manager::remove_env(co_env* env)
 
 void co_default_manager::create_env_from_this_thread()
 {
-    std::lock_guard<std::mutex> lck(mu_env_list__);
+    std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
     current_env__->set_manager(this);
     ++exist_env_count__;
@@ -117,7 +117,7 @@ co_env* co_default_manager::current_env()
 void co_default_manager::clean_up()
 {
     {
-        std::lock_guard<std::mutex> lck(mu_env_list__);
+        std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
         for (auto& env : env_list__)
         {
             env->stop_schedule();
