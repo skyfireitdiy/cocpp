@@ -31,6 +31,7 @@ private:
     co_default_env(co_ctx* idle_ctx, co_stack* shared_stack, bool create_new_thread);
 
     void        start_schedule_routine__();
+    void        remove_detached_ctx__();
     static void switch_to__(co_byte** curr_regs, co_byte** next_regs);
 
 public:

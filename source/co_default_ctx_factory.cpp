@@ -4,11 +4,14 @@
 
 co_ctx* co_default_ctx_factory ::create_ctx(const co_ctx_config& config)
 {
-    return new co_default_ctx(stack_factory__->create_stack(config.stack_size), config);
+    auto ret = new co_default_ctx(stack_factory__->create_stack(config.stack_size), config);
+    CO_DEBUG("create ctx: %p", ret);
+    return ret;
 }
 
 void co_default_ctx_factory::destroy_ctx(co_ctx* ctx)
 {
+    CO_DEBUG("destory ctx: %p", ctx);
     stack_factory__->destroy_stack(ctx->stack());
     delete ctx;
 }

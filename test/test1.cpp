@@ -1,5 +1,6 @@
 #include "co.h"
 #include "co_default_manager.h"
+#include <chrono>
 #include <functional>
 #include <iostream>
 #include <thread>
@@ -47,13 +48,27 @@ void test3()
     c1.wait<void>();
 }
 
+void test4()
+{
+    co c1([]() {
+        for (;;)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            printf("hello\n");
+            co::schedule_switch();
+        }
+    });
+    getchar();
+    c1.detach();
+}
+
 int main()
 {
     co::init_co(co_default_manager::instance());
 
     CO_DEBUG("thread %d", std::this_thread::get_id());
 
-    test3();
+    test4();
 
     getchar();
 

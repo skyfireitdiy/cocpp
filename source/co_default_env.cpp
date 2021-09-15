@@ -3,6 +3,7 @@
 #include "co_define.h"
 #include "co_env_factory.h"
 #include "co_manager.h"
+#include "co_type.h"
 
 #include <cassert>
 #include <future>
@@ -98,8 +99,29 @@ void co_default_env::set_state(co_env_state state)
     state__ = state;
 }
 
+void co_default_env::remove_detached_ctx__()
+{
+    std::shared_lock<std::shared_mutex> lck(mu_all_ctx__);
+
+    auto pos = std::remove_if(
+        all_ctx__.begin(),
+        all_ctx__.end(),
+        [](auto& ctx) {
+            return ctx->state() == co_state::finished && ctx->detach();
+        });
+
+    for (auto p = pos; p != all_ctx__.end(); ++p)
+    {
+        manager__->ctx_factory()->destroy_ctx(*p);
+    }
+
+    all_ctx__.erase(pos, all_ctx__.end());
+}
+
 void co_default_env::schedule_switch()
 {
+    remove_detached_ctx__();
+
     auto curr = current_ctx();
     assert(curr != nullptr);
     co_ctx* next = nullptr;
@@ -192,6 +214,16 @@ void co_default_env::start_schedule_routine__()
     }
 
     // todo clean env
+    {
+        std::unique_lock<std::shared_mutex> lck(mu_all_ctx__);
+        // 不销毁idle_ctx，idle_ctx应该与env一起销毁
+        for (int i = 1; i < all_ctx__.size(); ++i)
+        {
+            all_ctx__[i]->set_env(nullptr);
+            manager__->ctx_factory()->destroy_ctx(all_ctx__[i]);
+        }
+        all_ctx__.clear();
+    }
     if (current_env__ != nullptr)
     {
         manager__->remove_env(current_env__);

@@ -29,4 +29,9 @@ void co::uninit_co()
     co::manager__->clean_up();
 }
 
+void co::detach()
+{
+    ctx__->set_detach();
+}
+
 thread_local co::co_env_destoryer env_destoryer__;
