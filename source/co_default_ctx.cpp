@@ -83,31 +83,21 @@ co_default_ctx::co_default_ctx(co_stack* stack, const co_ctx_config& config)
     init_regs__();
 }
 
-void co_default_ctx::set_detach()
-{
-    set_flag__(CO_CTX_FLAG_DETACHED);
-}
-
-bool co_default_ctx::detach()
-{
-    return test_flag__(CO_CTX_FLAG_DETACHED);
-}
-
-void co_default_ctx::set_flag__(int flag)
+void co_default_ctx::set_flag(int flag)
 {
     assert(flag < CO_CTX_FLAG_MAX);
     std::lock_guard<std::mutex> lck(mu_flag__);
     flag__.set(flag);
 }
 
-bool co_default_ctx::test_flag__(int flag)
+bool co_default_ctx::test_flag(int flag)
 {
     assert(flag < CO_CTX_FLAG_MAX);
     std::lock_guard<std::mutex> lck(mu_flag__);
     return flag__.test(flag);
 }
 
-void co_default_ctx::unset_flag__(int flag)
+void co_default_ctx::reset_flag(int flag)
 {
     assert(flag < CO_CTX_FLAG_MAX);
     std::lock_guard<std::mutex> lck(mu_flag__);

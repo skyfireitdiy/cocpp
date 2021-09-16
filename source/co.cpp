@@ -31,7 +31,9 @@ void co::uninit_co()
 
 void co::detach()
 {
-    ctx__->set_detach();
+    ctx__->set_flag(CO_CTX_FLAG_DETACHED);
+    ctx__->reset_flag(CO_CTX_FLAG_HANDLE_BY_CO);
+    ctx__ = nullptr;
 }
 
 co_id co::id()
@@ -51,10 +53,20 @@ void co::convert_to_schedule_thread()
 
 co::~co()
 {
-    if (ctx__ != nullptr && !ctx__->detach())
+    if (ctx__ != nullptr)
     {
-        wait<void>();
+        detach();
     }
+}
+
+std::optional<co_ret> co::wait(const std::chrono::milliseconds& timeout)
+{
+    std::optional<co_ret> ret = manager__->current_env()->wait_ctx(ctx__, timeout);
+    if (ret) // 如果等待成功了，消除ctx持有
+    {
+        ctx__ = nullptr;
+    }
+    return ret;
 }
 
 thread_local co::co_env_destoryer env_destoryer__;

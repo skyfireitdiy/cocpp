@@ -54,7 +54,8 @@ public:
             };
         }
 
-        ctx__    = co::manager__->ctx_factory()->create_ctx(config);
+        ctx__ = co::manager__->ctx_factory()->create_ctx(config);
+        ctx__->set_flag(CO_CTX_FLAG_HANDLE_BY_CO); // 被co对象持有
         auto env = co::manager__->get_best_env();
         env->add_ctx(ctx__);
     }
@@ -64,7 +65,9 @@ public:
     Ret wait()
     {
         CO_DEBUG("start wait");
-        return manager__->current_env()->wait_ctx(ctx__);
+        Ret ret = manager__->current_env()->wait_ctx(ctx__); // wait之后对象被销毁，不用设置 flag
+        ctx__   = nullptr;
+        return ret;
     }
 
     // 对于无返回值函数的特化
@@ -72,6 +75,7 @@ public:
     void wait()
     {
         manager__->current_env()->wait_ctx(ctx__);
+        ctx__ = nullptr;
     }
 
     // 等待指定时间

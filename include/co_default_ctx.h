@@ -17,9 +17,6 @@ private:
     std::any              ret__;    // 协程返回值，会被传递给 config 中的 entry
     co_env*               env__;    // 协程当前对应的运行环境
 
-    static constexpr int CO_CTX_FLAG_DETACHED = 0;
-    static constexpr int CO_CTX_FLAG_MAX      = 8;
-
     std::bitset<CO_CTX_FLAG_MAX> flag__;    // 状态
     std::mutex                   mu_flag__; // 状态保护锁
 
@@ -68,9 +65,6 @@ private:
 #endif
 
     void init_regs__();
-    void set_flag__(int flag);
-    bool test_flag__(int flag);
-    void unset_flag__(int flag);
     co_default_ctx(co_stack* stack, const co_ctx_config& config);
 
 public:
@@ -82,8 +76,9 @@ public:
     std::any&            ret_ref() override;
     void                 set_env(co_env* env) override;
     co_env*              env() const override;
-    void                 set_detach() override;
-    bool                 detach() override;
+    void                 set_flag(int flag) override;
+    bool                 test_flag(int flag) override;
+    void                 reset_flag(int flag) override;
 
     friend void co_default_entry(co_ctx* ctx);
     friend class co_default_ctx_factory;

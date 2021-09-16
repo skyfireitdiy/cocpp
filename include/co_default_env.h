@@ -35,15 +35,16 @@ private:
     void        update_state__();
     void        remove_all_ctx__();
     void        remove_current_env__();
+    bool        can_destroy__();
     static void switch_to__(co_byte** curr_regs, co_byte** next_regs);
 
 public:
     co_stack*             shared_stack() const override;
     void                  add_ctx(co_ctx* ctx) override;
-    std::optional<co_ret> wait_ctx(co_ctx*&                         ctx,
+    std::optional<co_ret> wait_ctx(co_ctx*                          ctx,
                                    const std::chrono::milliseconds& timeout)
         override;
-    co_ret       wait_ctx(co_ctx*& ctx) override;
+    co_ret       wait_ctx(co_ctx* ctx) override;
     int          workload() const override;
     bool         has_scheduler_thread() const override;
     co_env_state state() const override;

@@ -49,7 +49,7 @@ void co_default_env::add_ctx(co_ctx* ctx)
     state__ = co_env_state::busy;
 }
 
-std::optional<co_ret> co_default_env::wait_ctx(co_ctx*& ctx, const std::chrono::milliseconds& timeout)
+std::optional<co_ret> co_default_env::wait_ctx(co_ctx* ctx, const std::chrono::milliseconds& timeout)
 {
     std::optional<co_ret> ret;
     auto                  now = std::chrono::system_clock::now();
@@ -64,11 +64,10 @@ std::optional<co_ret> co_default_env::wait_ctx(co_ctx*& ctx, const std::chrono::
     ret = ctx->ret_ref();
     assert(ctx->env() != nullptr); // fixme: 需要保证ctx变为finished状态后不会被迁移，对应的env不会被清理，并且ctx不会被销毁。这在cleanup或者env被销毁的时候可能会出问题
     ctx->env()->remove_ctx(ctx);
-    ctx = nullptr;
     return ret;
 }
 
-co_ret co_default_env::wait_ctx(co_ctx*& ctx)
+co_ret co_default_env::wait_ctx(co_ctx* ctx)
 {
     while (ctx->state() != co_state::finished)
     {
@@ -76,7 +75,6 @@ co_ret co_default_env::wait_ctx(co_ctx*& ctx)
     }
     co_ret ret = ctx->ret_ref();
     ctx->env()->remove_ctx(ctx); // fixme: 同上
-    ctx = nullptr;
     return ret;
 }
 
@@ -109,7 +107,7 @@ void co_default_env::remove_detached_ctx__()
         all_ctx__.begin(),
         all_ctx__.end(),
         [](auto& ctx) {
-            return ctx->state() == co_state::finished && ctx->detach();
+            return ctx->state() == co_state::finished && ctx->test_flag(CO_CTX_FLAG_DETACHED);
         });
 
     for (auto p = pos; p != all_ctx__.end(); ++p)
@@ -209,8 +207,27 @@ void co_default_env::start_schedule_routine__()
         schedule_switch();
     }
 
+    while (!can_destroy__())
+    {
+        // todo 转移可转移的ctx
+        schedule_switch();
+    }
+
     remove_all_ctx__();
     remove_current_env__();
+}
+
+bool co_default_env::can_destroy__()
+{
+    std::lock_guard<std::mutex> lck(mu_all_ctx__);
+    for (auto& ctx : all_ctx__) // 协程如果被co对象持有，就不能被销毁
+    {
+        if (ctx->test_flag(CO_CTX_FLAG_HANDLE_BY_CO))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 void co_default_env::schedule_in_this_thread()
