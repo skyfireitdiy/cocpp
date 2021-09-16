@@ -5,16 +5,23 @@
 
 #include <any>
 #include <atomic>
+#include <bitset>
+#include <mutex>
 
 class co_default_ctx : public co_ctx
 {
 private:
-    co_stack*             stack__;
-    std::atomic<co_state> state__;
-    co_ctx_config         config__;
-    std::any              ret__;
-    co_env*               env__;
-    std::atomic<bool>     detached__;
+    co_stack*             stack__;  // 当前栈空间
+    std::atomic<co_state> state__;  // 协程状态
+    co_ctx_config         config__; // 协程配置
+    std::any              ret__;    // 协程返回值，会被传递给 config 中的 entry
+    co_env*               env__;    // 协程当前对应的运行环境
+
+    static constexpr int CO_CTX_FLAG_DETACHED = 0;
+    static constexpr int CO_CTX_FLAG_MAX      = 8;
+
+    std::bitset<CO_CTX_FLAG_MAX> flag__;    // 状态
+    std::mutex                   mu_flag__; // 状态保护锁
 
 #if defined(_MSC_VER)
 #if defined(_WIN64)
@@ -61,7 +68,9 @@ private:
 #endif
 
     void init_regs__();
-
+    void set_flag__(int flag);
+    bool test_flag__(int flag);
+    void unset_flag__(int flag);
     co_default_ctx(co_stack* stack, const co_ctx_config& config);
 
 public:

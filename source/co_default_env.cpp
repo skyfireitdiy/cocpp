@@ -62,6 +62,7 @@ std::optional<co_ret> co_default_env::wait_ctx(co_ctx*& ctx, const std::chrono::
         schedule_switch();
     }
     ret = ctx->ret_ref();
+    assert(ctx->env() != nullptr); // fixme: 需要保证ctx变为finished状态后不会被迁移，对应的env不会被清理，并且ctx不会被销毁。这在cleanup或者env被销毁的时候可能会出问题
     ctx->env()->remove_ctx(ctx);
     ctx = nullptr;
     return ret;
@@ -74,7 +75,7 @@ co_ret co_default_env::wait_ctx(co_ctx*& ctx)
         schedule_switch();
     }
     co_ret ret = ctx->ret_ref();
-    ctx->env()->remove_ctx(ctx);
+    ctx->env()->remove_ctx(ctx); // fixme: 同上
     ctx = nullptr;
     return ret;
 }

@@ -1,4 +1,5 @@
 #include "co_default_ctx.h"
+#include <cassert>
 
 #ifdef _MSC_VER
 #ifdef _WIN64
@@ -84,10 +85,31 @@ co_default_ctx::co_default_ctx(co_stack* stack, const co_ctx_config& config)
 
 void co_default_ctx::set_detach()
 {
-    detached__ = true;
+    set_flag__(CO_CTX_FLAG_DETACHED);
 }
 
 bool co_default_ctx::detach()
 {
-    return detached__;
+    return test_flag__(CO_CTX_FLAG_DETACHED);
+}
+
+void co_default_ctx::set_flag__(int flag)
+{
+    assert(flag < CO_CTX_FLAG_MAX);
+    std::lock_guard<std::mutex> lck(mu_flag__);
+    flag__.set(flag);
+}
+
+bool co_default_ctx::test_flag__(int flag)
+{
+    assert(flag < CO_CTX_FLAG_MAX);
+    std::lock_guard<std::mutex> lck(mu_flag__);
+    return flag__.test(flag);
+}
+
+void co_default_ctx::unset_flag__(int flag)
+{
+    assert(flag < CO_CTX_FLAG_MAX);
+    std::lock_guard<std::mutex> lck(mu_flag__);
+    flag__.reset(flag);
 }
