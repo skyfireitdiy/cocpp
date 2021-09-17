@@ -79,7 +79,17 @@ co_default_ctx::co_default_ctx(co_stack* stack, const co_ctx_config& config)
     : stack__(stack)
     , state__(co_state::suspended)
     , config__(config)
+    , priority__(config.priority)
 {
+    if (priority__ >= CO_MAX_PRIORITY)
+    {
+        priority__ = CO_MAX_PRIORITY - 1;
+    }
+    if (priority__ < 0)
+    {
+        priority__ = 0;
+    }
+
     init_regs__();
 }
 
@@ -102,4 +112,14 @@ void co_default_ctx::reset_flag(int flag)
     assert(flag < CO_CTX_FLAG_MAX);
     std::lock_guard<std::mutex> lck(mu_flag__);
     flag__.reset(flag);
+}
+
+int co_default_ctx::priority() const
+{
+    return priority__;
+}
+
+void co_default_ctx::set_priority(int priority)
+{
+    priority__ = priority;
 }

@@ -3,6 +3,7 @@
 #include "co_define.h"
 #include "co_env_factory.h"
 #include "co_manager.h"
+#include "co_scheduler.h"
 #include "co_type.h"
 
 #include <cassert>
@@ -17,12 +18,12 @@ extern "C" void __switch_to_msvc_x64(co_byte**, co_byte**);
 #endif
 #endif
 
-co_default_env::co_default_env(co_ctx* idle_ctx, co_stack* shared_stack, bool create_new_thread)
-    : idle_ctx__(idle_ctx)
+co_default_env::co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_stack* shared_stack, bool create_new_thread)
+    : scheduler__(scheduler)
     , shared_stack__(shared_stack)
+    , idle_ctx__(idle_ctx)
     , state__(co_env_state::created)
 {
-    all_ctx__.push_back(idle_ctx__);
     if (create_new_thread)
     {
         // 此处设置状态是防止 add_ctx 前调度线程还未准备好，状态断言失败
@@ -44,8 +45,7 @@ void co_default_env::add_ctx(co_ctx* ctx)
 {
     assert(state__ != co_env_state::created);
     ctx->set_env(this);
-    std::lock_guard<std::mutex> lck(mu_all_ctx__);
-    all_ctx__.push_back(ctx);
+    scheduler__->add_ctx(ctx); // 添加到调度器
     state__ = co_env_state::busy;
 }
 
@@ -80,8 +80,7 @@ co_ret co_default_env::wait_ctx(co_ctx* ctx)
 
 int co_default_env::workload() const
 {
-    std::lock_guard<std::mutex> lck(mu_all_ctx__);
-    return all_ctx__.size();
+    return scheduler__->count();
 }
 
 bool co_default_env::has_scheduler_thread() const
@@ -101,21 +100,15 @@ void co_default_env::set_state(co_env_state state)
 
 void co_default_env::remove_detached_ctx__()
 {
-    std::lock_guard<std::mutex> lck(mu_all_ctx__);
-
-    auto pos = std::remove_if(
-        all_ctx__.begin(),
-        all_ctx__.end(),
-        [](auto& ctx) {
-            return ctx->state() == co_state::finished && ctx->test_flag(CO_CTX_FLAG_DETACHED);
-        });
-
-    for (auto p = pos; p != all_ctx__.end(); ++p)
+    auto all_ctx = scheduler__->all_ctx();
+    for (auto& ctx : all_ctx)
     {
-        manager__->ctx_factory()->destroy_ctx(*p);
+        if (ctx->state() == co_state::finished && ctx->test_flag(CO_CTX_FLAG_DETACHED))
+        {
+            scheduler__->remove_ctx(ctx);
+            manager__->ctx_factory()->destroy_ctx(ctx);
+        }
     }
-
-    all_ctx__.erase(pos, all_ctx__.end());
 }
 
 void co_default_env::schedule_switch()
@@ -124,15 +117,11 @@ void co_default_env::schedule_switch()
 
     auto curr = current_ctx();
     assert(curr != nullptr);
-    co_ctx* next = nullptr;
 
+    auto next = scheduler__->choose_ctx();
+    if (next == nullptr)
     {
-        std::lock_guard<std::mutex> lck(mu_all_ctx__);
-        do
-        {
-            current_index__ = (current_index__ + 1) % all_ctx__.size();
-            next            = all_ctx__[current_index__];
-        } while (next->state() == co_state::finished);
+        next = idle_ctx__;
     }
 
     if (curr->state() != co_state::finished)
@@ -156,11 +145,8 @@ void co_default_env::schedule_switch()
 
 void co_default_env::remove_ctx(co_ctx* ctx)
 {
-    ctx->set_env(nullptr);
-    std::lock_guard<std::mutex> lck(mu_all_ctx__);
-    all_ctx__.erase(std::remove(all_ctx__.begin(), all_ctx__.end(), ctx));
+    scheduler__->remove_ctx(ctx);
     manager__->ctx_factory()->destroy_ctx(ctx);
-
     update_state__();
 }
 
@@ -177,8 +163,12 @@ void co_default_env::switch_to__(co_byte** curr, co_byte** next)
 
 co_ctx* co_default_env::current_ctx() const
 {
-    assert(!all_ctx__.empty());
-    return all_ctx__[current_index__];
+    auto ret = scheduler__->current_ctx();
+    if (ret == nullptr)
+    {
+        return idle_ctx__;
+    }
+    return ret;
 }
 
 co_ctx* co_default_env::idle_ctx() const
@@ -219,8 +209,8 @@ void co_default_env::start_schedule_routine__()
 
 bool co_default_env::can_destroy__()
 {
-    std::lock_guard<std::mutex> lck(mu_all_ctx__);
-    for (auto& ctx : all_ctx__) // 协程如果被co对象持有，就不能被销毁
+    auto all_ctx = scheduler__->all_ctx();
+    for (auto& ctx : all_ctx) // 协程如果被co对象持有，就不能被销毁
     {
         if (ctx->test_flag(CO_CTX_FLAG_HANDLE_BY_CO))
         {
@@ -247,16 +237,12 @@ co_manager* co_default_env::manager() const
 
 void co_default_env::remove_all_ctx__()
 {
-    std::lock_guard<std::mutex> lck(mu_all_ctx__);
-    // 不销毁idle_ctx，idle_ctx应该与env一起销毁
-    for (int i = 1; i < all_ctx__.size(); ++i)
+    auto all_ctx = scheduler__->all_ctx();
+    for (auto ctx : all_ctx)
     {
-        all_ctx__[i]->set_env(nullptr);
-        manager__->ctx_factory()->destroy_ctx(all_ctx__[i]);
+        scheduler__->remove_ctx(ctx);
+        manager__->ctx_factory()->destroy_ctx(ctx);
     }
-    // 删除除idle以外的ctx
-    all_ctx__.resize(1);
-    // env要销毁了，是否更新状态不重要，为了保证一致性，此处更新一下
     update_state__();
 }
 
@@ -277,8 +263,13 @@ void co_default_env::update_state__()
         return;
     }
     // 只有一个ctx的时候，是idle_ctx，所以设置为空闲状态
-    if (all_ctx__.size() <= 1)
+    if (scheduler__->current_ctx() == nullptr)
     {
         state__ = co_env_state::idle;
     }
+}
+
+co_scheduler* co_default_env::scheduler() const
+{
+    return scheduler__;
 }

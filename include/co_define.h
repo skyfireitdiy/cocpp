@@ -4,10 +4,14 @@
 // 默认栈大小
 constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
 
+// 协程flag
 constexpr int CO_CTX_FLAG_DETACHED     = 0; // 被分离
 constexpr int CO_CTX_FLAG_WAITING      = 1; // 被等待
 constexpr int CO_CTX_FLAG_HANDLE_BY_CO = 2; // 被co对象持有，暂时不能销毁
 constexpr int CO_CTX_FLAG_MAX          = 8;
+
+// 协程优先级
+constexpr int CO_MAX_PRIORITY = 100;
 
 // 调试宏
 #define CO_OUTPUT(level, fmt, ...)                                      \

@@ -86,13 +86,34 @@ void test6()
     c1.wait<void>();
 }
 
+void test7()
+{
+    auto f = []() {
+        for (int i = 0; i < 10; ++i)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            printf("co %s -> %d\n", co::name(), i);
+            co::schedule_switch();
+        }
+    };
+    co c1({ with_priority(1), with_name("c1") }, f);
+    co c2({ with_priority(1), with_name("c2") }, f);
+    co c3({ with_priority(5), with_name("c3") }, f);
+    co c4({ with_priority(6), with_name("c4") }, f);
+
+    c1.wait<void>();
+    c2.wait<void>();
+    c3.wait<void>();
+    c4.wait<void>();
+}
+
 int main()
 {
     co::init_co(co_default_manager::instance());
 
     CO_DEBUG("thread %d", std::this_thread::get_id());
 
-    test6();
+    test7();
 
     getchar();
 

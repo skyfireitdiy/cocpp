@@ -11,6 +11,7 @@ struct co_ctx_config
     size_t                         stack_size = CO_DEFAULT_STACK_SIZE; // 栈大小
     co_startup_functype            startup    = co_default_entry;      // 协程真实的入口函数，协程启动时，pc指针将会调到这里
     std::string                    name       = "__unknown__";         // 协程名称
+    int                            priority   = 99;                    // 优先级 (0~99，数字越小，优先级约高)
 };
 
 // 以下宏代码生成 with_xxx 的配置选项
@@ -26,3 +27,4 @@ struct co_ctx_config
 CO_GEN_CTX_CONFIG_OPTION(size_t, stack_size)
 // CO_GEN_CTX_CONFIG_OPTION(co_startup_functype, startup)
 CO_GEN_CTX_CONFIG_OPTION(std::string, name)
+CO_GEN_CTX_CONFIG_OPTION(int, priority)

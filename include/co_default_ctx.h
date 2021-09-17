@@ -20,6 +20,8 @@ private:
     std::bitset<CO_CTX_FLAG_MAX> flag__;    // 状态
     std::mutex                   mu_flag__; // 状态保护锁
 
+    std::atomic<int> priority__; // 优先级
+
 #if defined(_MSC_VER)
 #if defined(_WIN64)
     // 16字节浮点寄存器
@@ -79,6 +81,8 @@ public:
     void                 set_flag(int flag) override;
     bool                 test_flag(int flag) override;
     void                 reset_flag(int flag) override;
+    void                 set_priority(int priority) override;
+    int                  priority() const override;
 
     friend void co_default_entry(co_ctx* ctx);
     friend class co_default_ctx_factory;
