@@ -100,10 +100,12 @@ void co_default_env::set_state(co_env_state state)
 
 void co_default_env::remove_detached_ctx__()
 {
+    auto curr    = scheduler__->current_ctx();
     auto all_ctx = scheduler__->all_ctx();
     for (auto& ctx : all_ctx)
     {
-        if (ctx->state() == co_state::finished && !ctx->test_flag(CO_CTX_FLAG_HANDLE_BY_CO))
+        // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
+        if (ctx->state() == co_state::finished && !ctx->test_flag(CO_CTX_FLAG_HANDLE_BY_CO) && ctx != curr)
         {
             scheduler__->remove_ctx(ctx);
             manager__->ctx_factory()->destroy_ctx(ctx);

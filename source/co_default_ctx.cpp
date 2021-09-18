@@ -91,7 +91,7 @@ void co_default_ctx::init_regs__()
     regs__[reg_index_RDI__] = reinterpret_cast<co_byte*>(this);
 
     __get_mxcsr_gcc_x64(&regs__[reg_index_MXCSR__]);
-    __get_fcw_gcc_x64(&regs__[reg_index_MXCSR__]);
+    __get_fcw_gcc_x64(&regs__[reg_index_FCW__]);
 #else
 #error only supported x86_64
 #endif

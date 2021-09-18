@@ -92,7 +92,7 @@ void test7()
         for (int i = 0; i < 10; ++i)
         {
             co::sleep_for(std::chrono::seconds(1));
-            printf("co %s -> %d\n", co::name(), i);
+            printf("co %s -> %d\n", co::name().c_str(), i);
             co::schedule_switch();
         }
     };
@@ -114,13 +114,14 @@ void test8()
     co c1({ with_name("c1") }, []() {
         for (int i = 0; i < 1000; ++i)
         {
-            // printf("co1 %d\n", i);
+            printf("co1 %d\n", i);
             co::schedule_switch();
         }
     });
     co c2({ with_name("c2") }, []() {
         for (int i = 0; i < 1000; ++i)
         {
+            printf("co2 %d\n", i);
             co::schedule_switch();
         }
     });
@@ -134,7 +135,7 @@ int main()
 
     CO_DEBUG("thread %u", std::this_thread::get_id());
 
-    test8();
+    test7();
 
     getchar();
 

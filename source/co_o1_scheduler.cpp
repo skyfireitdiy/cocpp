@@ -24,6 +24,10 @@ void co_o1_scheduler::remove_ctx(co_ctx* ctx)
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
     // CO_DEBUG("remove ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
     all_ctx__[ctx->priority()].remove(ctx);
+    if (ctx == curr__)
+    {
+        curr__ = nullptr;
+    }
 }
 
 co_ctx* co_o1_scheduler::choose_ctx()
