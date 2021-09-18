@@ -1,6 +1,7 @@
 #include "co_o1_scheduler.h"
 #include "co_ctx.h"
 #include "co_define.h"
+#include <cassert>
 #include <mutex>
 
 co_o1_scheduler::co_o1_scheduler()
@@ -23,11 +24,8 @@ void co_o1_scheduler::remove_ctx(co_ctx* ctx)
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
     // CO_DEBUG("remove ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
+    assert(ctx != curr__);
     all_ctx__[ctx->priority()].remove(ctx);
-    if (ctx == curr__)
-    {
-        curr__ = nullptr;
-    }
 }
 
 co_ctx* co_o1_scheduler::choose_ctx()
