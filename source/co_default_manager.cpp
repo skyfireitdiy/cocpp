@@ -12,7 +12,7 @@ co_env* co_default_manager::get_best_env()
         return create_env__();
     }
 
-    auto env          = *env_list__.begin();
+    auto env          = env_list__.front();
     auto min_workload = env->workload();
     for (auto& p : env_list__)
     {
@@ -92,8 +92,9 @@ void co_default_manager::remove_env(co_env* env)
     {
         std::lock_guard<std::mutex> lck(mu_expired_env__);
         expired_env__.push_back(env);
-        cond_expired_env__.notify_one();
     }
+    cond_expired_env__.notify_one();    
+    
 }
 
 void co_default_manager::create_env_from_this_thread()

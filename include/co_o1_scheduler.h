@@ -12,7 +12,7 @@ class co_o1_scheduler : public co_scheduler
 private:
     std::vector<std::list<co_ctx*>> all_ctx__;
     mutable std::mutex              mu_all_ctx__;
-    co_ctx*                         current_ctx__  = nullptr;
+    co_ctx*                         curr__         = nullptr;
     int                             min_priority__ = 0;
 
     co_o1_scheduler();

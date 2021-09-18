@@ -24,11 +24,6 @@ private:
 
     std::chrono::time_point<std::chrono::system_clock> last_schedule_time__; // 最后一次调度的时间点
 
-    // 所有ctx集合以及其对应的保护锁
-    // std::vector<co_ctx*> all_ctx__;
-    // mutable std::mutex   mu_all_ctx__;
-    // size_t               current_index__ = 0;
-
     co_scheduler* scheduler__ = nullptr;
 
     co_ctx* idle_ctx__;

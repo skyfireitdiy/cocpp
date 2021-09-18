@@ -91,7 +91,7 @@ void test7()
     auto f = []() {
         for (int i = 0; i < 10; ++i)
         {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            co::sleep_for(std::chrono::seconds(1));
             printf("co %s -> %d\n", co::name(), i);
             co::schedule_switch();
         }
@@ -107,15 +107,38 @@ void test7()
     c4.wait<void>();
 }
 
+bool test8_flag = true;
+
+void test8()
+{
+    co c1({ with_name("c1") }, []() {
+        for (int i = 0; i < 1000; ++i)
+        {
+            // printf("co1 %d\n", i);
+            co::schedule_switch();
+        }
+    });
+    co c2({ with_name("c2") }, []() {
+        for (int i = 0; i < 1000; ++i)
+        {
+            co::schedule_switch();
+        }
+    });
+    c1.wait<void>();
+    c2.wait<void>();
+}
+
 int main()
 {
     co::init_co(co_default_manager::instance());
 
     CO_DEBUG("thread %d", std::this_thread::get_id());
 
-    test7();
+    test8();
 
     getchar();
+
+    test8_flag = false;
 
     co::uninit_co();
 }

@@ -58,6 +58,15 @@ public:
     static co_id       id();                         // 协程id
     static std::string name();                       // 协程名称
     static void        convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
+    template <class Rep, class Period>
+    static void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
+    {
+        auto start = std::chrono::steady_clock::now();
+        do
+        {
+            schedule_switch();
+        } while (std::chrono::steady_clock::now() - start < sleep_duration);
+    }
 
     // 构造一个协程，自动开始调度，参数为可调用对象与参数列表，如：co c(add, 1, 2);
     template <typename Func, typename... Args>

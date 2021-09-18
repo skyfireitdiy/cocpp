@@ -1,4 +1,5 @@
 #include "co_default_ctx.h"
+#include "co_define.h"
 #include <cassert>
 
 #ifdef _MSC_VER
@@ -24,6 +25,10 @@ co_state co_default_ctx::state() const
 
 void co_default_ctx::set_state(co_state state)
 {
+    if (config__.name != "idle")
+    {
+        CO_DEBUG("set state %d to %s %p\n", state, config__.name.c_str(), this);
+    }
     state__ = state;
 }
 

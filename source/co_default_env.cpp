@@ -62,8 +62,7 @@ std::optional<co_ret> co_default_env::wait_ctx(co_ctx* ctx, const std::chrono::m
         schedule_switch();
     }
     ret = ctx->ret_ref();
-    assert(ctx->env() != nullptr); // fixme: 需要保证ctx变为finished状态后不会被迁移，对应的env不会被清理，并且ctx不会被销毁。这在cleanup或者env被销毁的时候可能会出问题
-    ctx->env()->remove_ctx(ctx);
+    ctx->reset_flag(CO_CTX_FLAG_HANDLE_BY_CO);
     return ret;
 }
 
@@ -72,9 +71,10 @@ co_ret co_default_env::wait_ctx(co_ctx* ctx)
     while (ctx->state() != co_state::finished)
     {
         schedule_switch();
+        // CO_DEBUG("ctx %s %p state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
     }
     co_ret ret = ctx->ret_ref();
-    ctx->env()->remove_ctx(ctx); // fixme: 同上
+    ctx->reset_flag(CO_CTX_FLAG_HANDLE_BY_CO);
     return ret;
 }
 
@@ -103,7 +103,7 @@ void co_default_env::remove_detached_ctx__()
     auto all_ctx = scheduler__->all_ctx();
     for (auto& ctx : all_ctx)
     {
-        if (ctx->state() == co_state::finished && ctx->test_flag(CO_CTX_FLAG_DETACHED))
+        if (ctx->state() == co_state::finished && !ctx->test_flag(CO_CTX_FLAG_HANDLE_BY_CO))
         {
             scheduler__->remove_ctx(ctx);
             manager__->ctx_factory()->destroy_ctx(ctx);
@@ -129,6 +129,8 @@ void co_default_env::schedule_switch()
         curr->set_state(co_state::suspended);
     }
 
+    // CO_DEBUG("from %p to %p", curr, next);
+
     next->set_state(co_state::running);
     if (curr == next)
     {
@@ -139,7 +141,6 @@ void co_default_env::schedule_switch()
     {
         state__ = co_env_state::busy;
     }
-
     switch_to__(curr->regs(), next->regs());
 }
 
