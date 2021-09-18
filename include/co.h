@@ -15,6 +15,12 @@
 class co_manager;
 class co_ctx;
 
+template <typename T>
+concept co_is_void = std::is_same_v<T, void>;
+
+template <typename T>
+concept co_not_void = !std::is_same_v<T, void>;
+
 class co
 {
 private:
@@ -87,7 +93,7 @@ public:
     }
 
     // 等待协程执行结束返回
-    template <typename Ret>
+    template <co_not_void Ret>
     Ret wait()
     {
         CO_DEBUG("start wait");
@@ -96,11 +102,11 @@ public:
         return ret;
     }
 
-    // 对于无返回值函数的特化
-    template <>
-    void wait()
+    template <co_is_void Ret>
+    Ret wait()
     {
-        manager__->current_env()->wait_ctx(ctx__);
+        // CO_DEBUG("start wait");
+        manager__->current_env()->wait_ctx(ctx__); // wait之后对象被销毁，不用设置 flag
         ctx__ = nullptr;
     }
 

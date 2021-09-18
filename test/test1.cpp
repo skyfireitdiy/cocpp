@@ -26,8 +26,8 @@ void add2(int a, int b)
 
 void test1()
 {
-    co c1(std::function(func), 1);
-    co c2(std::function(func), 2);
+    co c1(std::function<void(int)>(func), 1);
+    co c2(std::function<void(int)>(func), 2);
 
     c1.wait<void>();
     c2.wait<void>();
@@ -37,14 +37,14 @@ void test1()
 
 void test2()
 {
-    co  c1(std::function(add), 1, 2);
+    co  c1(std::function<int(int, int)>(add), 1, 2);
     int ret = c1.wait<int>();
     printf("ret = %d\n", ret);
 }
 
 void test3()
 {
-    co c1(std::function(add2), 1, 2);
+    co c1(std::function<void(int, int)>(add2), 1, 2);
     c1.wait<void>();
 }
 
@@ -132,7 +132,7 @@ int main()
 {
     co::init_co(co_default_manager::instance());
 
-    CO_DEBUG("thread %d", std::this_thread::get_id());
+    CO_DEBUG("thread %u", std::this_thread::get_id());
 
     test8();
 

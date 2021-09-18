@@ -1,6 +1,7 @@
 #include "co_default_ctx.h"
 #include "co_define.h"
 #include <cassert>
+#include <cstring>
 
 #ifdef _MSC_VER
 #ifdef _WIN64
@@ -25,10 +26,10 @@ co_state co_default_ctx::state() const
 
 void co_default_ctx::set_state(co_state state)
 {
-    if (config__.name != "idle")
-    {
-        CO_DEBUG("set state %d to %s %p\n", state, config__.name.c_str(), this);
-    }
+    // if (config__.name != "idle")
+    // {
+    //     CO_DEBUG("set state %u to %s %p\n", state, config__.name.c_str(), this);
+    // }
     state__ = state;
 }
 
@@ -36,6 +37,28 @@ co_byte** co_default_ctx::regs()
 {
     return reinterpret_cast<co_byte**>(&regs__);
 }
+
+#ifdef __GNUC__
+#ifdef __x86_64__
+static void __get_mxcsr_gcc_x64(void*)
+{
+    __asm volatile(
+        "stmxcsr (%%rdi)\n"
+        :
+        :
+        : "memory");
+}
+
+static void __get_fcw_gcc_x64(void*)
+{
+    __asm volatile(
+        "fnstcw (%%rdi)\n"
+        :
+        :
+        : "memory");
+}
+#endif
+#endif
 
 void co_default_ctx::init_regs__()
 {
@@ -56,6 +79,21 @@ void co_default_ctx::init_regs__()
 
 #else
 #error only support x86_64 in msvc
+#endif
+#endif
+
+#ifdef __GNUC__
+#ifdef __x86_64__
+    memset(stack__->stack(), 0, stack__->stack_size());
+    regs__[reg_index_RSP__] = stack__->stack_top() - sizeof(void*); // why sub sizeof(void*) ?
+    regs__[reg_index_RBP__] = regs__[reg_index_RSP__];
+    regs__[reg_index_RIP__] = reinterpret_cast<co_byte*>(config__.startup);
+    regs__[reg_index_RDI__] = reinterpret_cast<co_byte*>(this);
+
+    __get_mxcsr_gcc_x64(&regs__[reg_index_MXCSR__]);
+    __get_fcw_gcc_x64(&regs__[reg_index_MXCSR__]);
+#else
+#error only supported x86_64
 #endif
 #endif
 }

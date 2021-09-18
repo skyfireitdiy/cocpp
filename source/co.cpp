@@ -31,7 +31,6 @@ void co::uninit_co()
 
 void co::detach()
 {
-    ctx__->set_flag(CO_CTX_FLAG_DETACHED);
     ctx__->reset_flag(CO_CTX_FLAG_HANDLE_BY_CO);
     ctx__ = nullptr;
 }

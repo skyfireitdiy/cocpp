@@ -16,13 +16,13 @@ void co_o1_scheduler::add_ctx(co_ctx* ctx)
     {
         min_priority__ = ctx->priority();
     }
-    CO_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
+    // CO_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
 }
 
 void co_o1_scheduler::remove_ctx(co_ctx* ctx)
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
-    CO_DEBUG("remove ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
+    // CO_DEBUG("remove ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
     all_ctx__[ctx->priority()].remove(ctx);
 }
 
@@ -56,7 +56,7 @@ co_ctx* co_o1_scheduler::choose_ctx()
 std::list<co_ctx*> co_o1_scheduler::all_ctx() const
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
-    std::list<co_ctx*> ret;
+    std::list<co_ctx*>          ret;
     for (int i = 0; i < all_ctx__.size(); ++i)
     {
         ret.insert(ret.end(), all_ctx__[i].begin(), all_ctx__[i].end());
@@ -67,7 +67,7 @@ std::list<co_ctx*> co_o1_scheduler::all_ctx() const
 size_t co_o1_scheduler::count() const
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
-    
+
     size_t ret = 0;
     for (int i = 0; i < all_ctx__.size(); ++i)
     {
@@ -79,6 +79,6 @@ size_t co_o1_scheduler::count() const
 co_ctx* co_o1_scheduler::current_ctx() const
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
-    
+
     return curr__;
 }
