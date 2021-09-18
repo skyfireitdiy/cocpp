@@ -7,4 +7,8 @@ set_kind("binary")
 add_includedirs("include")
 add_files("source/*.cpp")
 add_files("test/test1.cpp")
-add_links("pthread")
+if is_plat("linux") then
+    add_links("pthread")
+else
+    add_files("source/*.s")
+end
