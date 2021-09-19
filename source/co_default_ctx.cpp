@@ -122,17 +122,8 @@ co_default_ctx::co_default_ctx(co_stack* stack, const co_ctx_config& config)
     : stack__(stack)
     , state__(co_state::suspended)
     , config__(config)
-    , priority__(config.priority)
 {
-    if (priority__ >= CO_MAX_PRIORITY)
-    {
-        priority__ = CO_MAX_PRIORITY - 1;
-    }
-    if (priority__ < 0)
-    {
-        priority__ = 0;
-    }
-
+    set_priority(config.priority);
     init_regs__();
 }
 
@@ -164,5 +155,13 @@ int co_default_ctx::priority() const
 
 void co_default_ctx::set_priority(int priority)
 {
+    if (priority >= CO_MAX_PRIORITY)
+    {
+        priority = CO_MAX_PRIORITY - 1;
+    }
+    if (priority < 0)
+    {
+        priority = 0;
+    }
     priority__ = priority;
 }

@@ -27,7 +27,7 @@ co_default_env::co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_sta
     if (create_new_thread)
     {
         // 此处设置状态是防止 add_ctx 前调度线程还未准备好，状态断言失败
-        state__ = co_env_state::idle;
+        set_state(co_env_state::idle);
         start_schedule();
     }
     else
@@ -43,13 +43,18 @@ co_stack* co_default_env::shared_stack() const
 
 void co_default_env::add_ctx(co_ctx* ctx)
 {
-    assert(state__ != co_env_state::created);
+    if (ctx == nullptr)
+    {
+        CO_ERROR("add a nullptr ctx");
+        return;
+    }
+    assert(state__ != co_env_state::created && state__ != co_env_state::destorying);
     ctx->set_env(this);
     scheduler__->add_ctx(ctx); // 添加到调度器
-    state__ = co_env_state::busy;
+    set_state(co_env_state::busy);
 }
 
-std::optional<co_ret> co_default_env::wait_ctx(co_ctx* ctx, const std::chrono::milliseconds& timeout)
+std::optional<co_ret> co_default_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
 {
     std::optional<co_ret> ret;
     auto                  now = std::chrono::system_clock::now();
@@ -61,9 +66,7 @@ std::optional<co_ret> co_default_env::wait_ctx(co_ctx* ctx, const std::chrono::m
         }
         schedule_switch();
     }
-    ret = ctx->ret_ref();
-    ctx->reset_flag(CO_CTX_FLAG_HANDLE_BY_CO);
-    return ret;
+    return ctx->ret_ref();
 }
 
 co_ret co_default_env::wait_ctx(co_ctx* ctx)
@@ -73,9 +76,7 @@ co_ret co_default_env::wait_ctx(co_ctx* ctx)
         schedule_switch();
         // CO_DEBUG("ctx %s %p state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
     }
-    co_ret ret = ctx->ret_ref();
-    ctx->reset_flag(CO_CTX_FLAG_HANDLE_BY_CO);
-    return ret;
+    return ctx->ret_ref();
 }
 
 int co_default_env::workload() const
@@ -85,17 +86,23 @@ int co_default_env::workload() const
 
 bool co_default_env::has_scheduler_thread() const
 {
+    std::shared_lock<std::shared_mutex> lock(mu_state__);
     return state__ != co_env_state::created;
 }
 
 co_env_state co_default_env::state() const
 {
+    std::shared_lock<std::shared_mutex> lock(mu_state__);
     return state__;
 }
 
 void co_default_env::set_state(co_env_state state)
 {
-    state__ = state;
+    std::unique_lock<std::shared_mutex> lock(mu_state__);
+    if (state__ != co_env_state::destorying) // destorying 状态不允许迁移到其他状态
+    {
+        state__ = state;
+    }
 }
 
 void co_default_env::remove_detached_ctx__()
@@ -141,7 +148,7 @@ void co_default_env::schedule_switch()
 
     if (next != idle_ctx__)
     {
-        state__ = co_env_state::busy;
+        set_state(co_env_state::busy);
     }
     switch_to__(curr->regs(), next->regs());
 }
@@ -215,7 +222,7 @@ co_ctx* co_default_env::idle_ctx() const
 
 void co_default_env::stop_schedule()
 {
-    state__ = co_env_state::destorying;
+    set_state(co_env_state::destorying);
 }
 
 void co_default_env::start_schedule()
@@ -228,8 +235,8 @@ void co_default_env::start_schedule()
 
 void co_default_env::start_schedule_routine__()
 {
-    state__ = co_env_state::idle;
-    while (state__ != co_env_state::destorying)
+    set_state(co_env_state::idle);
+    while (state() != co_env_state::destorying)
     {
         schedule_switch();
     }
@@ -278,6 +285,11 @@ void co_default_env::remove_all_ctx__()
     for (auto ctx : all_ctx)
     {
         scheduler__->remove_ctx(ctx);
+        if (manager__ == nullptr)
+        {
+            CO_ERROR("manager__ is nullptr, make sure this is a test");
+            continue;
+        }
         manager__->ctx_factory()->destroy_ctx(ctx);
     }
     update_state__();
@@ -287,22 +299,24 @@ void co_default_env::remove_current_env__()
 {
     if (current_env__ != nullptr)
     {
-        manager__->remove_env(current_env__);
-        current_env__ = nullptr;
+        if (manager__ != nullptr)
+        {
+            manager__->remove_env(current_env__);
+            current_env__ = nullptr;
+        }
+        else
+        {
+            CO_WARN("manager__ is nullptr, make sure this is a test");
+        }
     }
 }
 
 void co_default_env::update_state__()
 {
-    // 如果当前是待销毁状态，不更新
-    if (state__ == co_env_state::destorying)
-    {
-        return;
-    }
     // 只有一个ctx的时候，是idle_ctx，所以设置为空闲状态
     if (scheduler__->current_ctx() == nullptr)
     {
-        state__ = co_env_state::idle;
+        set_state(co_env_state::idle);
     }
 }
 

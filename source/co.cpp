@@ -58,14 +58,4 @@ co::~co()
     }
 }
 
-std::optional<co_ret> co::wait(const std::chrono::milliseconds& timeout)
-{
-    std::optional<co_ret> ret = manager__->current_env()->wait_ctx(ctx__, timeout);
-    if (ret) // 如果等待成功了，消除ctx持有
-    {
-        ctx__ = nullptr;
-    }
-    return ret;
-}
-
 thread_local co::co_env_destoryer env_destoryer__;

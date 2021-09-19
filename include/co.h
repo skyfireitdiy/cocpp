@@ -96,22 +96,23 @@ public:
     template <co_not_void Ret>
     Ret wait()
     {
-        CO_DEBUG("start wait");
-        Ret ret = manager__->current_env()->wait_ctx(ctx__); // wait之后对象被销毁，不用设置 flag
-        ctx__   = nullptr;
-        return ret;
+        // CO_DEBUG("start wait");
+        return manager__->current_env()->wait_ctx(ctx__);
     }
 
     template <co_is_void Ret>
     Ret wait()
     {
         // CO_DEBUG("start wait");
-        manager__->current_env()->wait_ctx(ctx__); // wait之后对象被销毁，不用设置 flag
-        ctx__ = nullptr;
+        manager__->current_env()->wait_ctx(ctx__);
     }
 
     // 等待指定时间
-    std::optional<co_ret> wait(const std::chrono::milliseconds& timeout);
+    template <class Rep, class Period>
+    std::optional<co_ret> wait(const std::chrono::duration<Rep, Period>& wait_duration)
+    {
+        return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
+    }
 
     // 分离协程，之后此协程就不再受到co对象的管理了
     void detach();

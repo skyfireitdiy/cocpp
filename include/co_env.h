@@ -18,8 +18,8 @@ public:
     virtual co_stack*             shared_stack() const = 0; // 获取共享栈
     virtual void                  add_ctx(co_ctx* ctx) = 0; // 添加ctx进行调度
     virtual std::optional<co_ret> wait_ctx(
-        co_ctx*                          ctx,
-        const std::chrono::milliseconds& timeout)
+        co_ctx*                         ctx,
+        const std::chrono::nanoseconds& timeout)
         = 0;                                                    // 等待一个ctx在指定时间内执行完成，如果在指定时间内执行结束那么optional对象会被赋值，可以通过对co_ret类型进行强制类型转换获取到返回值，如果超时，返回空的optional对象
     virtual co_ret        wait_ctx(co_ctx* ctx)            = 0; // 等待，但是不会超时，所以肯定会有返回值
     virtual int           workload() const                 = 0; // 返回当前env的负载，为协程迁移和env数量动态管理提供参考

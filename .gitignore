@@ -4,5 +4,8 @@ build/
 
 # MacOS Cache
 .DS_Store
-
-
+.cache
+cover.info
+cover_report
+final.info
+compile_commands.json

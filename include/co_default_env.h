@@ -6,6 +6,7 @@
 #include <chrono>
 #include <future>
 #include <mutex>
+#include <shared_mutex>
 
 class co_manager;
 class co_scheduler;
@@ -19,8 +20,11 @@ private:
     co_stack*                          shared_stack__;
     std::future<void>                  worker__;
     std::bitset<CO_ENV_FLAG_MAX_VALUE> flag__;
-    std::atomic<co_env_state>          state__;
-    co_manager*                        manager__ = nullptr;
+
+    co_env_state              state__;
+    mutable std::shared_mutex mu_state__;
+
+    co_manager* manager__ = nullptr;
 
     std::chrono::time_point<std::chrono::system_clock> last_schedule_time__; // 最后一次调度的时间点
 
@@ -41,8 +45,8 @@ private:
 public:
     co_stack*             shared_stack() const override;
     void                  add_ctx(co_ctx* ctx) override;
-    std::optional<co_ret> wait_ctx(co_ctx*                          ctx,
-                                   const std::chrono::milliseconds& timeout)
+    std::optional<co_ret> wait_ctx(co_ctx*                         ctx,
+                                   const std::chrono::nanoseconds& timeout)
         override;
     co_ret        wait_ctx(co_ctx* ctx) override;
     int           workload() const override;
