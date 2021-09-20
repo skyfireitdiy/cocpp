@@ -2,15 +2,16 @@ add_rules("mode.debug", "mode.release")
 
 set_languages("c++20")
 
+if is_mode("debug") then
+    add_links("gcov")
+    add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
+end
+
 target("cocpp")
 set_kind("shared")
 add_includedirs("include")
 add_files("source/*.cpp")
 add_links("pthread")
-if is_mode("debug") then
-    add_links("gcov")
-    add_cxxflags("-fprofile-arcs", "-ftest-coverage")
-end
 target_end()
 
 target("test")
@@ -20,8 +21,6 @@ add_files("test/*.cpp")
 add_links("gtest", "pthread")
 add_deps("cocpp")
 if is_mode("debug") then
-    add_links("gcov")
-    add_cxxflags("-fprofile-arcs", "-ftest-coverage")
     after_build(function()
         import("core.project.task")
         task.run("test_cov")

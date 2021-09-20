@@ -17,14 +17,14 @@ void co_o1_scheduler::add_ctx(co_ctx* ctx)
     {
         min_priority__ = ctx->priority();
     }
-    // CO_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
+    CO_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
 }
 
 void co_o1_scheduler::remove_ctx(co_ctx* ctx)
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
-    // CO_DEBUG("remove ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
-    assert(ctx != curr__);
+    CO_DEBUG("remove ctx %s %p , state: %d", ctx->config().name.c_str(), ctx, ctx->state());
+    // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
     all_ctx__[ctx->priority()].remove(ctx);
 }
 
@@ -59,9 +59,9 @@ std::list<co_ctx*> co_o1_scheduler::all_ctx() const
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
     std::list<co_ctx*>          ret;
-    for (int i = 0; i < all_ctx__.size(); ++i)
+    for (auto& lst : all_ctx__)
     {
-        ret.insert(ret.end(), all_ctx__[i].begin(), all_ctx__[i].end());
+        ret.insert(ret.end(), lst.begin(), lst.end());
     }
     return ret;
 }

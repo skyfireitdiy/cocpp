@@ -8,4 +8,5 @@ class co_default_stack_factory : public co_stack_factory,
 public:
     co_stack* create_stack(size_t size) override;
     void      destroy_stack(co_stack* stack) override;
+    void      set_manager(co_manager* manager) override;
 };

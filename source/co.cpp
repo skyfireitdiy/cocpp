@@ -15,34 +15,42 @@ void co::schedule_switch()
     co::manager__->current_env()->schedule_switch();
 }
 
-co::co_env_destoryer::~co_env_destoryer()
-{
-    if (current_env__ != nullptr)
-    {
-        co::manager__->env_factory()->destroy_env(current_env__);
-        current_env__ = nullptr;
-    }
-}
-
 void co::uninit_co()
 {
-    co::manager__->clean_up();
+    co::manager__->set_clean_up();
 }
 
 void co::detach()
 {
+    if (ctx__ == nullptr)
+    {
+        return;
+    }
+    if (co::manager__->clean_up()) // manager已经设置了clean_up，所有的ctx都会被销毁
+    {
+        return;
+    }
     ctx__->reset_flag(CO_CTX_FLAG_HANDLE_BY_CO);
     ctx__ = nullptr;
 }
 
-co_id co::id()
+co_id co::this_co::id()
 {
     return reinterpret_cast<co_id>(co::manager__->current_env()->current_ctx());
 }
 
-std::string co::name()
+std::string co::name() const
 {
-    return current_env__->current_ctx()->config().name;
+    if (ctx__ == nullptr)
+    {
+        return "";
+    }
+    return ctx__->config().name;
+}
+
+std::string co::this_co::name()
+{
+    return co::manager__->current_env()->current_ctx()->config().name;
 }
 
 void co::convert_to_schedule_thread()
@@ -52,10 +60,10 @@ void co::convert_to_schedule_thread()
 
 co::~co()
 {
-    if (ctx__ != nullptr)
-    {
-        detach();
-    }
+    detach();
 }
 
-thread_local co::co_env_destoryer env_destoryer__;
+co_id co::id() const
+{
+    return reinterpret_cast<co_id>(ctx__);
+}

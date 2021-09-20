@@ -16,10 +16,10 @@ class co_default_manager : public co_manager,
                            public co_singleton<co_default_manager>
 {
 private:
-    std::list<co_env*> env_list__;
+    std::list<co_env*>   env_list__;
     std::recursive_mutex mu_env_list__;
 
-    std::atomic<bool> need_clean__ = { false };
+    std::atomic<bool> clean_up__ = { false };
 
     std::list<std::future<void>> background_task__;
     std::list<co_env*>           expired_env__;
@@ -28,9 +28,10 @@ private:
 
     std::atomic<int> exist_env_count__ = 0;
 
-    co_env_factory*   env_factory__   = co_default_env_factory::instance();
-    co_ctx_factory*   ctx_factory__   = co_default_ctx_factory::instance();
-    co_stack_factory* stack_factory__ = co_default_stack_factory::instance();
+    co_env_factory*       env_factory__       = co_default_env_factory::instance();
+    co_ctx_factory*       ctx_factory__       = co_default_ctx_factory::instance();
+    co_stack_factory*     stack_factory__     = co_default_stack_factory::instance();
+    co_scheduler_factory* scheduler_factory__ = nullptr;
 
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
 
@@ -39,21 +40,23 @@ private:
 
     void clean_env_routine__();
 
-    co_default_manager();
+    co_default_manager(co_scheduler_factory* scheduler_factory,
+                       co_stack_factory*     stack_factory,
+                       co_ctx_factory*       ctx_factory,
+                       co_env_factory*       env_factory);
 
 public:
-    co_env*           get_best_env() override;
-    void              set_env_shared_stack_size(size_t size) override;
-    void              set_env_factory(co_env_factory* env_factory) override;
-    void              set_ctx_factory(co_ctx_factory* ctx_factory) override;
-    void              set_stack_factory(co_stack_factory* stack_factory) override;
-    co_env_factory*   env_factory() override;
-    co_ctx_factory*   ctx_factory() override;
-    co_stack_factory* stack_factory() override;
-    void              remove_env(co_env* env) override;
-    void              create_env_from_this_thread() override;
-    co_env*           current_env() override;
-    void              clean_up() override;
+    co_env*               get_best_env() override;
+    void                  set_env_shared_stack_size(size_t size) override;
+    co_env_factory*       env_factory() override;
+    co_ctx_factory*       ctx_factory() override;
+    co_stack_factory*     stack_factory() override;
+    co_scheduler_factory* scheduler_factory() override;
+    void                  remove_env(co_env* env) override;
+    void                  create_env_from_this_thread() override;
+    co_env*               current_env() override;
+    void                  set_clean_up() override;
+    bool                  clean_up() const override;
 
     friend class co_singleton<co_default_manager>;
 };

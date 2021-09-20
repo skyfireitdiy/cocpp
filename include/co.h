@@ -2,6 +2,8 @@
 
 #include "co_ctx_config.h"
 #include "co_ctx_factory.h"
+#include "co_default_ctx.h"
+#include "co_default_env.h"
 #include "co_define.h"
 #include "co_env.h"
 #include "co_manager.h"
@@ -52,18 +54,18 @@ private:
     }
 
 public:
-    class co_env_destoryer
+    class this_co
     {
     public:
-        ~co_env_destoryer();
+        static co_id       id();   // 协程id
+        static std::string name(); // 协程名称
     };
 
-    static void        init_co(co_manager* manager); // 应该在所有协程功能使用前调用，传入manager对象
-    static void        uninit_co();                  // 应该在所有协程功能使用完毕后调用，用于清理资源
-    static void        schedule_switch();            // 主动让出cpu
-    static co_id       id();                         // 协程id
-    static std::string name();                       // 协程名称
-    static void        convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
+    static void init_co(co_manager* manager); // 应该在所有协程功能使用前调用，传入manager对象
+    static void uninit_co();                  // 应该在所有协程功能使用完毕后调用，用于清理资源
+    static void schedule_switch();            // 主动让出cpu
+
+    static void convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
     template <class Rep, class Period>
     static void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
     {
@@ -73,6 +75,9 @@ public:
             schedule_switch();
         } while (std::chrono::steady_clock::now() - start < sleep_duration);
     }
+
+    co_id       id() const;
+    std::string name() const;
 
     // 构造一个协程，自动开始调度，参数为可调用对象与参数列表，如：co c(add, 1, 2);
     template <typename Func, typename... Args>
@@ -96,14 +101,14 @@ public:
     template <co_not_void Ret>
     Ret wait()
     {
-        // CO_DEBUG("start wait");
+        CO_DEBUG("start wait");
         return manager__->current_env()->wait_ctx(ctx__);
     }
 
     template <co_is_void Ret>
     Ret wait()
     {
-        // CO_DEBUG("start wait");
+        CO_DEBUG("start wait");
         manager__->current_env()->wait_ctx(ctx__);
     }
 

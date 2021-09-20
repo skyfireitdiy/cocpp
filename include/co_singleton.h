@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 
 // 单例模式
 template <typename T>
@@ -9,10 +10,11 @@ private:
 
 public:
     // 获取实例
-    static T* instance()
+    template <typename... Args>
+    static T* instance(Args&&... args)
     {
-        static T* inst = new T();
-        return inst;
+        static T inst(std::forward<Args>(args)...);
+        return &inst;
     }
     friend T;
 };

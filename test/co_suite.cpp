@@ -1,14 +1,21 @@
 #include <gtest/gtest.h>
 #define private public
 #include "co.h"
+#include "co_default_ctx_factory.h"
+#include "co_default_env_factory.h"
 #include "co_default_manager.h"
+#include "co_default_stack_factory.h"
+#include "co_o1_scheduler_factory.h"
 
 class co_suite : public testing::Test
 {
 public:
     static void SetUpTestCase()
     {
-        co::init_co(co_default_manager::instance());
+        co::init_co(co_default_manager::instance(co_o1_scheduler_factory::instance(),
+                                                 co_default_stack_factory::instance(),
+                                                 co_default_ctx_factory::instance(),
+                                                 co_default_env_factory::instance()));
     }
 
     static void TearDownTestCase()
@@ -20,7 +27,7 @@ public:
 TEST_F(co_suite, name)
 {
     co c1({ with_name("test1") }, [this]() {
-        EXPECT_EQ(co::name(), "test1");
+        EXPECT_EQ(co::this_co::name(), "test1");
     });
     c1.wait<void>();
 }
@@ -30,13 +37,14 @@ TEST_F(co_suite, id)
     auto f = []() {
         for (int i = 0; i < 10; ++i)
         {
-            printf("%s %llu %d\n", co::name().c_str(), co::id(), i);
+            printf("%s %llu %d\n", co::this_co::name().c_str(), co::this_co::id(), i);
             co::schedule_switch();
         }
     };
     co c1({ with_name("test1") }, f);
     co c2({ with_name("test1") }, f);
     c1.wait<void>();
+    c2.wait<void>();
 }
 
 TEST_F(co_suite, my_thread)
@@ -47,7 +55,7 @@ TEST_F(co_suite, my_thread)
     });
 
     co c1([]() {
-        printf("new co %llu in thread %llu\n", co::id(), std::this_thread::get_id());
+        printf("new co %llu in thread %llu\n", co::this_co::id(), std::this_thread::get_id());
     });
 
     c1.wait<void>();
@@ -85,9 +93,9 @@ TEST_F(co_suite, wait_timeout)
     co   c1([]() {
         co::sleep_for(std::chrono::seconds(1));
     });
-    auto ret = c1.wait(std::chrono::milliseconds(100));
+    auto ret = c1.wait(std::chrono::milliseconds(1));
     EXPECT_FALSE(ret);
-    ret = c1.wait(std::chrono::milliseconds(1000));
+    ret = c1.wait(std::chrono::milliseconds(10000));
     EXPECT_TRUE(ret);
 }
 
@@ -96,6 +104,7 @@ TEST_F(co_suite, priority)
     std::vector<int> arr;
     co               c1(
         { with_priority(0) }, [](std::vector<int>& arr) {
+            co::sleep_for(std::chrono::milliseconds(50));
             arr.push_back(100);
             co::schedule_switch();
             arr.push_back(200);
@@ -106,6 +115,7 @@ TEST_F(co_suite, priority)
         std::ref(arr));
     co c2(
         { with_priority(1) }, [](std::vector<int>& arr) {
+            co::sleep_for(std::chrono::milliseconds(50));
             arr.push_back(400);
             co::schedule_switch();
             arr.push_back(500);
@@ -114,6 +124,35 @@ TEST_F(co_suite, priority)
             co::schedule_switch();
         },
         std::ref(arr));
+    c1.wait<void>();
+    c2.wait<void>();
     std::vector<int> expect { 100, 200, 300, 400, 500, 600 };
     EXPECT_EQ(arr, expect);
+}
+
+TEST_F(co_suite, co_id)
+{
+    co_id id;
+    co    c1([&id]() {
+        id = co::this_co::id();
+    });
+    c1.wait<void>();
+    EXPECT_EQ(c1.id(), id);
+}
+
+TEST_F(co_suite, co_id_name_after_detach)
+{
+    co_id id;
+    co    c1([&id]() {
+    });
+    c1.detach();
+    EXPECT_EQ(c1.id(), 0);
+    EXPECT_EQ(c1.name(), "");
+}
+
+TEST_F(co_suite, other_co_name)
+{
+    co c1({ with_name("zhangsan") }, []() {});
+    c1.wait<void>();
+    EXPECT_EQ(c1.name(), "zhangsan");
 }

@@ -39,7 +39,6 @@ private:
     void        update_state__();
     void        remove_all_ctx__();
     void        remove_current_env__();
-    bool        can_destroy__();
     static void switch_to__(co_byte** curr_regs, co_byte** next_regs);
 
 public:

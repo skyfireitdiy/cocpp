@@ -10,3 +10,7 @@ void co_o1_scheduler_factory::destroy_scheduler(co_scheduler* scheduler)
 {
     delete scheduler;
 }
+
+void co_o1_scheduler_factory::set_manager(co_manager* manager)
+{
+}

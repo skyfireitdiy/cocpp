@@ -43,11 +43,7 @@ co_stack* co_default_env::shared_stack() const
 
 void co_default_env::add_ctx(co_ctx* ctx)
 {
-    if (ctx == nullptr)
-    {
-        CO_ERROR("add a nullptr ctx");
-        return;
-    }
+    assert(ctx != nullptr);
     assert(state__ != co_env_state::created && state__ != co_env_state::destorying);
     ctx->set_env(this);
     scheduler__->add_ctx(ctx); // 添加到调度器
@@ -57,10 +53,10 @@ void co_default_env::add_ctx(co_ctx* ctx)
 std::optional<co_ret> co_default_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
 {
     std::optional<co_ret> ret;
-    auto                  now = std::chrono::system_clock::now();
+    auto                  now = std::chrono::high_resolution_clock::now();
     while (ctx->state() != co_state::finished)
     {
-        if (std::chrono::system_clock::now() - now > timeout)
+        if (std::chrono::high_resolution_clock::now() - now > timeout)
         {
             return ret;
         }
@@ -74,7 +70,7 @@ co_ret co_default_env::wait_ctx(co_ctx* ctx)
     while (ctx->state() != co_state::finished)
     {
         schedule_switch();
-        // CO_DEBUG("ctx %s %p state: %d\n", ctx->config().name.c_str(), ctx, ctx->state());
+        CO_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
     }
     return ctx->ret_ref();
 }
@@ -127,10 +123,19 @@ void co_default_env::schedule_switch()
     auto curr = current_ctx();
     assert(curr != nullptr);
 
-    auto next = scheduler__->choose_ctx();
-    if (next == nullptr)
+    co_ctx* next = nullptr;
+    // 如果要销毁、并且可以销毁，切换到idle销毁
+    if (state() == co_env_state::destorying)
     {
         next = idle_ctx__;
+    }
+    else
+    {
+        next = scheduler__->choose_ctx();
+        if (next == nullptr)
+        {
+            next = idle_ctx__;
+        }
     }
 
     if (curr->state() != co_state::finished)
@@ -172,6 +177,9 @@ void co_default_env::switch_to__(co_byte** curr, co_byte** next)
 
 #ifdef __GNUC__
 #ifdef __x86_64__
+    __asm volatile("" ::
+                       : "memory");
+
     __asm volatile("popq %rbp");
 
     __asm volatile("movq %rdi, (%rdi)");
@@ -199,6 +207,9 @@ void co_default_env::switch_to__(co_byte** curr, co_byte** next)
     __asm volatile("movq (%rsi), %rdi");
 
     __asm volatile("pushq %rbp");
+
+    __asm volatile("" ::
+                       : "memory");
 #else
 #error only supported x86_64
 #endif
@@ -222,7 +233,12 @@ co_ctx* co_default_env::idle_ctx() const
 
 void co_default_env::stop_schedule()
 {
-    set_state(co_env_state::destorying);
+    CO_DEBUG("set env to destorying");
+    // created 状态说明没有调度线程，不能转为destroying状态
+    if (state() != co_env_state::created)
+    {
+        set_state(co_env_state::destorying);
+    }
 }
 
 void co_default_env::start_schedule()
@@ -241,27 +257,10 @@ void co_default_env::start_schedule_routine__()
         schedule_switch();
     }
 
-    while (!can_destroy__())
-    {
-        // todo 转移可转移的ctx
-        schedule_switch();
-    }
+    CO_DEBUG("stop schedule, prepare to cleanup");
 
     remove_all_ctx__();
     remove_current_env__();
-}
-
-bool co_default_env::can_destroy__()
-{
-    auto all_ctx = scheduler__->all_ctx();
-    for (auto& ctx : all_ctx) // 协程如果被co对象持有，就不能被销毁
-    {
-        if (ctx->test_flag(CO_CTX_FLAG_HANDLE_BY_CO))
-        {
-            return false;
-        }
-    }
-    return true;
 }
 
 void co_default_env::schedule_in_this_thread()
@@ -282,32 +281,20 @@ co_manager* co_default_env::manager() const
 void co_default_env::remove_all_ctx__()
 {
     auto all_ctx = scheduler__->all_ctx();
-    for (auto ctx : all_ctx)
+    for (auto& ctx : all_ctx)
     {
-        scheduler__->remove_ctx(ctx);
-        if (manager__ == nullptr)
-        {
-            CO_ERROR("manager__ is nullptr, make sure this is a test");
-            continue;
-        }
-        manager__->ctx_factory()->destroy_ctx(ctx);
+        remove_ctx(ctx);
     }
-    update_state__();
 }
 
 void co_default_env::remove_current_env__()
 {
     if (current_env__ != nullptr)
     {
-        if (manager__ != nullptr)
-        {
-            manager__->remove_env(current_env__);
-            current_env__ = nullptr;
-        }
-        else
-        {
-            CO_WARN("manager__ is nullptr, make sure this is a test");
-        }
+        assert(manager__ != nullptr);
+        CO_DEBUG("add self to clean up list: %p", current_env__);
+        manager__->remove_env(current_env__);
+        current_env__ = nullptr;
     }
 }
 
