@@ -35,12 +35,16 @@ private:
     co_stack_factory*     stack_factory__ { nullptr };
     co_scheduler_factory* scheduler_factory__ { nullptr };
 
+    std::chrono::high_resolution_clock::duration check_duration__ { std::chrono::milliseconds(10) };
+
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
 
     co_env* create_env__();
     bool    can_schedule_ctx__(co_env* env) const;
 
     void clean_env_routine__();
+    void move_ctx_routine__();
+    bool is_blocked__(co_env* env) const;
 
     co_default_manager(co_scheduler_factory* scheduler_factory,
                        co_stack_factory*     stack_factory,

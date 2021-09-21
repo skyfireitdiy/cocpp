@@ -46,7 +46,7 @@ co_env* co_default_manager::get_best_env()
 bool co_default_manager::can_schedule_ctx__(co_env* env) const
 {
     auto state = env->state();
-    return !(state == co_env_state::overload || state == co_env_state::destorying || state == co_env_state::created);
+    return !(state == co_env_state::blocked || state == co_env_state::destorying || state == co_env_state::created);
 }
 
 co_env* co_default_manager::create_env__()
@@ -201,4 +201,53 @@ void co_default_manager::set_max_schedule_thread_count(size_t max_thread_count)
         max_thread_count = 1;
     }
     max_thread_count__ = max_thread_count;
+}
+
+void co_default_manager::move_ctx_routine__()
+{
+    auto merge_list = [](std::list<co_ctx*>& target, const std::list<co_ctx*>& src) {
+        target.insert(target.end(), src.begin(), src.end());
+    };
+
+    while (!clean_up__)
+    {
+        std::this_thread::sleep_for(check_duration__);
+        {
+            std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
+            std::list<co_ctx*>                    moved_ctx_list;        // 需要被移动的ctx
+            std::list<co_env*>                    blocked_env_list;      // 阻塞的env列表
+            std::list<co_env*>                    can_schedule_env_list; // 可调度的env列表
+            for (auto& env : env_list__)
+            {
+                // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
+                if (is_blocked__(env))
+                {
+                    env->lock_schedule();
+                    env->set_state(co_env_state::blocked); // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
+                    blocked_env_list.push_back(env);
+                    auto tmp_moveable_ctx = env->moveable_ctx_list();
+                    merge_list(moved_ctx_list, tmp_moveable_ctx); // 将阻塞的env中可移动的ctx收集起来
+                    for (auto& ctx : tmp_moveable_ctx)            // 将收集到的可转移的ctx从阻塞的env中取出
+                    {
+                        env->take_ctx(ctx);
+                    }
+                }
+                else
+                {
+                    if (can_schedule_ctx__(env)) // 记录可以用来调度的env
+                    {
+                        can_schedule_env_list.push_back(env);
+                    }
+                }
+                env->reset_scheduled();
+            }
+            // todo 重新分配
+        }
+    }
+}
+
+bool co_default_manager::is_blocked__(co_env* env) const
+{
+    auto state = env->state();
+    return state != co_env_state::idle && state != co_env_state::created && !env->scheduled();
 }

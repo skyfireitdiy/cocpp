@@ -43,5 +43,9 @@ co_env* co_default_env_factory::create_env_from_this_thread(size_t stack_size)
 
 co_ctx* co_default_env_factory::create_idle_ctx__()
 {
-    return manager__->ctx_factory()->create_ctx(co_ctx_config { nullptr, 0, nullptr, "idle", CO_IDLE_CTX_PRIORITY });
+    co_ctx_config config;
+    config.name       = "idle";
+    config.stack_size = 0;
+    config.priority   = CO_IDLE_CTX_PRIORITY;
+    return manager__->ctx_factory()->create_ctx(config);
 }

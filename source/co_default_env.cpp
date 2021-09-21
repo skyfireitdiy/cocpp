@@ -75,7 +75,7 @@ co_ret co_default_env::wait_ctx(co_ctx* ctx)
     while (ctx->state() != co_state::finished)
     {
         schedule_switch();
-        CO_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
+        // CO_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
     }
     return ctx->ret_ref();
 }
@@ -121,12 +121,6 @@ void co_default_env::remove_detached_ctx__()
     }
 }
 
-void co_default_env::update_schedule_time__()
-{
-    std::lock_guard<std::mutex> lock(mu_last_schedule_time__);
-    last_schedule_time__ = std::chrono::high_resolution_clock::now();
-}
-
 co_ctx* co_default_env::next_ctx__()
 {
     // 如果要销毁、并且可以销毁，切换到idle销毁
@@ -154,25 +148,33 @@ void co_default_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
 
 void co_default_env::schedule_switch()
 {
-    update_schedule_time__();
-    remove_detached_ctx__();
-
-    auto curr = current_ctx();
-    auto next = next_ctx__();
-
-    assert(curr != nullptr);
-    assert(next != nullptr);
-
-    update_ctx_state__(curr, next);
-
-    if (curr == next)
+    co_ctx* curr = nullptr;
+    co_ctx* next = nullptr;
     {
-        return;
-    }
+        // 切换前加锁
+        std::lock_guard<std::mutex> lock(mu_schedule__);
 
-    if (next != idle_ctx__)
-    {
-        set_state(co_env_state::busy);
+        scheduled__ = true;
+
+        remove_detached_ctx__();
+
+        curr = current_ctx();
+        next = next_ctx__();
+
+        assert(curr != nullptr);
+        assert(next != nullptr);
+
+        update_ctx_state__(curr, next);
+
+        if (curr == next)
+        {
+            return;
+        }
+
+        if (next != idle_ctx__)
+        {
+            set_state(co_env_state::busy);
+        }
     }
     switch_to__(curr->regs(), next->regs());
 }
@@ -341,8 +343,43 @@ co_scheduler* co_default_env::scheduler() const
     return scheduler__;
 }
 
-const std::chrono::time_point<std::chrono::high_resolution_clock>& co_default_env::last_schedule_time() const
+bool co_default_env::scheduled() const
 {
-    std::lock_guard<std::mutex> lock(mu_last_schedule_time__);
-    return last_schedule_time__;
+    return scheduled__;
+}
+
+void co_default_env::reset_scheduled()
+{
+    scheduled__ = false;
+}
+
+void co_default_env::lock_schedule()
+{
+    mu_schedule__.lock();
+}
+
+void co_default_env::unlock_schedule()
+{
+    mu_schedule__.unlock();
+}
+
+std::list<co_ctx*> co_default_env::moveable_ctx_list()
+{
+    auto               all_ctx = scheduler__->all_ctx();
+    std::list<co_ctx*> ret;
+    for (auto& ctx : all_ctx)
+    {
+        // 共享栈协程和当前协程不能移动
+        if (ctx->config().share_stack || ctx->state() == co_state::running)
+        {
+            continue;
+        }
+        ret.push_back(ctx);
+    }
+    return ret;
+}
+
+void co_default_env::take_ctx(co_ctx* ctx)
+{
+    scheduler__->remove_ctx(ctx);
 }
