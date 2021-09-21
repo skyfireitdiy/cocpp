@@ -43,6 +43,8 @@ co_env* co_default_manager::create_env__()
 {
     auto env = env_factory__->create_env(default_shared_stack_size__);
     env->set_manager(this);
+
+    std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     env_list__.push_back(env);
     ++exist_env_count__;
     return env;
@@ -111,8 +113,9 @@ void co_default_manager::create_env_from_this_thread()
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
     current_env__->set_manager(this);
-    ++exist_env_count__;
+    std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     env_list__.push_back(current_env__);
+    ++exist_env_count__;
 }
 
 co_env* co_default_manager::current_env()
@@ -171,4 +174,21 @@ void co_default_manager::clean_env_routine__()
         expired_env__.clear();
     }
     CO_DEBUG("clean up env finished\n");
+}
+
+void co_default_manager::set_base_schedule_thread_count(size_t base_thread_count)
+{
+    if (base_thread_count == 0)
+    {
+        base_thread_count = 1;
+    }
+    base_thread_count__ = base_thread_count;
+}
+void co_default_manager::set_max_schedule_thread_count(size_t max_thread_count)
+{
+    if (max_thread_count == 0)
+    {
+        max_thread_count = 1;
+    }
+    max_thread_count__ = max_thread_count;
 }
