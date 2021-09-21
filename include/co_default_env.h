@@ -26,11 +26,14 @@ private:
 
     co_manager* manager__ = nullptr;
 
-    std::chrono::time_point<std::chrono::system_clock> last_schedule_time__; // 最后一次调度的时间点
+    std::chrono::time_point<std::chrono::high_resolution_clock> last_schedule_time__; // 最后一次调度的时间点
 
     co_scheduler* scheduler__ = nullptr;
 
     co_ctx* idle_ctx__;
+
+    std::mutex              mu_wake_up_idle__;
+    std::condition_variable cond_wake_schedule__;
 
     co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_stack* shared_stack, bool create_new_thread);
 

@@ -45,9 +45,14 @@ void co_default_env::add_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
     assert(state__ != co_env_state::created && state__ != co_env_state::destorying);
-    ctx->set_env(this);
-    scheduler__->add_ctx(ctx); // 添加到调度器
-    set_state(co_env_state::busy);
+    {
+        std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
+        ctx->set_env(this);
+        scheduler__->add_ctx(ctx); // 添加到调度器
+        set_state(co_env_state::busy);
+    }
+    CO_DEBUG("add ctx weak up idle co");
+    cond_wake_schedule__.notify_one();
 }
 
 std::optional<co_ret> co_default_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
@@ -235,10 +240,15 @@ void co_default_env::stop_schedule()
 {
     CO_DEBUG("set env to destorying");
     // created 状态说明没有调度线程，不能转为destroying状态
-    if (state() != co_env_state::created)
     {
-        set_state(co_env_state::destorying);
+        std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
+        if (state() != co_env_state::created)
+        {
+            set_state(co_env_state::destorying);
+        }
     }
+    CO_DEBUG("stop schedule wake up idle co");
+    cond_wake_schedule__.notify_one(); // 唤醒idle的ctx
 }
 
 void co_default_env::start_schedule()
@@ -255,6 +265,20 @@ void co_default_env::start_schedule_routine__()
     while (state() != co_env_state::destorying)
     {
         schedule_switch();
+        // 切回idle之后，直接睡眠等待
+        {
+            std::unique_lock<std::mutex> lock(mu_wake_up_idle__);
+            if (state() == co_env_state::destorying)
+            {
+                break;
+            }
+            CO_DEBUG("idle co start wait add ctx or destroying ...");
+            cond_wake_schedule__.wait(lock);
+            if (state() == co_env_state::destorying)
+            {
+                break;
+            }
+        }
     }
 
     CO_DEBUG("stop schedule, prepare to cleanup");
