@@ -130,7 +130,7 @@ void co_default_ctx::set_flag(int flag)
     flag__.set(flag);
 }
 
-bool co_default_ctx::test_flag(int flag)
+bool co_default_ctx::test_flag(int flag) const
 {
     assert(flag < CO_CTX_FLAG_MAX);
     std::lock_guard<std::mutex> lck(mu_flag__);

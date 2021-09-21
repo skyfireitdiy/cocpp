@@ -121,36 +121,50 @@ void co_default_env::remove_detached_ctx__()
     }
 }
 
-void co_default_env::schedule_switch()
+void co_default_env::update_schedule_time__()
 {
-    remove_detached_ctx__();
+    std::lock_guard<std::mutex> lock(mu_last_schedule_time__);
+    last_schedule_time__ = std::chrono::high_resolution_clock::now();
+}
 
-    auto curr = current_ctx();
-    assert(curr != nullptr);
-
-    co_ctx* next = nullptr;
+co_ctx* co_default_env::next_ctx__()
+{
     // 如果要销毁、并且可以销毁，切换到idle销毁
     if (state() == co_env_state::destorying)
     {
-        next = idle_ctx__;
+        return idle_ctx__;
     }
     else
     {
-        next = scheduler__->choose_ctx();
-        if (next == nullptr)
-        {
-            next = idle_ctx__;
-        }
+        auto next = scheduler__->choose_ctx();
+        return next == nullptr ? idle_ctx__ : next;
     }
+}
 
+void co_default_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
+{
+    // 如果当前运行的ctx已经完成，不切换状态
     if (curr->state() != co_state::finished)
     {
         curr->set_state(co_state::suspended);
     }
-
     // CO_DEBUG("from %p to %p", curr, next);
-
     next->set_state(co_state::running);
+}
+
+void co_default_env::schedule_switch()
+{
+    update_schedule_time__();
+    remove_detached_ctx__();
+
+    auto curr = current_ctx();
+    auto next = next_ctx__();
+
+    assert(curr != nullptr);
+    assert(next != nullptr);
+
+    update_ctx_state__(curr, next);
+
     if (curr == next)
     {
         return;
@@ -167,7 +181,6 @@ void co_default_env::remove_ctx(co_ctx* ctx)
 {
     scheduler__->remove_ctx(ctx);
     manager__->ctx_factory()->destroy_ctx(ctx);
-    update_state__();
 }
 
 void co_default_env::switch_to__(co_byte** curr, co_byte** next)
@@ -279,6 +292,7 @@ void co_default_env::start_schedule_routine__()
                 break;
             }
         }
+        set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
     }
 
     CO_DEBUG("stop schedule, prepare to cleanup");
@@ -322,16 +336,13 @@ void co_default_env::remove_current_env__()
     }
 }
 
-void co_default_env::update_state__()
-{
-    // 只有一个ctx的时候，是idle_ctx，所以设置为空闲状态
-    if (scheduler__->current_ctx() == nullptr)
-    {
-        set_state(co_env_state::idle);
-    }
-}
-
 co_scheduler* co_default_env::scheduler() const
 {
     return scheduler__;
+}
+
+const std::chrono::time_point<std::chrono::high_resolution_clock>& co_default_env::last_schedule_time() const
+{
+    std::lock_guard<std::mutex> lock(mu_last_schedule_time__);
+    return last_schedule_time__;
 }

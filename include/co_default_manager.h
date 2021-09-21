@@ -23,7 +23,7 @@ private:
 
     std::list<std::future<void>> background_task__;
     std::list<co_env*>           expired_env__;
-    std::mutex                   mu_expired_env__;
+    mutable std::mutex           mu_expired_env__;
     std::condition_variable      cond_expired_env__;
 
     std::atomic<int> exist_env_count__ { 0 };

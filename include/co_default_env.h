@@ -26,22 +26,25 @@ private:
 
     co_manager* manager__ = nullptr;
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> last_schedule_time__; // 最后一次调度的时间点
+    mutable std::mutex                                          mu_last_schedule_time__;
+    std::chrono::time_point<std::chrono::high_resolution_clock> last_schedule_time__ {}; // 最后一次调度的时间点
 
     co_scheduler* scheduler__ = nullptr;
 
     co_ctx* idle_ctx__;
 
-    std::mutex              mu_wake_up_idle__;
+    mutable std::mutex      mu_wake_up_idle__;
     std::condition_variable cond_wake_schedule__;
 
     co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_stack* shared_stack, bool create_new_thread);
 
     void        start_schedule_routine__();
     void        remove_detached_ctx__();
-    void        update_state__();
     void        remove_all_ctx__();
     void        remove_current_env__();
+    void        update_schedule_time__();
+    co_ctx*     next_ctx__();
+    void        update_ctx_state__(co_ctx* curr, co_ctx* next);
     static void switch_to__(co_byte** curr_regs, co_byte** next_regs);
 
 public:
@@ -65,6 +68,9 @@ public:
     void          set_manager(co_manager* manager) override;
     co_manager*   manager() const override;
     co_scheduler* scheduler() const override;
+
+    const std::chrono::time_point<std::chrono::high_resolution_clock>&
+    last_schedule_time() const override;
 
     friend class co_default_env_factory;
 };

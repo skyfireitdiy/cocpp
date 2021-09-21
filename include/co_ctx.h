@@ -19,7 +19,7 @@ public:
     virtual void                 set_env(co_env* env)       = 0; // 设置协程运行环境，该接口用于将ctx与env绑定起来，在M:N调度环境下，env可能会发生改变，需要通过此接口同步绑定关系
     virtual co_env*              env() const                = 0; // 获取绑定的env
     virtual void                 set_flag(int flag)         = 0; // 设置flag
-    virtual bool                 test_flag(int flag)        = 0; // 检测flag
+    virtual bool                 test_flag(int flag) const  = 0; // 检测flag
     virtual void                 reset_flag(int flag)       = 0; // 重置flag
     virtual void                 set_priority(int priority) = 0; // 设置优先级
     virtual int                  priority() const           = 0; // 优先级

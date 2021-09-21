@@ -18,7 +18,7 @@ private:
     co_env*               env__;    // 协程当前对应的运行环境
 
     std::bitset<CO_CTX_FLAG_MAX> flag__;    // 状态
-    std::mutex                   mu_flag__; // 状态保护锁
+    mutable std::mutex           mu_flag__; // 状态保护锁
 
     std::atomic<int> priority__; // 优先级
 
@@ -99,7 +99,7 @@ public:
     void                 set_env(co_env* env) override;
     co_env*              env() const override;
     void                 set_flag(int flag) override;
-    bool                 test_flag(int flag) override;
+    bool                 test_flag(int flag) const override;
     void                 reset_flag(int flag) override;
     void                 set_priority(int priority) override;
     int                  priority() const override;

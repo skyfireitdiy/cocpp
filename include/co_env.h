@@ -36,6 +36,8 @@ public:
     virtual void          set_manager(co_manager* manager) = 0; // 设置manager，将env与对应的manager绑定
     virtual co_manager*   manager() const                  = 0; // 获取manager
     virtual co_scheduler* scheduler() const                = 0; // 获取调度器
+    virtual const std::chrono::time_point<std::chrono::high_resolution_clock>&
+    last_schedule_time() const = 0; //获取最后一次调度的时间
 
     virtual ~co_env() {}
 };
