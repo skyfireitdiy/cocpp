@@ -7,7 +7,7 @@
 co_env* co_default_manager::get_best_env()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
-    if (env_list__.empty())
+    if (env_list__.size() < base_thread_count__)
     {
         return create_env__();
     }
