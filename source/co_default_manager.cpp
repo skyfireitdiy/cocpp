@@ -7,7 +7,7 @@
 co_env* co_default_manager::get_best_env()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
-    if (env_list__.size() < base_thread_count__)
+    if (env_list__.empty())
     {
         return create_env__();
     }
@@ -29,6 +29,16 @@ co_env* co_default_manager::get_best_env()
             min_workload = p->workload();
             env          = p;
         }
+    }
+    // 如果没有可用的env，就创建
+    if (env == nullptr)
+    {
+        return create_env__();
+    }
+    // 运行到此处说明有可用的env但是没有空闲的env
+    if (env_list__.size() < base_thread_count__)
+    {
+        return create_env__();
     }
     return env;
 }
