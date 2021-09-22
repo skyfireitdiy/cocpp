@@ -108,7 +108,7 @@ public:
     template <co_is_void Ret>
     Ret wait()
     {
-        CO_DEBUG("start wait");
+        CO_DEBUG("start wait %p", ctx__);
         manager__->current_env()->wait_ctx(ctx__);
     }
 

@@ -26,7 +26,11 @@ co_state co_default_ctx::state() const
 
 void co_default_ctx::set_state(co_state state)
 {
-    state__ = state;
+    // finished 状态的ctx不再更新
+    if (state__ != co_state::finished)
+    {
+        state__ = state;
+    }
 }
 
 co_byte** co_default_ctx::regs()

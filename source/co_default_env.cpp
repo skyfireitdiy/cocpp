@@ -45,13 +45,13 @@ void co_default_env::add_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
     assert(state__ != co_env_state::created && state__ != co_env_state::destorying);
-    {
-        std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
-        ctx->set_env(this);
-        scheduler__->add_ctx(ctx); // 添加到调度器
-        set_state(co_env_state::busy);
-    }
-    CO_DEBUG("add ctx weak up idle co");
+
+    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
+    ctx->set_env(this);
+    scheduler__->add_ctx(ctx); // 添加到调度器
+    set_state(co_env_state::busy);
+
+    CO_DEBUG("add ctx wake up env: %p", this);
     cond_wake_schedule__.notify_one();
 }
 
@@ -255,13 +255,13 @@ void co_default_env::stop_schedule()
 {
     CO_DEBUG("set env to destorying");
     // created 状态说明没有调度线程，不能转为destroying状态
+
+    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
+    if (state() != co_env_state::created)
     {
-        std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
-        if (state() != co_env_state::created)
-        {
-            set_state(co_env_state::destorying);
-        }
+        set_state(co_env_state::destorying);
     }
+
     CO_DEBUG("stop schedule wake up idle co");
     cond_wake_schedule__.notify_one(); // 唤醒idle的ctx
 }
@@ -280,21 +280,20 @@ void co_default_env::start_schedule_routine__()
     while (state() != co_env_state::destorying)
     {
         schedule_switch();
-        // 切回idle之后，直接睡眠等待
-        {
-            std::unique_lock<std::mutex> lock(mu_wake_up_idle__);
-            if (state() == co_env_state::destorying)
-            {
-                break;
-            }
-            CO_DEBUG("idle co start wait add ctx or destroying ...");
-            cond_wake_schedule__.wait(lock);
-            if (state() == co_env_state::destorying)
-            {
-                break;
-            }
-        }
         set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
+        remove_detached_ctx__();       // 切换回来之后，将完成的ctx删除
+
+        // 切回idle之后，睡眠等待
+        std::unique_lock<std::mutex> lock(mu_wake_up_idle__);
+        CO_DEBUG("idle co start wait add ctx or destroying ... %p", this);
+        if (state() == co_env_state::destorying)
+        {
+            break;
+        }
+        if (!scheduler__->can_schedule())
+        {
+            cond_wake_schedule__.wait(lock);
+        }
     }
 
     CO_DEBUG("stop schedule, prepare to cleanup");

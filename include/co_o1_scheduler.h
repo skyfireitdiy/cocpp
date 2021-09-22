@@ -24,6 +24,7 @@ public:
     std::list<co_ctx*> all_ctx() const override;
     size_t             count() const override;
     co_ctx*            current_ctx() const override;
+    bool               can_schedule() const override;
 
     friend class co_o1_scheduler_factory;
 };

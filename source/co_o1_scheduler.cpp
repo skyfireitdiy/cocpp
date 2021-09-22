@@ -84,3 +84,19 @@ co_ctx* co_o1_scheduler::current_ctx() const
 
     return curr__;
 }
+
+bool co_o1_scheduler::can_schedule() const
+{
+    std::lock_guard<std::mutex> lock(mu_all_ctx__);
+    for (int i = min_priority__; i < all_ctx__.size(); ++i)
+    {
+        for (auto& ctx : all_ctx__[i])
+        {
+            if (ctx->state() != co_state::finished)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}

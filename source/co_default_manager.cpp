@@ -110,11 +110,11 @@ void co_default_manager::remove_env(co_env* env)
         std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
         env_list__.remove(env);
     }
-    {
-        std::lock_guard<std::mutex> lck(mu_expired_env__);
-        CO_DEBUG("push to clean up: %p", env);
-        expired_env__.push_back(env);
-    }
+
+    std::lock_guard<std::mutex> lck(mu_expired_env__);
+    CO_DEBUG("push to clean up: %p", env);
+    expired_env__.push_back(env);
+
     cond_expired_env__.notify_one();
 }
 
@@ -160,7 +160,7 @@ void co_default_manager::set_clean_up()
             env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
         }
     }
-    cond_expired_env__.notify_one();
+
     for (auto& task : background_task__)
     {
         task.wait();
@@ -169,9 +169,9 @@ void co_default_manager::set_clean_up()
 
 void co_default_manager::clean_env_routine__()
 {
+    std::unique_lock<std::mutex> lck(mu_expired_env__);
     while (!clean_up__ || exist_env_count__ != 0)
     {
-        std::unique_lock<std::mutex> lck(mu_expired_env__);
         CO_DEBUG("wait to wake up ...");
         cond_expired_env__.wait(lck);
         CO_DEBUG("wake up clean, exist_env_count: %d, expire count: %u", (int)exist_env_count__, expired_env__.size());
