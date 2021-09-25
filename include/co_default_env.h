@@ -70,6 +70,7 @@ public:
     void               unlock_schedule() override;
     std::list<co_ctx*> moveable_ctx_list() override;
     void               take_ctx(co_ctx* ctx) override;
+    bool               can_auto_destroy() const override;
 
     friend class co_default_env_factory;
 };

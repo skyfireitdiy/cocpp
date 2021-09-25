@@ -8,6 +8,7 @@
 #include <list>
 #include <memory>
 #include <optional>
+#include <thread>
 
 class co_manager;
 class co_scheduler;
@@ -42,6 +43,7 @@ public:
     virtual void               unlock_schedule()                = 0; // 解锁调度
     virtual std::list<co_ctx*> moveable_ctx_list()              = 0; // 获取当前可移动的ctx列表
     virtual void               take_ctx(co_ctx* ctx)            = 0; // 去除一个ctx，注意：与remove_ctx的区别是，此函数只是将ctx与env解绑，不会销毁ctx
+    virtual bool               can_auto_destroy() const         = 0; // 当线程数量超过设定的最大数量的时候，是否允许被选中销毁
 
     virtual ~co_env()
     {

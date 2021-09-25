@@ -385,3 +385,9 @@ void co_default_env::take_ctx(co_ctx* ctx)
 {
     scheduler__->remove_ctx(ctx);
 }
+
+bool co_default_env::can_auto_destroy() const
+{
+    // 如果是用户自己转换的env，不能被选中销毁
+    return !test_flag(CO_ENV_FLAG_COVERTED_ENV);
+}
