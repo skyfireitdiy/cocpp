@@ -10,6 +10,7 @@
 #include <condition_variable>
 #include <future>
 #include <list>
+#include <map>
 #include <mutex>
 
 class co_default_manager : public co_manager,
@@ -35,16 +36,18 @@ private:
     co_ctx_factory* const       ctx_factory__ { nullptr };
     co_env_factory* const       env_factory__ { nullptr };
 
-    std::chrono::high_resolution_clock::duration check_duration__ { std::chrono::milliseconds(10) };
+    mutable std::mutex                           mu_redistribute_duration__;
+    std::chrono::high_resolution_clock::duration redistribute_duration__ { std::chrono::milliseconds(10) };
 
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
 
     co_env* create_env__();
     bool    can_schedule_ctx__(co_env* env) const;
 
-    void clean_env_routine__();
-    void move_ctx_routine__();
-    bool is_blocked__(co_env* env) const;
+    void                                         clean_env_routine__();
+    void                                         redistribute_ctx_routine__();
+    bool                                         is_blocked__(co_env* env) const;
+    static std::map<co_env*, std::list<co_ctx*>> redistribute_ctx__(const std::list<co_env*>& env_list, const std::list<co_ctx*>& ctx_list);
 
     co_default_manager(co_scheduler_factory* scheduler_factory,
                        co_stack_factory*     stack_factory,
@@ -65,6 +68,9 @@ public:
     bool                  clean_up() const override;
     void                  set_base_schedule_thread_count(size_t base_thread_count) override;
     void                  set_max_schedule_thread_count(size_t max_thread_count) override;
+    void                  set_redistribute_duration(
+                         const std::chrono::high_resolution_clock::duration& duration) override;
+    const std::chrono::high_resolution_clock::duration& redistribute_duration() const override;
 
     friend class co_singleton<co_default_manager>;
 };

@@ -24,5 +24,10 @@ public:
     virtual bool                  clean_up() const                                         = 0; // 是否已被清理
     virtual void                  set_base_schedule_thread_count(size_t base_thread_count) = 0; // 设置基础调度线程数量（如果在此数量之下，新建协程的时候会创建新的调度线程执行）
     virtual void                  set_max_schedule_thread_count(size_t max_thread_count)   = 0; // 设置最大调度线程数量（调度线程一旦超过此数量，如果调度线程变为空闲，就会被回收）
+                                                                                                //
+    virtual void set_redistribute_duration(
+        const std::chrono::high_resolution_clock::duration& duration)
+        = 0;                                                                                       // 设置重分配时间间隔，重分配是指当调度线程发生死循环或耗时操作的时候，将线程上的其他ctx重新分配给另外的调度线程
+    virtual const std::chrono::high_resolution_clock::duration& redistribute_duration() const = 0; // 获取重分配时间间隔
     virtual ~co_manager() {}
 };
