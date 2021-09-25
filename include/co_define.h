@@ -8,9 +8,14 @@
 constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
 
 // 协程flag
-constexpr int CO_CTX_FLAG_WAITING      = 0; // 被等待
-constexpr int CO_CTX_FLAG_HANDLE_BY_CO = 1; // 被co对象持有，暂时不能销毁
-constexpr int CO_CTX_FLAG_MAX          = 8;
+constexpr int CO_CTX_FLAG_WAITING = 0; // 被等待
+constexpr int CO_CTX_FLAG_LOCKED  = 1; // 被co对象持有，暂时不能销毁
+constexpr int CO_CTX_FLAG_MAX     = 8;
+
+constexpr int CO_ENV_FLAG_NO_SCHE_THREAD = 0; // 没有调度线程
+constexpr int CO_ENV_FLAG_COVERTED_ENV   = 1; // 从正常线程转换来的调度线程
+constexpr int CO_ENV_FLAG_SCHEDULED      = 2; // 被调度过
+constexpr int CO_ENV_FLAG_MAX_VALUE      = 8;
 
 // 协程优先级
 constexpr int CO_IDLE_CTX_PRIORITY = 99;

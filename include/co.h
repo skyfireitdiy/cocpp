@@ -48,7 +48,7 @@ private:
         }
 
         ctx__ = co::manager__->ctx_factory()->create_ctx(config);
-        ctx__->set_flag(CO_CTX_FLAG_HANDLE_BY_CO); // 被co对象持有
+        ctx__->lock_destroy(); // 被co对象持有
         auto env = co::manager__->get_best_env();
         env->add_ctx(ctx__);
     }

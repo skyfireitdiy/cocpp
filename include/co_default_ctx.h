@@ -1,6 +1,7 @@
 #pragma once
 #include "co_ctx.h"
 #include "co_ctx_config.h"
+#include "co_flag_manager.h"
 #include "co_stack.h"
 
 #include <any>
@@ -8,7 +9,8 @@
 #include <bitset>
 #include <mutex>
 
-class co_default_ctx : public co_ctx
+class co_default_ctx : public co_ctx,
+                       public co_flag_manager<CO_CTX_FLAG_MAX>
 {
 private:
     co_stack*             stack__;  // 当前栈空间
@@ -16,9 +18,6 @@ private:
     co_ctx_config         config__; // 协程配置
     std::any              ret__;    // 协程返回值，会被传递给 config 中的 entry
     co_env*               env__;    // 协程当前对应的运行环境
-
-    std::bitset<CO_CTX_FLAG_MAX> flag__;    // 状态
-    mutable std::mutex           mu_flag__; // 状态保护锁
 
     std::atomic<int> priority__; // 优先级
 
@@ -98,11 +97,11 @@ public:
     std::any&            ret_ref() override;
     void                 set_env(co_env* env) override;
     co_env*              env() const override;
-    void                 set_flag(int flag) override;
-    bool                 test_flag(int flag) const override;
-    void                 reset_flag(int flag) override;
     void                 set_priority(int priority) override;
     int                  priority() const override;
+    bool                 can_destroy() const override;
+    void                 lock_destroy() override;
+    void                 unlock_destroy() override;
 
     friend void co_default_entry(co_ctx* ctx);
     friend class co_default_ctx_factory;

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "co_env.h"
+#include "co_flag_manager.h"
+
 #include <atomic>
 #include <bitset>
 #include <chrono>
@@ -11,28 +13,23 @@
 class co_manager;
 class co_scheduler;
 
-class co_default_env : public co_env
+class co_default_env : public co_env,
+                       public co_flag_manager<CO_ENV_FLAG_MAX_VALUE>
 {
 private:
-    static constexpr int CO_ENV_FLAG_NO_SCHE_THREAD = 0;
-    static constexpr int CO_ENV_FLAG_MAX_VALUE      = 8;
-
-    std::future<void>                  worker__;
-    std::bitset<CO_ENV_FLAG_MAX_VALUE> flag__;
+    std::future<void> worker__;
 
     mutable std::shared_mutex mu_state__;
 
     co_manager* manager__ = nullptr;
 
-    co_scheduler* scheduler__ = nullptr;
-    co_stack*     shared_stack__;
-    co_ctx*       idle_ctx__;
-    co_env_state  state__;
+    co_scheduler* const scheduler__ = nullptr;
+    co_stack* const     shared_stack__;
+    co_ctx* const       idle_ctx__;
+    co_env_state        state__;
 
     mutable std::mutex      mu_wake_up_idle__;
     std::condition_variable cond_wake_schedule__;
-
-    std::atomic<bool> scheduled__ { true };
 
     std::mutex mu_schedule__;
 

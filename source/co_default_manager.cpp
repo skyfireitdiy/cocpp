@@ -2,6 +2,7 @@
 #include "co_ctx_factory.h"
 #include "co_env.h"
 #include "co_env_factory.h"
+#include <cassert>
 #include <future>
 #include <mutex>
 
@@ -47,11 +48,12 @@ co_env* co_default_manager::get_best_env()
 bool co_default_manager::can_schedule_ctx__(co_env* env) const
 {
     auto state = env->state();
-    return !(state == co_env_state::blocked || state == co_env_state::destorying || state == co_env_state::created);
+    return !(state == co_env_state::blocked || state == co_env_state::destorying || !env->has_scheduler_thread());
 }
 
 co_env* co_default_manager::create_env__()
 {
+    assert(!clean_up__);
     auto env = env_factory__->create_env(default_shared_stack_size__);
     env->set_manager(this);
 
@@ -115,7 +117,7 @@ void co_default_manager::remove_env(co_env* env)
         env_list__.remove(env);
     }
 
-    std::lock_guard<std::mutex> lck(mu_expired_env__);
+    std::lock_guard<std::recursive_mutex> lck(mu_clean_up__);
     CO_DEBUG("push to clean up: %p", env);
     expired_env__.push_back(env);
 
@@ -148,23 +150,27 @@ bool co_default_manager::clean_up() const
 
 void co_default_manager::set_clean_up()
 {
-    clean_up__ = true;
     {
-        std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
-        auto                                  env_list_back = env_list__; // 在下面的清理操作中需要删除list中的元素导致迭代器失效，此处创建一个副本（也可以直接加入过期列表，然后清空env_list__，但是这样表达力会好些）
-        for (auto& env : env_list_back)
+        std::lock_guard<std::recursive_mutex> lock(mu_clean_up__);
+        clean_up__ = true;
         {
-            if (!env->has_scheduler_thread())
+            std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
+            auto                                  env_list_back = env_list__; // 在下面的清理操作中需要删除list中的元素导致迭代器失效，此处创建一个副本（也可以直接加入过期列表，然后清空env_list__，但是这样表达力会好些）
+            for (auto& env : env_list_back)
             {
-                // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
-                remove_env(env);
-                CO_DEBUG("push to clean up: %p", env);
-                continue;
+                if (!env->has_scheduler_thread())
+                {
+                    // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
+                    remove_env(env);
+                    CO_DEBUG("push to clean up: %p", env);
+                    continue;
+                }
+                CO_DEBUG("call stop_schedule on %p", env);
+                env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
             }
-            env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
         }
+        cond_expired_env__.notify_one();
     }
-
     for (auto& task : background_task__)
     {
         task.wait();
@@ -173,7 +179,7 @@ void co_default_manager::set_clean_up()
 
 void co_default_manager::clean_env_routine__()
 {
-    std::unique_lock<std::mutex> lck(mu_expired_env__);
+    std::unique_lock<std::recursive_mutex> lck(mu_clean_up__);
     while (!clean_up__ || exist_env_count__ != 0)
     {
         CO_DEBUG("wait to wake up ...");

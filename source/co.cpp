@@ -30,7 +30,7 @@ void co::detach()
     {
         return;
     }
-    ctx__->reset_flag(CO_CTX_FLAG_HANDLE_BY_CO);
+    ctx__->unlock_destroy();
     ctx__ = nullptr;
 }
 

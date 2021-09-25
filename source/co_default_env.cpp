@@ -9,6 +9,7 @@
 #include <cassert>
 #include <future>
 #include <iterator>
+#include <mutex>
 
 #ifdef _MSC_VER
 #ifdef _WIN64
@@ -32,6 +33,8 @@ co_default_env::co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_sta
     }
     else
     {
+        set_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
+        set_flag(CO_ENV_FLAG_COVERTED_ENV);
         current_env__ = this;
     }
 }
@@ -87,8 +90,7 @@ int co_default_env::workload() const
 
 bool co_default_env::has_scheduler_thread() const
 {
-    std::shared_lock<std::shared_mutex> lock(mu_state__);
-    return state__ != co_env_state::created;
+    return !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
 }
 
 co_env_state co_default_env::state() const
@@ -113,7 +115,7 @@ void co_default_env::remove_detached_ctx__()
     for (auto& ctx : all_ctx)
     {
         // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
-        if (ctx->state() == co_state::finished && !ctx->test_flag(CO_CTX_FLAG_HANDLE_BY_CO) && ctx != curr)
+        if (ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr)
         {
             scheduler__->remove_ctx(ctx);
             manager__->ctx_factory()->destroy_ctx(ctx);
@@ -154,7 +156,7 @@ void co_default_env::schedule_switch()
         // 切换前加锁
         std::lock_guard<std::mutex> lock(mu_schedule__);
 
-        scheduled__ = true;
+        set_flag(CO_ENV_FLAG_SCHEDULED);
 
         remove_detached_ctx__();
 
@@ -253,16 +255,16 @@ co_ctx* co_default_env::idle_ctx() const
 
 void co_default_env::stop_schedule()
 {
-    CO_DEBUG("set env to destorying");
+    CO_DEBUG("set env to destorying, %p", this);
     // created 状态说明没有调度线程，不能转为destroying状态
 
     std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
-    if (state() != co_env_state::created)
+    if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
         set_state(co_env_state::destorying);
     }
 
-    CO_DEBUG("stop schedule wake up idle co");
+    CO_DEBUG("%p : stop schedule wake up idle co", this);
     cond_wake_schedule__.notify_one(); // 唤醒idle的ctx
 }
 
@@ -276,6 +278,7 @@ void co_default_env::start_schedule()
 
 void co_default_env::start_schedule_routine__()
 {
+    reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
     {
@@ -344,12 +347,12 @@ co_scheduler* co_default_env::scheduler() const
 
 bool co_default_env::scheduled() const
 {
-    return scheduled__;
+    return test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
 void co_default_env::reset_scheduled()
 {
-    scheduled__ = false;
+    reset_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
 void co_default_env::lock_schedule()

@@ -127,27 +127,6 @@ co_default_ctx::co_default_ctx(co_stack* stack, const co_ctx_config& config)
     init_regs__();
 }
 
-void co_default_ctx::set_flag(int flag)
-{
-    assert(flag < CO_CTX_FLAG_MAX);
-    std::lock_guard<std::mutex> lck(mu_flag__);
-    flag__.set(flag);
-}
-
-bool co_default_ctx::test_flag(int flag) const
-{
-    assert(flag < CO_CTX_FLAG_MAX);
-    std::lock_guard<std::mutex> lck(mu_flag__);
-    return flag__.test(flag);
-}
-
-void co_default_ctx::reset_flag(int flag)
-{
-    assert(flag < CO_CTX_FLAG_MAX);
-    std::lock_guard<std::mutex> lck(mu_flag__);
-    flag__.reset(flag);
-}
-
 int co_default_ctx::priority() const
 {
     return priority__;
@@ -164,4 +143,19 @@ void co_default_ctx::set_priority(int priority)
         priority = 0;
     }
     priority__ = priority;
+}
+
+bool co_default_ctx::can_destroy() const
+{
+    return !test_flag(CO_CTX_FLAG_LOCKED);
+}
+
+void co_default_ctx::lock_destroy()
+{
+    set_flag(CO_CTX_FLAG_LOCKED);
+}
+
+void co_default_ctx::unlock_destroy()
+{
+    reset_flag(CO_CTX_FLAG_LOCKED);
 }
