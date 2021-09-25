@@ -3,6 +3,7 @@
 #include "co_env.h"
 #include "co_env_factory.h"
 #include <cassert>
+#include <cstddef>
 #include <future>
 #include <mutex>
 
@@ -14,8 +15,9 @@ co_env* co_default_manager::get_best_env()
         return create_env__();
     }
 
-    auto env          = env_list__.front();
-    auto min_workload = env->workload();
+    auto   env                    = env_list__.front();
+    auto   min_workload           = env->workload();
+    size_t can_schedule_env_count = 0;
     for (auto& p : env_list__)
     {
         if (p->state() == co_env_state::idle)
@@ -26,6 +28,8 @@ co_env* co_default_manager::get_best_env()
         {
             continue;
         }
+        // 统计可用于调度的env数量
+        ++can_schedule_env_count;
         if (p->workload() < min_workload)
         {
             min_workload = p->workload();
@@ -37,8 +41,9 @@ co_env* co_default_manager::get_best_env()
     {
         return create_env__();
     }
-    // 运行到此处说明有可用的env但是没有空闲的env
-    if (env_list__.size() < base_thread_count__)
+
+    // 如果可用于调度的env数量小于基础线程数量，创建一个来调度新的ctx
+    if (can_schedule_env_count < base_thread_count__)
     {
         return create_env__();
     }
@@ -247,6 +252,31 @@ void co_default_manager::redistribute_ctx_routine__()
             for (auto& ctx : moved_ctx_list)
             {
                 get_best_env()->add_ctx(ctx);
+            }
+
+            // 然后删除多余的处于idle状态的env
+            size_t               can_schedule_env_count = 0;
+            std::vector<co_env*> idle_env_list;
+            idle_env_list.reserve(env_list__.size());
+            for (auto& env : env_list__)
+            {
+                if (can_schedule_ctx__(env))
+                {
+                    ++can_schedule_env_count;
+                }
+                if (env->state() == co_env_state::idle)
+                {
+                    idle_env_list.push_back(env);
+                }
+            }
+            // 超出max_thread_count__，需要销毁env
+            if (can_schedule_env_count > max_thread_count__)
+            {
+                auto should_destroy_count = can_schedule_env_count - max_thread_count__;
+                for (size_t i = 0; i < should_destroy_count && i < idle_env_list.size(); ++i)
+                {
+                    idle_env_list[i]->stop_schedule();
+                }
             }
         }
     }
