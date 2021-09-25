@@ -83,6 +83,9 @@ co_default_manager::co_default_manager(co_scheduler_factory* scheduler_factory,
     background_task__.emplace_back(std::async([this]() {
         clean_env_routine__();
     }));
+    background_task__.emplace_back(std::async([this]() {
+        redistribute_ctx_routine__();
+    }));
 }
 
 co_env_factory* co_default_manager::env_factory()
