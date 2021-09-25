@@ -26,14 +26,14 @@ private:
     mutable std::mutex           mu_expired_env__;
     std::condition_variable      cond_expired_env__;
 
-    std::atomic<int> exist_env_count__ { 0 };
-    std::atomic<int> base_thread_count__ { std::thread::hardware_concurrency() };
-    std::atomic<int> max_thread_count__ { std::thread::hardware_concurrency() * 2 };
+    std::atomic<unsigned int> exist_env_count__ { 0 };
+    std::atomic<unsigned int> base_thread_count__ { std::thread::hardware_concurrency() };
+    std::atomic<unsigned int> max_thread_count__ { std::thread::hardware_concurrency() * 2 };
 
-    co_env_factory*       env_factory__ { nullptr };
-    co_ctx_factory*       ctx_factory__ { nullptr };
-    co_stack_factory*     stack_factory__ { nullptr };
-    co_scheduler_factory* scheduler_factory__ { nullptr };
+    co_scheduler_factory* const scheduler_factory__ { nullptr };
+    co_stack_factory* const     stack_factory__ { nullptr };
+    co_ctx_factory* const       ctx_factory__ { nullptr };
+    co_env_factory* const       env_factory__ { nullptr };
 
     std::chrono::high_resolution_clock::duration check_duration__ { std::chrono::milliseconds(10) };
 

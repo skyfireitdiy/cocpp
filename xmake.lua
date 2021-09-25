@@ -6,6 +6,7 @@ if is_mode("debug") then
     add_links("gcov")
     add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
 end
+add_cxxflags("-Wall", "-Werror")
 
 target("cocpp")
 set_kind("shared")

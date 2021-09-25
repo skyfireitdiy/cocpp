@@ -14,4 +14,5 @@ public:
     virtual size_t             count() const           = 0;
     virtual co_ctx*            current_ctx() const     = 0;
     virtual bool               can_schedule() const    = 0;
+    virtual ~co_scheduler() {}
 };

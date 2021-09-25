@@ -174,7 +174,7 @@ void co_default_manager::clean_env_routine__()
     {
         CO_DEBUG("wait to wake up ...");
         cond_expired_env__.wait(lck);
-        CO_DEBUG("wake up clean, exist_env_count: %d, expire count: %u", (int)exist_env_count__, expired_env__.size());
+        CO_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)exist_env_count__, expired_env__.size());
         for (auto& p : expired_env__)
         {
             CO_DEBUG("clean up an env: %p", p);

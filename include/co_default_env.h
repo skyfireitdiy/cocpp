@@ -17,18 +17,17 @@ private:
     static constexpr int CO_ENV_FLAG_NO_SCHE_THREAD = 0;
     static constexpr int CO_ENV_FLAG_MAX_VALUE      = 8;
 
-    co_stack*                          shared_stack__;
     std::future<void>                  worker__;
     std::bitset<CO_ENV_FLAG_MAX_VALUE> flag__;
 
-    co_env_state              state__;
     mutable std::shared_mutex mu_state__;
 
     co_manager* manager__ = nullptr;
 
     co_scheduler* scheduler__ = nullptr;
-
-    co_ctx* idle_ctx__;
+    co_stack*     shared_stack__;
+    co_ctx*       idle_ctx__;
+    co_env_state  state__;
 
     mutable std::mutex      mu_wake_up_idle__;
     std::condition_variable cond_wake_schedule__;

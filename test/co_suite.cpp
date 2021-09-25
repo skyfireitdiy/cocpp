@@ -50,12 +50,12 @@ TEST_F(co_suite, id)
 TEST_F(co_suite, my_thread)
 {
     std::thread th([]() {
-        printf("new thread: %llu\n", std::this_thread::get_id());
+        printf("new thread: %u\n", gettid());
         co::convert_to_schedule_thread();
     });
 
     co c1([]() {
-        printf("new co %llu in thread %llu\n", co::this_co::id(), std::this_thread::get_id());
+        printf("new co %llu in thread %u\n", co::this_co::id(), gettid());
     });
 
     c1.wait<void>();
