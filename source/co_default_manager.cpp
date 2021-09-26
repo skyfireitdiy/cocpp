@@ -91,7 +91,7 @@ co_default_manager::co_default_manager(co_scheduler_factory* scheduler_factory,
         clean_env_routine__();
     }));
     background_task__.emplace_back(std::async([this]() {
-        redistribute_ctx_routine__();
+        timing_routine__();
     }));
 }
 
@@ -218,66 +218,78 @@ void co_default_manager::set_max_schedule_thread_count(size_t max_thread_count)
     max_thread_count__ = max_thread_count;
 }
 
-void co_default_manager::redistribute_ctx_routine__()
+void co_default_manager::redistribute_ctx__()
 {
+    std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
+    std::list<co_ctx*>                    moved_ctx_list; // 需要被移动的ctx
+
     auto merge_list = [](std::list<co_ctx*>& target, const std::list<co_ctx*>& src) {
         target.insert(target.end(), src.begin(), src.end());
     };
 
+    for (auto& env : env_list__)
+    {
+        // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
+        if (is_blocked__(env))
+        {
+            CO_DEBUG("env %p is blocked, redistribute ctx", env);
+            env->lock_schedule();
+            env->set_state(co_env_state::blocked); // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
+            auto tmp_moveable_ctx = env->moveable_ctx_list();
+            merge_list(moved_ctx_list, tmp_moveable_ctx); // 将阻塞的env中可移动的ctx收集起来
+            for (auto& ctx : tmp_moveable_ctx)            // 将收集到的可转移的ctx从阻塞的env中取出
+            {
+                env->take_ctx(ctx);
+            }
+            env->unlock_schedule(); // 恢复调度
+        }
+        env->reset_scheduled();
+    }
+    // 重新选择合适的env进行调度
+    for (auto& ctx : moved_ctx_list)
+    {
+        get_best_env()->add_ctx(ctx);
+    }
+}
+
+void co_default_manager::destroy_redundant_env__()
+{
+    std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
+    // 然后删除多余的处于idle状态的env
+    size_t               can_schedule_env_count = 0;
+    std::vector<co_env*> idle_env_list;
+    idle_env_list.reserve(env_list__.size());
+    for (auto& env : env_list__)
+    {
+        if (can_schedule_ctx__(env))
+        {
+            ++can_schedule_env_count;
+        }
+        if (env->state() == co_env_state::idle && env->can_auto_destroy()) // 如果状态是空闲，并且可以可以被自动销毁线程选中
+        {
+            idle_env_list.push_back(env);
+        }
+    }
+    // 超出max_thread_count__，需要销毁env
+    if (can_schedule_env_count > max_thread_count__)
+    {
+        auto should_destroy_count = can_schedule_env_count - max_thread_count__;
+        for (size_t i = 0; i < should_destroy_count && i < idle_env_list.size(); ++i)
+        {
+            idle_env_list[i]->stop_schedule();
+        }
+    }
+}
+
+void co_default_manager::timing_routine__()
+{
     while (!clean_up__)
     {
-        std::this_thread::sleep_for(redistribute_duration());
+        std::this_thread::sleep_for(timing_duration());
         {
             std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
-            std::list<co_ctx*>                    moved_ctx_list; // 需要被移动的ctx
-            for (auto& env : env_list__)
-            {
-                // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
-                if (is_blocked__(env))
-                {
-                    CO_DEBUG("env %p is blocked, redistribute ctx", env);
-                    env->lock_schedule();
-                    env->set_state(co_env_state::blocked); // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
-                    auto tmp_moveable_ctx = env->moveable_ctx_list();
-                    merge_list(moved_ctx_list, tmp_moveable_ctx); // 将阻塞的env中可移动的ctx收集起来
-                    for (auto& ctx : tmp_moveable_ctx)            // 将收集到的可转移的ctx从阻塞的env中取出
-                    {
-                        env->take_ctx(ctx);
-                    }
-                    env->unlock_schedule(); // 恢复调度
-                }
-                env->reset_scheduled();
-            }
-            // 重新选择合适的env进行调度
-            for (auto& ctx : moved_ctx_list)
-            {
-                get_best_env()->add_ctx(ctx);
-            }
-
-            // 然后删除多余的处于idle状态的env
-            size_t               can_schedule_env_count = 0;
-            std::vector<co_env*> idle_env_list;
-            idle_env_list.reserve(env_list__.size());
-            for (auto& env : env_list__)
-            {
-                if (can_schedule_ctx__(env))
-                {
-                    ++can_schedule_env_count;
-                }
-                if (env->state() == co_env_state::idle && env->can_auto_destroy()) // 如果状态是空闲，并且可以可以被自动销毁线程选中
-                {
-                    idle_env_list.push_back(env);
-                }
-            }
-            // 超出max_thread_count__，需要销毁env
-            if (can_schedule_env_count > max_thread_count__)
-            {
-                auto should_destroy_count = can_schedule_env_count - max_thread_count__;
-                for (size_t i = 0; i < should_destroy_count && i < idle_env_list.size(); ++i)
-                {
-                    idle_env_list[i]->stop_schedule();
-                }
-            }
+            redistribute_ctx__();
+            destroy_redundant_env__();
         }
     }
 }
@@ -288,22 +300,22 @@ bool co_default_manager::is_blocked__(co_env* env) const
     return state != co_env_state::idle && state != co_env_state::created && !env->scheduled();
 }
 
-void co_default_manager::set_redistribute_duration(
+void co_default_manager::set_timing_duration(
     const std::chrono::high_resolution_clock::duration& duration)
 {
-    std::lock_guard<std::mutex> lock(mu_redistribute_duration__);
+    std::lock_guard<std::mutex> lock(mu_timing_duration__);
     if (duration < std::chrono::milliseconds(10))
     {
-        redistribute_duration__ = std::chrono::milliseconds(10);
+        timing_duration__ = std::chrono::milliseconds(10);
     }
     else
     {
-        redistribute_duration__ = duration;
+        timing_duration__ = duration;
     }
 }
 
-const std::chrono::high_resolution_clock::duration& co_default_manager::redistribute_duration() const
+const std::chrono::high_resolution_clock::duration& co_default_manager::timing_duration() const
 {
-    std::lock_guard<std::mutex> lock(mu_redistribute_duration__);
-    return redistribute_duration__;
+    std::lock_guard<std::mutex> lock(mu_timing_duration__);
+    return timing_duration__;
 }
