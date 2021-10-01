@@ -1,5 +1,6 @@
 #pragma once
 
+#include "co_default_entry.h"
 #include "co_define.h"
 #include "co_scheduler.h"
 
@@ -14,6 +15,8 @@ private:
     mutable std::mutex              mu_all_ctx__;
     co_ctx*                         curr__         = nullptr;
     int                             min_priority__ = 0;
+
+    static bool ctx_can_schedule__(co_ctx* ctx);
 
     co_o1_scheduler();
 

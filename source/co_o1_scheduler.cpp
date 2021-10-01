@@ -1,5 +1,6 @@
 #include "co_o1_scheduler.h"
 #include "co_ctx.h"
+#include "co_default_entry.h"
 #include "co_define.h"
 #include <cassert>
 #include <mutex>
@@ -40,7 +41,7 @@ co_ctx* co_o1_scheduler::choose_ctx()
 
         for (auto& ctx : all_ctx__[i])
         {
-            if (ctx->state() != co_state::finished)
+            if (ctx_can_schedule__(ctx))
             {
                 auto ret = ctx;
                 all_ctx__[i].remove(ctx);
@@ -92,11 +93,17 @@ bool co_o1_scheduler::can_schedule() const
     {
         for (auto& ctx : all_ctx__[i])
         {
-            if (ctx->state() != co_state::finished)
+            if (ctx_can_schedule__(ctx))
             {
                 return true;
             }
         }
     }
     return false;
+}
+
+bool co_o1_scheduler::ctx_can_schedule__(co_ctx* ctx)
+{
+    auto state = ctx->state();
+    return state != co_state::finished && state != co_state::waitting;
 }

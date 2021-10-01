@@ -10,6 +10,7 @@ enum class co_state : unsigned char
 {
     suspended, // 暂停
     running,   // 运行
+    waitting,  // 等待
     finished,  // 结束
 };
 
