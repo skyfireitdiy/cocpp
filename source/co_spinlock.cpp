@@ -21,3 +21,9 @@ void co_spinlock::unlock()
         co::schedule_switch();
     }
 }
+
+bool co_spinlock::try_lock()
+{
+    bool lock = false;
+    return locked__.compare_exchange_strong(lock, true);
+}

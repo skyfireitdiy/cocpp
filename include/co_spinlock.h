@@ -10,4 +10,5 @@ class co_spinlock
 public:
     void lock();
     void unlock();
+    bool try_lock();
 };
