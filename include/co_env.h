@@ -44,6 +44,7 @@ public:
     virtual std::list<co_ctx*> moveable_ctx_list()              = 0; // 获取当前可移动的ctx列表
     virtual void               take_ctx(co_ctx* ctx)            = 0; // 去除一个ctx，注意：与remove_ctx的区别是，此函数只是将ctx与env解绑，不会销毁ctx
     virtual bool               can_auto_destroy() const         = 0; // 当线程数量超过设定的最大数量的时候，是否允许被选中销毁
+    virtual void               wake_up()                        = 0; // 唤醒当前env，当env没有ctx调度的时候就会休眠，使用此接口唤醒
 
     virtual ~co_env()
     {

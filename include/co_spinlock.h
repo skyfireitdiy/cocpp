@@ -5,12 +5,7 @@
 
 class co_spinlock
 {
-    std::atomic<bool>               token_locked__;
-    std::list<unsigned long long*>  req_list__;
-    std::atomic<unsigned long long> token__;
-
-    void lock_index__();
-    void unlock_index__();
+    std::atomic<bool> locked__ { false };
 
 public:
     void lock();

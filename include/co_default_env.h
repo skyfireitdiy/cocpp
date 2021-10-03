@@ -6,6 +6,7 @@
 #include <atomic>
 #include <bitset>
 #include <chrono>
+#include <condition_variable>
 #include <future>
 #include <mutex>
 #include <shared_mutex>
@@ -28,8 +29,8 @@ private:
     co_ctx* const       idle_ctx__;
     co_env_state        state__;
 
-    mutable std::mutex      mu_wake_up_idle__;
-    std::condition_variable cond_wake_schedule__;
+    mutable std::recursive_mutex mu_wake_up_idle__;
+    std::condition_variable_any  cond_wake_schedule__;
 
     std::mutex mu_schedule__;
 
@@ -71,6 +72,7 @@ public:
     std::list<co_ctx*> moveable_ctx_list() override;
     void               take_ctx(co_ctx* ctx) override;
     bool               can_auto_destroy() const override;
+    void               wake_up() override;
 
     friend class co_default_env_factory;
 };

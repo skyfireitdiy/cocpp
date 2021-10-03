@@ -125,4 +125,5 @@ public:
     ~co();
 
     friend class co_env_destoryer;
+    friend class co_mutex;
 };

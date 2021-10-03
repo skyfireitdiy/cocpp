@@ -25,6 +25,7 @@ co_default_env::co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_sta
     , idle_ctx__(idle_ctx)
     , state__(co_env_state::created)
 {
+    idle_ctx__->set_env(this);
     if (create_new_thread)
     {
         // 此处设置状态是防止 add_ctx 前调度线程还未准备好，状态断言失败
@@ -49,13 +50,13 @@ void co_default_env::add_ctx(co_ctx* ctx)
     assert(ctx != nullptr);
     assert(state__ != co_env_state::created && state__ != co_env_state::destorying);
 
-    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
+    std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     ctx->set_env(this);
     scheduler__->add_ctx(ctx); // 添加到调度器
     set_state(co_env_state::busy);
 
     CO_DEBUG("add ctx wake up env: %p", this);
-    cond_wake_schedule__.notify_one();
+    wake_up();
 }
 
 std::optional<co_ret> co_default_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
@@ -139,8 +140,10 @@ co_ctx* co_default_env::next_ctx__()
 
 void co_default_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
 {
-    // 如果当前运行的ctx已经完成，不切换状态
-    if (curr->state() != co_state::finished)
+    // 如果当前运行的ctx已经完成，状态不变
+    // 当前处于watting状态切换出去，状态不变
+    auto state = curr->state();
+    if (state != co_state::finished && state != co_state::waitting)
     {
         curr->set_state(co_state::suspended);
     }
@@ -258,14 +261,14 @@ void co_default_env::stop_schedule()
     CO_DEBUG("set env to destorying, %p", this);
     // created 状态说明没有调度线程，不能转为destroying状态
 
-    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
+    std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
         set_state(co_env_state::destorying);
     }
 
     CO_DEBUG("%p : stop schedule wake up idle co", this);
-    cond_wake_schedule__.notify_one(); // 唤醒idle的ctx
+    wake_up(); // 唤醒idle的ctx
 }
 
 void co_default_env::start_schedule()
@@ -287,7 +290,7 @@ void co_default_env::start_schedule_routine__()
         remove_detached_ctx__();       // 切换回来之后，将完成的ctx删除
 
         // 切回idle之后，睡眠等待
-        std::unique_lock<std::mutex> lock(mu_wake_up_idle__);
+        std::unique_lock<std::recursive_mutex> lock(mu_wake_up_idle__);
         CO_DEBUG("idle co start wait add ctx or destroying ... %p", this);
         if (state() == co_env_state::destorying)
         {
@@ -390,4 +393,11 @@ bool co_default_env::can_auto_destroy() const
 {
     // 如果是用户自己转换的env，不能被选中销毁
     return !test_flag(CO_ENV_FLAG_COVERTED_ENV);
+}
+
+void co_default_env::wake_up()
+{
+    std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
+    // CO_DEBUG("wake up env: %p", this);
+    cond_wake_schedule__.notify_one();
 }
