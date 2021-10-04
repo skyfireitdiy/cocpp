@@ -15,7 +15,7 @@ co_default_stack::co_default_stack(size_t stack_size)
     }
     raw_mem__ = reinterpret_cast<co_byte*>(malloc(size__ + sizeof(void*) - 1));
     stack__   = reinterpret_cast<co_byte*>(reinterpret_cast<unsigned long long>(raw_mem__ + sizeof(void*) - 1) / sizeof(void*) * sizeof(void*));
-    CO_DEBUG("malloc raw_mem__ = %p", raw_mem__);
+    CO_O_DEBUG("malloc raw_mem__ = %p", raw_mem__);
 }
 
 size_t co_default_stack::stack_size() const
@@ -35,6 +35,6 @@ co_byte* co_default_stack::stack_top() const
 
 co_default_stack::~co_default_stack()
 {
-    CO_DEBUG("free raw_mem__ = %p", raw_mem__);
+    CO_O_DEBUG("free raw_mem__ = %p", raw_mem__);
     free(raw_mem__);
 }

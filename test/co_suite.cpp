@@ -5,8 +5,8 @@
 #include "co_default_env_factory.h"
 #include "co_default_manager.h"
 #include "co_default_stack_factory.h"
+#include "co_mutex.h"
 #include "co_o1_scheduler_factory.h"
-#include "co_spinlock.h"
 
 class co_suite : public testing::Test
 {
@@ -160,7 +160,7 @@ TEST_F(co_suite, other_co_name)
     EXPECT_EQ(c1.name(), "zhangsan");
 }
 
-TEST_F(co_suite, co_mutex_try_lock)
+TEST_F(co_suite, co_spinlock_try_lock)
 {
     co_spinlock mu;
 
@@ -173,7 +173,7 @@ TEST_F(co_suite, co_mutex_try_lock)
     EXPECT_FALSE(mu.try_lock());
 }
 
-TEST_F(co_suite, co_mutex_lock)
+TEST_F(co_suite, co_spinlock_lock)
 {
     co_spinlock mu;
 
@@ -190,6 +190,45 @@ TEST_F(co_suite, co_mutex_lock)
     {
         std::lock_guard<co_spinlock> lock(mu);
         ret -= i;
+    }
+
+    c1.wait<void>();
+
+    EXPECT_EQ(ret, 0);
+}
+
+TEST_F(co_suite, co_mutex_try_lock)
+{
+    co_mutex mu;
+
+    co c1([&]() {
+        std::lock_guard<co_mutex> lock(mu);
+        co::sleep_for(std::chrono::seconds(1));
+    });
+
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_FALSE(mu.try_lock());
+}
+
+TEST_F(co_suite, co_mutex_lock)
+{
+    co_mutex mu;
+
+    int ret = 0;
+
+    co c1([&]() {
+        for (int i = 0; i < 10000; ++i)
+        {
+            mu.lock();
+            ret += i;
+            mu.unlock();
+        }
+    });
+    for (int i = 0; i < 10000; ++i)
+    {
+        mu.lock();
+        ret -= i;
+        mu.unlock();
     }
 
     c1.wait<void>();

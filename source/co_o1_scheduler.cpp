@@ -14,13 +14,13 @@ void co_o1_scheduler::add_ctx(co_ctx* ctx)
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
     all_ctx__[ctx->priority()].push_back(ctx);
-    CO_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, (int)ctx->state());
+    CO_O_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, (int)ctx->state());
 }
 
 void co_o1_scheduler::remove_ctx(co_ctx* ctx)
 {
     std::lock_guard<std::mutex> lock(mu_all_ctx__);
-    CO_DEBUG("remove ctx %s %p , state: %d", ctx->config().name.c_str(), ctx, (int)ctx->state());
+    CO_O_DEBUG("remove ctx %s %p , state: %d", ctx->config().name.c_str(), ctx, (int)ctx->state());
     // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
     all_ctx__[ctx->priority()].remove(ctx);
 }

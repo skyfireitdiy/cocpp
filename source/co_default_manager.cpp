@@ -65,6 +65,7 @@ co_env* co_default_manager::create_env__()
     std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     env_list__.push_back(env);
     ++exist_env_count__;
+    CO_O_DEBUG("create env : %p", env);
     return env;
 }
 
@@ -117,15 +118,11 @@ co_scheduler_factory* co_default_manager::scheduler_factory()
 
 void co_default_manager::remove_env(co_env* env)
 {
-    {
-        std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
-        env_list__.remove(env);
-    }
-
+    std::scoped_lock lock(mu_env_list__, mu_clean_up__);
+    env_list__.remove(env);
     std::lock_guard<std::recursive_mutex> lck(mu_clean_up__);
-    CO_DEBUG("push to clean up: %p", env);
+    CO_O_DEBUG("push to clean up: %p", env);
     expired_env__.push_back(env);
-
     cond_expired_env__.notify_one();
 }
 
@@ -137,6 +134,7 @@ void co_default_manager::create_env_from_this_thread()
     std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     env_list__.push_back(current_env__);
     ++exist_env_count__;
+    CO_O_DEBUG("create env from this thread : %p", current_env__);
 }
 
 co_env* co_default_manager::current_env()
@@ -156,23 +154,21 @@ bool co_default_manager::clean_up() const
 void co_default_manager::set_clean_up()
 {
     {
-        std::lock_guard<std::recursive_mutex> lock(mu_clean_up__);
-        clean_up__ = true;
+        std::scoped_lock lock(mu_clean_up__, mu_env_list__);
+        CO_O_DEBUG("set clean up!!!");
+        clean_up__         = true;
+        auto env_list_back = env_list__; // 在下面的清理操作中需要删除list中的元素导致迭代器失效，此处创建一个副本（也可以直接加入过期列表，然后清空env_list__，但是这样表达力会好些）
+        for (auto& env : env_list_back)
         {
-            std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
-            auto                                  env_list_back = env_list__; // 在下面的清理操作中需要删除list中的元素导致迭代器失效，此处创建一个副本（也可以直接加入过期列表，然后清空env_list__，但是这样表达力会好些）
-            for (auto& env : env_list_back)
+            if (!env->has_scheduler_thread())
             {
-                if (!env->has_scheduler_thread())
-                {
-                    // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
-                    remove_env(env);
-                    CO_DEBUG("push to clean up: %p", env);
-                    continue;
-                }
-                CO_DEBUG("call stop_schedule on %p", env);
-                env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
+                // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
+                remove_env(env);
+                CO_O_DEBUG("push to clean up: %p", env);
+                continue;
             }
+            CO_O_DEBUG("call stop_schedule on %p", env);
+            env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
         }
         cond_expired_env__.notify_one();
     }
@@ -187,18 +183,18 @@ void co_default_manager::clean_env_routine__()
     std::unique_lock<std::recursive_mutex> lck(mu_clean_up__);
     while (!clean_up__ || exist_env_count__ != 0)
     {
-        CO_DEBUG("wait to wake up ...");
+        CO_O_DEBUG("wait to wake up ...");
         cond_expired_env__.wait(lck);
-        CO_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)exist_env_count__, expired_env__.size());
+        CO_O_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)exist_env_count__, expired_env__.size());
         for (auto& p : expired_env__)
         {
-            CO_DEBUG("clean up an env: %p", p);
+            CO_O_DEBUG("clean up an env: %p", p);
             env_factory__->destroy_env(p);
             --exist_env_count__;
         }
         expired_env__.clear();
     }
-    CO_DEBUG("clean up env finished\n");
+    CO_O_DEBUG("clean up env finished\n");
 }
 
 void co_default_manager::set_base_schedule_thread_count(size_t base_thread_count)
@@ -220,8 +216,14 @@ void co_default_manager::set_max_schedule_thread_count(size_t max_thread_count)
 
 void co_default_manager::redistribute_ctx__()
 {
-    std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
-    std::list<co_ctx*>                    moved_ctx_list; // 需要被移动的ctx
+    // 此处也需要锁定mu_env_list__，上层锁定
+    std::lock_guard<std::recursive_mutex> lock(mu_clean_up__);
+    if (clean_up__)
+    {
+        return;
+    }
+
+    std::list<co_ctx*> moved_ctx_list; // 需要被移动的ctx
 
     auto merge_list = [](std::list<co_ctx*>& target, const std::list<co_ctx*>& src) {
         target.insert(target.end(), src.begin(), src.end());
@@ -232,7 +234,7 @@ void co_default_manager::redistribute_ctx__()
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
         if (is_blocked__(env))
         {
-            CO_DEBUG("env %p is blocked, redistribute ctx", env);
+            CO_O_DEBUG("env %p is blocked, redistribute ctx", env);
             env->lock_schedule();
             env->set_state(co_env_state::blocked); // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
             auto tmp_moveable_ctx = env->moveable_ctx_list();
@@ -286,11 +288,8 @@ void co_default_manager::timing_routine__()
     while (!clean_up__)
     {
         std::this_thread::sleep_for(timing_duration());
-        {
-            std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
-            redistribute_ctx__();
-            destroy_redundant_env__();
-        }
+        redistribute_ctx__();
+        destroy_redundant_env__();
     }
 }
 

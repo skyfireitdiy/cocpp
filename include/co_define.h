@@ -29,13 +29,28 @@ constexpr int CO_MAX_PRIORITY      = 100;
                reinterpret_cast<int>(gettid()), ##__VA_ARGS__); \
     }
 
+#define CO_O_OUTPUT(level, fmt, ...)                                  \
+    {                                                                 \
+        printf("[%s] %s(%u) %s :[0x%x] %p -> " fmt "\n",              \
+               level, __FILE__, __LINE__, __FUNCTION__,               \
+               reinterpret_cast<int>(gettid()), this, ##__VA_ARGS__); \
+    }
+
 #ifdef NDEBUG
 #define CO_DEBUG(...)
 #define CO_WARN(...)
 #define CO_ERROR(...)
 
+#define CO_O_DEBUG(...)
+#define CO_O_WARN(...)
+#define CO_O_ERROR(...)
+
 #else
 #define CO_DEBUG(fmt, ...) CO_OUTPUT("DEBUG", fmt, ##__VA_ARGS__)
 #define CO_WARN(fmt, ...) CO_OUTPUT("WARN ", fmt, ##__VA_ARGS__)
 #define CO_ERROR(fmt, ...) CO_OUTPUT("ERROR", fmt, ##__VA_ARGS__)
+
+#define CO_O_DEBUG(fmt, ...) CO_O_OUTPUT("DEBUG", fmt, ##__VA_ARGS__)
+#define CO_O_WARN(fmt, ...) CO_O_OUTPUT("WARN ", fmt, ##__VA_ARGS__)
+#define CO_O_ERROR(fmt, ...) CO_O_OUTPUT("ERROR", fmt, ##__VA_ARGS__)
 #endif

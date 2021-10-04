@@ -40,10 +40,10 @@ private:
         }
         else
         {
-            config.entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
-                CO_DEBUG("before run");
+            config.entry = [this, ... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
+                CO_O_DEBUG("before run");
                 ret = std::forward<Func>(func)(std::forward<Args>(args)...);
-                CO_DEBUG("after run");
+                CO_O_DEBUG("after run");
             };
         }
 
@@ -101,14 +101,14 @@ public:
     template <co_not_void Ret>
     Ret wait()
     {
-        CO_DEBUG("start wait");
+        CO_O_DEBUG("start wait");
         return manager__->current_env()->wait_ctx(ctx__);
     }
 
     template <co_is_void Ret>
     Ret wait()
     {
-        CO_DEBUG("start wait %p", ctx__);
+        CO_O_DEBUG("start wait %p", ctx__);
         manager__->current_env()->wait_ctx(ctx__);
     }
 
