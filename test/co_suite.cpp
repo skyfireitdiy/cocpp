@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mutex>
 #define private public
 #include "co.h"
 #include "co_default_ctx_factory.h"
@@ -208,6 +209,7 @@ TEST_F(co_suite, co_mutex_try_lock)
 
     co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock());
+    c1.wait<void>();
 }
 
 TEST_F(co_suite, co_mutex_lock)
@@ -217,21 +219,39 @@ TEST_F(co_suite, co_mutex_lock)
     int ret = 0;
 
     co c1([&]() {
-        for (int i = 0; i < 10000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
-            mu.lock();
+            std::lock_guard<co_mutex> lock(mu);
             ret += i;
-            mu.unlock();
+            co::schedule_switch();
         }
     });
-    for (int i = 0; i < 10000; ++i)
+    co c2([&]() {
+        for (int i = 0; i < 1000; ++i)
+        {
+            std::lock_guard<co_mutex> lock(mu);
+            ret += i;
+            co::schedule_switch();
+        }
+    });
+    co c3([&]() {
+        for (int i = 0; i < 1000; ++i)
+        {
+            std::lock_guard<co_mutex> lock(mu);
+            ret -= i;
+            co::schedule_switch();
+        }
+    });
+    for (int i = 0; i < 1000; ++i)
     {
-        mu.lock();
+        std::lock_guard<co_mutex> lock(mu);
         ret -= i;
-        mu.unlock();
+        co::schedule_switch();
     }
 
     c1.wait<void>();
+    c2.wait<void>();
+    c3.wait<void>();
 
     EXPECT_EQ(ret, 0);
 }
