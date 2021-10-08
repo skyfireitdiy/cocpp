@@ -21,7 +21,7 @@ add_includedirs("include")
 add_files("test/*.cpp")
 add_links("gtest", "pthread")
 add_deps("cocpp")
-if is_mode("debug") then
+if is_mode("debug") and is_plat("linux") then
     after_build(function()
         import("core.project.task")
         task.run("test_cov")
