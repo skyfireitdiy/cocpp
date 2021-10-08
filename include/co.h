@@ -7,6 +7,7 @@
 #include "co_define.h"
 #include "co_env.h"
 #include "co_manager.h"
+#include "co_nocopy.h"
 #include "co_ret.h"
 #include <chrono>
 #include <initializer_list>
@@ -23,7 +24,7 @@ concept co_is_void = std::is_same_v<T, void>;
 template <typename T>
 concept co_not_void = !std::is_same_v<T, void>;
 
-class co
+class co : public co_nocopy
 {
 private:
     co_ctx*            ctx__;

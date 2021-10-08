@@ -10,8 +10,8 @@ class co_scheduler;
 class co_stack_factory;
 class co_scheduler_factory;
 
-class co_default_env_factory : public co_env_factory,
-                               public co_singleton<co_default_env_factory>
+class co_default_env_factory final : public co_env_factory,
+                                     public co_singleton<co_default_env_factory>
 {
 private:
     co_manager* manager__ = nullptr;

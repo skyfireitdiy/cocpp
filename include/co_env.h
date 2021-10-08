@@ -1,6 +1,7 @@
 #pragma once
 
 #include "co_ctx.h"
+#include "co_nocopy.h"
 #include "co_ret.h"
 #include "co_stack.h"
 
@@ -13,7 +14,7 @@
 class co_manager;
 class co_scheduler;
 
-class co_env
+class co_env : public co_nocopy
 {
 public:
     virtual co_stack*             shared_stack() const = 0; // 获取共享栈
@@ -46,9 +47,7 @@ public:
     virtual bool               can_auto_destroy() const         = 0; // 当线程数量超过设定的最大数量的时候，是否允许被选中销毁
     virtual void               wake_up()                        = 0; // 唤醒当前env，当env没有ctx调度的时候就会休眠，使用此接口唤醒
 
-    virtual ~co_env()
-    {
-    }
+    virtual ~co_env() = default;
 };
 
 extern thread_local co_env* current_env__;

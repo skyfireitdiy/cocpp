@@ -2,8 +2,8 @@
 #include "co_singleton.h"
 #include "co_stack_factory.h"
 
-class co_default_stack_factory : public co_stack_factory,
-                                 public co_singleton<co_default_stack_factory>
+class co_default_stack_factory final : public co_stack_factory,
+                                       public co_singleton<co_default_stack_factory>
 {
 public:
     co_stack* create_stack(size_t size) override;

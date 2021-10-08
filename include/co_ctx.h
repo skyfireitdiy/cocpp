@@ -1,13 +1,14 @@
 #pragma once
 
 #include "co_ctx_config.h"
+#include "co_nocopy.h"
 #include "co_stack.h"
 #include "co_type.h"
 
 class co_env;
 
 // 协程上下文
-class co_ctx
+class co_ctx : public co_nocopy
 {
 public:
     virtual co_stack*            stack() const              = 0; // 获取协程栈
@@ -24,5 +25,5 @@ public:
     virtual void                 lock_destroy()             = 0; // 锁定，不允许被销毁
     virtual void                 unlock_destroy()           = 0; // 解锁,允许被销毁
 
-    virtual ~co_ctx() {}
+    virtual ~co_ctx() = default;
 };

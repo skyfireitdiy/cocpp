@@ -13,8 +13,8 @@
 #include <map>
 #include <mutex>
 
-class co_default_manager : public co_manager,
-                           public co_singleton<co_default_manager>
+class co_default_manager final : public co_manager,
+                                 public co_singleton<co_default_manager>
 {
 private:
     std::list<co_env*>   env_list__;

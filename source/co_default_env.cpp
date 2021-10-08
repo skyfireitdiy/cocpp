@@ -223,6 +223,7 @@ void co_default_env::switch_to__(co_byte** curr, co_byte** next)
     __asm volatile("ldmxcsr 72(%rsi)");
     __asm volatile("movq 64(%rsi), %r15");
     __asm volatile("movq 56(%rsi), %r14");
+
     __asm volatile("movq 48(%rsi), %r13");
     __asm volatile("movq 40(%rsi), %r12");
     __asm volatile("movq 32(%rsi), %rbx");

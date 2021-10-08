@@ -1,12 +1,14 @@
 #pragma once
 #include <utility>
 
+#include "co_nocopy.h"
+
 // 单例模式
 template <typename T>
-class co_singleton
+class co_singleton : public co_nocopy
 {
 private:
-    co_singleton() {}
+    co_singleton() = default;
 
 public:
     // 获取实例

@@ -1,13 +1,14 @@
 #pragma once
 
 #include "co_ctx.h"
+#include "co_nocopy.h"
 #include "co_spinlock.h"
 #include <atomic>
 #include <list>
 
 class co_ctx;
 
-class co_mutex
+class co_mutex : public co_nocopy
 {
 private:
     co_spinlock          spinlock__;

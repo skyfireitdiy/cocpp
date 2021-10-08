@@ -1,8 +1,8 @@
 #pragma once
-#include "co_stack.h"
 #include "co_define.h"
+#include "co_stack.h"
 
-class co_default_stack : public co_stack
+class co_default_stack final : public co_stack
 {
     co_byte* raw_mem__;
     co_byte* stack__;

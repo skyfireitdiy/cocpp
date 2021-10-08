@@ -3,7 +3,9 @@
 #include <atomic>
 #include <list>
 
-class co_spinlock
+#include "co_nocopy.h"
+
+class co_spinlock : public co_nocopy
 {
     std::atomic<bool> locked__ { false };
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "co_ctx_config.h"
+#include "co_nocopy.h"
 
 class co_env;
 class co_ctx;
@@ -8,7 +9,7 @@ class co_ctx_factory;
 class co_stack_factory;
 class co_scheduler_factory;
 
-class co_manager
+class co_manager : public co_nocopy
 {
 public:
     virtual co_env*               get_best_env()                                           = 0; // 挑选负载最低的env，如果没有可用的env，此接口还应该具备创建env的能力
@@ -29,5 +30,6 @@ public:
         const std::chrono::high_resolution_clock::duration& duration)
         = 0;                                                                                 // 设置定时任务时间间隔
     virtual const std::chrono::high_resolution_clock::duration& timing_duration() const = 0; // 获取定时任务时间间隔
-    virtual ~co_manager() {}
+
+    virtual ~co_manager() = default;
 };

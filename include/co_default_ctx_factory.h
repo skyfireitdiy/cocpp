@@ -2,8 +2,8 @@
 #include "co_ctx_config.h"
 #include "co_ctx_factory.h"
 
-class co_default_ctx_factory : public co_ctx_factory,
-                               public co_singleton<co_default_ctx_factory>
+class co_default_ctx_factory final : public co_ctx_factory,
+                                     public co_singleton<co_default_ctx_factory>
 {
 private:
     co_manager* manager__ = nullptr;
