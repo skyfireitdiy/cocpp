@@ -7,9 +7,21 @@
 #include "co_type.h"
 
 #include <cassert>
+#include <cstring>
 #include <future>
 #include <iterator>
 #include <mutex>
+
+#ifdef _MSC_VER
+#ifdef _WIN64
+extern "C" void __get_mxcsr_msvc_x64(co_byte**);
+extern "C" void __get_fcw_msvc_x64(co_byte**);
+extern "C" void __get_TEB_8_msvc_x64(co_byte**);
+extern "C" void __get_TEB_16_msvc_x64(co_byte**);
+extern "C" void __get_TEB_24_msvc_x64(co_byte**);
+extern "C" void __get_TEB_5240_msvc_x64(co_byte**);
+#endif
+#endif
 
 #ifdef _MSC_VER
 #ifdef _WIN64
@@ -168,6 +180,11 @@ void co_default_env::schedule_switch()
 
         assert(curr != nullptr);
         assert(next != nullptr);
+
+        if (next->state() == co_state::created) // 第一次运行需要初始化
+        {
+            init_ctx(next);
+        }
 
         update_ctx_state__(curr, next);
 
@@ -401,4 +418,65 @@ void co_default_env::wake_up()
     std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
+}
+
+#ifdef __GNUC__
+#ifdef __x86_64__
+static void __get_mxcsr_gcc_x64(void*)
+{
+    __asm volatile(
+        "stmxcsr (%%rdi)\n"
+        :
+        :
+        : "memory");
+}
+
+static void __get_fcw_gcc_x64(void*)
+{
+    __asm volatile(
+        "fnstcw (%%rdi)\n"
+        :
+        :
+        : "memory");
+}
+#endif
+#endif
+
+void co_default_env::init_ctx(co_ctx* ctx)
+{
+    auto regs   = ctx->regs();
+    auto stack  = ctx->stack();
+    auto config = ctx->config();
+#ifdef _MSC_VER
+#ifdef _WIN64
+    regs[reg_index_RSP__] = stack->stack_top();
+    regs[reg_index_RBP__] = regs[reg_index_RSP__];
+    regs[reg_index_RIP__] = reinterpret_cast<co_byte*>(config.startup);
+    regs[reg_index_RCX__] = reinterpret_cast<co_byte*>(ctx);
+
+    __get_mxcsr_msvc_x64(&regs[reg_index_MXCSR__]);
+    __get_fcw_msvc_x64(&regs[reg_index_FCW__]);
+    __get_TEB_8_msvc_x64(&regs[reg_index_TEB_8__]);
+    __get_TEB_16_msvc_x64(&regs[reg_index_TEB_16__]);
+    __get_TEB_24_msvc_x64(&regs[reg_index_TEB_24__]);
+    __get_TEB_5240_msvc_x64(&regs[reg_index_TEB_5240__]);
+
+#else
+#error only support x86_64 in msvc
+#endif
+#endif
+
+#ifdef __GNUC__
+#ifdef __x86_64__
+    regs[reg_index_RSP__] = stack->stack_top();
+    regs[reg_index_RBP__] = regs[reg_index_RSP__];
+    regs[reg_index_RIP__] = reinterpret_cast<co_byte*>(config.startup);
+    regs[reg_index_RDI__] = reinterpret_cast<co_byte*>(ctx);
+
+    __get_mxcsr_gcc_x64(&regs[reg_index_MXCSR__]);
+    __get_fcw_gcc_x64(&regs[reg_index_FCW__]);
+#else
+#error only supported x86_64
+#endif
+#endif
 }

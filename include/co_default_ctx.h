@@ -67,17 +67,6 @@ private:
 
 #ifdef __GNUC__
 #ifdef __x86_64__
-    static constexpr int reg_index_RDI__   = 0;
-    static constexpr int reg_index_RIP__   = 1;
-    static constexpr int reg_index_RSP__   = 2;
-    static constexpr int reg_index_RBP__   = 3;
-    static constexpr int reg_index_RBX__   = 4;
-    static constexpr int reg_index_R12__   = 5;
-    static constexpr int reg_index_R13__   = 6;
-    static constexpr int reg_index_R14__   = 7;
-    static constexpr int reg_index_R15__   = 8;
-    static constexpr int reg_index_MXCSR__ = 9;
-    static constexpr int reg_index_FCW__   = 10;
 
     co_byte* regs__[11];
 #else
@@ -85,7 +74,6 @@ private:
 #endif
 #endif
 
-    void init_regs__();
     co_default_ctx(co_stack* stack, const co_ctx_config& config);
 
 public:

@@ -44,7 +44,20 @@ private:
     void        update_ctx_state__(co_ctx* curr, co_ctx* next);
     static void switch_to__(co_byte** curr_regs, co_byte** next_regs);
 
+    static constexpr int reg_index_RDI__   = 0;
+    static constexpr int reg_index_RIP__   = 1;
+    static constexpr int reg_index_RSP__   = 2;
+    static constexpr int reg_index_RBP__   = 3;
+    static constexpr int reg_index_RBX__   = 4;
+    static constexpr int reg_index_R12__   = 5;
+    static constexpr int reg_index_R13__   = 6;
+    static constexpr int reg_index_R14__   = 7;
+    static constexpr int reg_index_R15__   = 8;
+    static constexpr int reg_index_MXCSR__ = 9;
+    static constexpr int reg_index_FCW__   = 10;
+
 public:
+    void                  init_ctx(co_ctx* ctx) override;
     co_stack*             shared_stack() const override;
     void                  add_ctx(co_ctx* ctx) override;
     std::optional<co_ret> wait_ctx(co_ctx*                         ctx,

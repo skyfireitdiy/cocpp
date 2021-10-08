@@ -8,6 +8,7 @@ using co_id               = unsigned long long;
 
 enum class co_state : unsigned char
 {
+    created,   // 创建
     suspended, // 暂停
     running,   // 运行
     waitting,  // 等待

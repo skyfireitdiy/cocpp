@@ -17,8 +17,9 @@ class co_scheduler;
 class co_env : public co_nocopy
 {
 public:
-    virtual co_stack*             shared_stack() const = 0; // 获取共享栈
-    virtual void                  add_ctx(co_ctx* ctx) = 0; // 添加ctx进行调度
+    virtual void                  init_ctx(co_ctx* ctx) = 0; // 初始化ctx
+    virtual co_stack*             shared_stack() const  = 0; // 获取共享栈
+    virtual void                  add_ctx(co_ctx* ctx)  = 0; // 添加ctx进行调度
     virtual std::optional<co_ret> wait_ctx(
         co_ctx*                         ctx,
         const std::chrono::nanoseconds& timeout)
