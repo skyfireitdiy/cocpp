@@ -10,9 +10,12 @@ class co_error : public std::exception
 
 public:
     template <typename... Args>
-    co_error(Args&&... args)
-    {
-        std::ostringstream so;
-        (so << ... << args);
-    }
+    co_error(Args&&... args);
 };
+
+template <typename... Args>
+co_error::co_error(Args&&... args)
+{
+    std::ostringstream so;
+    (so << ... << args);
+}

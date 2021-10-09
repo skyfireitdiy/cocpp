@@ -6,8 +6,13 @@
 #include "co_default_env_factory.h"
 #include "co_default_manager.h"
 #include "co_default_stack_factory.h"
+#include "co_error.h"
 #include "co_mutex.h"
 #include "co_o1_scheduler_factory.h"
+#include "co_recursive_mutex.h"
+#include "co_shared_mutex.h"
+#include "co_shared_timed_mutex.h"
+#include "co_timed_mutex.h"
 
 class co_suite : public testing::Test
 {
@@ -254,4 +259,164 @@ TEST_F(co_suite, co_mutex_lock)
     c3.wait<void>();
 
     EXPECT_EQ(ret, 0);
+}
+
+TEST_F(co_suite, co_mutex_throw)
+{
+    co_mutex mu;
+    EXPECT_THROW(mu.unlock(), co_error);
+}
+
+TEST_F(co_suite, co_recursive_mutex_lock)
+{
+    co_recursive_mutex mu;
+    mu.lock();
+    mu.lock();
+    mu.lock();
+    mu.unlock();
+    mu.unlock();
+    mu.unlock();
+}
+
+TEST_F(co_suite, co_recursive_mutex_trylock)
+{
+    co_recursive_mutex mu;
+    EXPECT_TRUE(mu.try_lock());
+    EXPECT_TRUE(mu.try_lock());
+    EXPECT_TRUE(mu.try_lock());
+    mu.unlock();
+    mu.unlock();
+    mu.unlock();
+}
+
+TEST_F(co_suite, co_timed_mutex)
+{
+    co_timed_mutex mu;
+    co             c1([&] {
+        mu.lock();
+        co::sleep_for(std::chrono::seconds(1));
+        mu.unlock();
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_FALSE(mu.try_lock_for(std::chrono::milliseconds(100)));
+    EXPECT_TRUE(mu.try_lock_for(std::chrono::milliseconds(600)));
+    mu.unlock();
+    c1.wait<void>();
+}
+
+TEST_F(co_suite, co_shared_mutex_shared_lock)
+{
+    co_shared_mutex mu;
+
+    co c1([&] {
+        mu.lock_shared();
+        co::sleep_for(std::chrono::seconds(1));
+        mu.unlock_shared();
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_TRUE(mu.try_lock_shared());
+    mu.unlock_shared();
+    c1.wait<void>();
+}
+
+TEST_F(co_suite, co_shared_mutex_shared_lock_multi)
+{
+    co_shared_mutex mu;
+
+    mu.lock_shared();
+    mu.lock_shared();
+    EXPECT_TRUE(mu.try_lock_shared());
+    mu.unlock_shared();
+    mu.unlock_shared();
+    mu.unlock_shared();
+}
+
+TEST_F(co_suite, co_shared_mutex_lock)
+{
+    co_shared_mutex mu;
+
+    co c1([&] {
+        mu.lock();
+        co::sleep_for(std::chrono::seconds(1));
+        mu.unlock();
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_FALSE(mu.try_lock_shared());
+    c1.wait<void>();
+}
+
+TEST_F(co_suite, co_shared_mutex_lock2)
+{
+    co_shared_mutex mu;
+
+    co c1([&] {
+        mu.lock_shared();
+        co::sleep_for(std::chrono::seconds(1));
+        mu.unlock_shared();
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_FALSE(mu.try_lock());
+    c1.wait<void>();
+}
+
+TEST_F(co_suite, co_shared_mutex_lock3)
+{
+    co_shared_mutex mu;
+
+    co c1([&] {
+        mu.lock();
+        co::sleep_for(std::chrono::seconds(1));
+        mu.unlock();
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_FALSE(mu.try_lock());
+    c1.wait<void>();
+}
+
+TEST_F(co_suite, co_shared_timed_mutex1)
+{
+    co_shared_timed_mutex mu;
+
+    co c1([&] {
+        mu.lock_shared();
+        co::sleep_for(std::chrono::seconds(1));
+        mu.unlock_shared();
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_FALSE(mu.try_lock_for(std::chrono::milliseconds(100)));
+    EXPECT_TRUE(mu.try_lock_for(std::chrono::milliseconds(600)));
+    mu.unlock();
+    c1.wait<void>();
+}
+
+TEST_F(co_suite, co_shared_timed_mutex2)
+{
+    co_shared_timed_mutex mu;
+
+    co c1([&] {
+        mu.lock();
+        co::sleep_for(std::chrono::seconds(1));
+        mu.unlock();
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_FALSE(mu.try_lock_for(std::chrono::milliseconds(100)));
+    EXPECT_TRUE(mu.try_lock_for(std::chrono::milliseconds(600)));
+    mu.unlock();
+    c1.wait<void>();
+}
+
+TEST_F(co_suite, co_shared_timed_mutex3)
+{
+    co_shared_timed_mutex mu;
+
+    co c1([&] {
+        mu.lock();
+        co::sleep_for(std::chrono::seconds(1));
+        mu.unlock();
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_FALSE(mu.try_lock_shared_for(std::chrono::milliseconds(100)));
+    EXPECT_TRUE(mu.try_lock_shared_for(std::chrono::milliseconds(800)));
+    mu.unlock_shared();
+    c1.wait<void>();
 }

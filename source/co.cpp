@@ -67,3 +67,8 @@ co_id co::id() const
 {
     return reinterpret_cast<co_id>(ctx__);
 }
+
+co_ctx* co::current_ctx()
+{
+    return manager__->current_env()->current_ctx();
+}

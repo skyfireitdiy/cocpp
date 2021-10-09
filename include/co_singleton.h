@@ -13,10 +13,15 @@ private:
 public:
     // 获取实例
     template <typename... Args>
-    static T* instance(Args&&... args)
-    {
-        static T inst(std::forward<Args>(args)...);
-        return &inst;
-    }
+    static T* instance(Args&&... args);
+
     friend T;
 };
+
+template <typename T>
+template <typename... Args>
+T* co_singleton<T>::instance(Args&&... args)
+{
+    static T inst(std::forward<Args>(args)...);
+    return &inst;
+}

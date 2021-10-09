@@ -24,35 +24,14 @@ concept co_is_void = std::is_same_v<T, void>;
 template <typename T>
 concept co_not_void = !std::is_same_v<T, void>;
 
-class co : public co_nocopy
+class co final : public co_nocopy
 {
 private:
     co_ctx*            ctx__;
     static co_manager* manager__;
 
     template <typename Func, typename... Args>
-    void init__(co_ctx_config config, Func&& func, Args&&... args)
-    {
-        if constexpr (std::is_same_v<std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>, void>)
-        {
-            config.entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
-                std::forward<Func>(func)(std::forward<Args>(args)...);
-            };
-        }
-        else
-        {
-            config.entry = [this, ... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
-                CO_O_DEBUG("before run");
-                ret = std::forward<Func>(func)(std::forward<Args>(args)...);
-                CO_O_DEBUG("after run");
-            };
-        }
-
-        ctx__ = co::manager__->ctx_factory()->create_ctx(config);
-        ctx__->lock_destroy(); // 被co对象持有
-        auto env = co::manager__->get_best_env();
-        env->add_ctx(ctx__);
-    }
+    void init__(co_ctx_config config, Func&& func, Args&&... args);
 
 public:
     class this_co
@@ -68,63 +47,106 @@ public:
 
     static void convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
     template <class Rep, class Period>
-    static void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
-    {
-        auto start = std::chrono::steady_clock::now();
-        do
-        {
-            schedule_switch();
-        } while (std::chrono::steady_clock::now() - start < sleep_duration);
-    }
+    static void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration); // 协程睡眠
+
+    static co_ctx* current_ctx(); // 当前协程ctx
 
     co_id       id() const;
     std::string name() const;
 
     // 构造一个协程，自动开始调度，参数为可调用对象与参数列表，如：co c(add, 1, 2);
     template <typename Func, typename... Args>
-    co(Func&& func, Args&&... args)
-    {
-        init__(co_ctx_config {}, std::forward<Func>(func), std::forward<Args>(args)...);
-    }
+    co(Func&& func, Args&&... args);
 
     template <typename Func, typename... Args>
-    co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args)
-    {
-        co_ctx_config config;
-        for (auto& cb : opts)
-        {
-            cb(config);
-        }
-        init__(config, std::forward<Func>(func), std::forward<Args>(args)...);
-    }
+    co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args);
 
     // 等待协程执行结束返回
     template <co_not_void Ret>
-    Ret wait()
-    {
-        CO_O_DEBUG("start wait");
-        return manager__->current_env()->wait_ctx(ctx__);
-    }
+    Ret wait();
 
     template <co_is_void Ret>
-    Ret wait()
-    {
-        CO_O_DEBUG("start wait %p", ctx__);
-        manager__->current_env()->wait_ctx(ctx__);
-    }
+    Ret wait();
 
     // 等待指定时间
     template <class Rep, class Period>
-    std::optional<co_ret> wait(const std::chrono::duration<Rep, Period>& wait_duration)
-    {
-        return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
-    }
+    std::optional<co_ret> wait(const std::chrono::duration<Rep, Period>& wait_duration);
 
     // 分离协程，之后此协程就不再受到co对象的管理了
     void detach();
 
     ~co();
-
-    friend class co_env_destoryer;
-    friend class co_mutex;
 };
+
+///// 模板实现
+
+template <typename Func, typename... Args>
+void co::init__(co_ctx_config config, Func&& func, Args&&... args)
+{
+    if constexpr (std::is_same_v<std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>, void>)
+    {
+        config.entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
+            std::forward<Func>(func)(std::forward<Args>(args)...);
+        };
+    }
+    else
+    {
+        config.entry = [this, ... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
+            CO_O_DEBUG("before run");
+            ret = std::forward<Func>(func)(std::forward<Args>(args)...);
+            CO_O_DEBUG("after run");
+        };
+    }
+
+    ctx__ = co::manager__->ctx_factory()->create_ctx(config);
+    ctx__->lock_destroy(); // 被co对象持有
+    auto env = co::manager__->get_best_env();
+    env->add_ctx(ctx__);
+}
+
+template <class Rep, class Period>
+void co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
+{
+    auto start = std::chrono::steady_clock::now();
+    do
+    {
+        schedule_switch();
+    } while (std::chrono::steady_clock::now() - start < sleep_duration);
+}
+
+template <typename Func, typename... Args>
+co::co(Func&& func, Args&&... args)
+{
+    init__(co_ctx_config {}, std::forward<Func>(func), std::forward<Args>(args)...);
+}
+
+template <typename Func, typename... Args>
+co::co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args)
+{
+    co_ctx_config config;
+    for (auto& cb : opts)
+    {
+        cb(config);
+    }
+    init__(config, std::forward<Func>(func), std::forward<Args>(args)...);
+}
+
+template <co_not_void Ret>
+Ret co::wait()
+{
+    CO_O_DEBUG("start wait");
+    return manager__->current_env()->wait_ctx(ctx__);
+}
+
+template <co_is_void Ret>
+Ret co::wait()
+{
+    CO_O_DEBUG("start wait");
+    manager__->current_env()->wait_ctx(ctx__);
+}
+
+template <class Rep, class Period>
+std::optional<co_ret> co::wait(const std::chrono::duration<Rep, Period>& wait_duration)
+{
+    return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
+}

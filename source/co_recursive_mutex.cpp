@@ -1,46 +1,48 @@
-#include "co_mutex.h"
+#include "co_recursive_mutex.h"
 #include "co.h"
-#include "co_define.h"
 #include "co_error.h"
 #include <cassert>
 #include <mutex>
 
-void co_mutex::lock()
+void co_recursive_mutex::lock()
 {
     auto ctx = co::current_ctx();
 
     std::unique_lock<co_spinlock> lck(spinlock__);
-    if (owner__ == nullptr) // 锁处于空闲状态
+    if (owner__ == nullptr || owner__ == ctx)
     {
         owner__ = ctx;
+        ++lock_count__;
         return;
     }
 
-    ctx->set_state(co_state::waitting); // 设置当前状态为等待状态
-    waited_ctx_list__.push_back(ctx);   // 添加到等待队列
+    // 加入等待队列
+    ctx->set_state(co_state::waitting);
+    waited_ctx_list__.push_back(ctx);
 
-    while (owner__ != ctx) // 被唤醒的有可能是idle ctx
+    while (owner__ != ctx)
     {
         lck.unlock();
-        co::schedule_switch(); // 再次切换回来的时候说明已经获得了锁
+        co::schedule_switch();
         lck.lock();
     }
 }
 
-bool co_mutex::try_lock()
+bool co_recursive_mutex::try_lock()
 {
     auto ctx = co::current_ctx();
 
     std::lock_guard<co_spinlock> lck(spinlock__);
-    if (owner__ == nullptr)
+    if (owner__ == nullptr || owner__ == ctx)
     {
         owner__ = ctx;
+        ++lock_count__;
         return true;
     }
     return false;
 }
 
-void co_mutex::unlock()
+void co_recursive_mutex::unlock()
 {
     auto ctx = co::current_ctx();
 
@@ -51,17 +53,22 @@ void co_mutex::unlock()
         throw co_error("ctx is not owner[", ctx, "]");
     }
 
-    // 没有等待ctx，设置拥有者为nullptr
-    if (waited_ctx_list__.empty())
+    --lock_count__;
+    if (lock_count__ != 0) // 还有上层锁
+    {
+        return;
+    }
+
+    if (waited_ctx_list__.empty()) // 没有等待者了
     {
         owner__ = nullptr;
         return;
     }
 
-    // 锁拥有者设置为等待队列中第一个
     auto waked_ctx = waited_ctx_list__.front();
     waited_ctx_list__.pop_front();
     owner__ = waked_ctx;
+    ++lock_count__;
 
     assert(waked_ctx != nullptr);
     // 状态设置为suspend，此状态可调度
