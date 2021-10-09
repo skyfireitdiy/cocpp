@@ -25,7 +25,6 @@ private:
     co_manager* manager__ = nullptr;
 
     co_scheduler* const scheduler__ = nullptr;
-    co_stack* const     shared_stack__;
     co_ctx* const       idle_ctx__;
     co_env_state        state__;
 
@@ -34,7 +33,7 @@ private:
 
     std::mutex mu_schedule__;
 
-    co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_stack* shared_stack, bool create_new_thread);
+    co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, bool create_new_thread);
 
     void        start_schedule_routine__();
     void        remove_detached_ctx__();
@@ -58,7 +57,6 @@ private:
 
 public:
     void                  init_ctx(co_ctx* ctx) override;
-    co_stack*             shared_stack() const override;
     void                  add_ctx(co_ctx* ctx) override;
     std::optional<co_ret> wait_ctx(co_ctx*                         ctx,
                                    const std::chrono::nanoseconds& timeout)

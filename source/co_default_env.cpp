@@ -31,9 +31,8 @@ extern "C" void __switch_to_msvc_x64(co_byte**, co_byte**);
 #endif
 #endif
 
-co_default_env::co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_stack* shared_stack, bool create_new_thread)
+co_default_env::co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, bool create_new_thread)
     : scheduler__(scheduler)
-    , shared_stack__(shared_stack)
     , idle_ctx__(idle_ctx)
     , state__(co_env_state::created)
 {
@@ -50,11 +49,6 @@ co_default_env::co_default_env(co_scheduler* scheduler, co_ctx* idle_ctx, co_sta
         set_flag(CO_ENV_FLAG_COVERTED_ENV);
         current_env__ = this;
     }
-}
-
-co_stack* co_default_env::shared_stack() const
-{
-    return shared_stack__;
 }
 
 void co_default_env::add_ctx(co_ctx* ctx)
