@@ -465,7 +465,7 @@ void co_env::init_ctx(co_ctx* ctx)
 #ifdef __x86_64__
     regs[reg_index_RSP__] = stack->stack_top();
     regs[reg_index_RBP__] = regs[reg_index_RSP__];
-    regs[reg_index_RIP__] = reinterpret_cast<co_byte*>(config.startup);
+    regs[reg_index_RIP__] = reinterpret_cast<co_byte*>(co_entry);
     regs[reg_index_RDI__] = reinterpret_cast<co_byte*>(ctx);
 
     __get_mxcsr_gcc_x64(&regs[reg_index_MXCSR__]);

@@ -2,7 +2,6 @@
 #include "co_define.h"
 #include "co_entry.h"
 #include "co_stack_factory.h"
-#include "co_type.h"
 #include <any>
 #include <functional>
 
@@ -10,7 +9,6 @@ struct co_ctx_config
 {
     std::function<void(std::any&)> entry;                               // 协程执行入口，该入口是被上层调用者使用函数对象或者lambda表达式封装的对象，直接调用
     size_t                         stack_size  = CO_DEFAULT_STACK_SIZE; // 栈大小
-    co_startup_functype            startup     = co_entry;              // 协程真实的入口函数，协程启动时，pc指针将会调到这里
     std::string                    name        = "__unknown__";         // 协程名称
     int                            priority    = 99;                    // 优先级 (0~99，数字越小，优先级约高)
     bool                           share_stack = false;                 // 共享栈
