@@ -64,7 +64,7 @@ void co_env::add_ctx(co_ctx* ctx)
     scheduler__->add_ctx(ctx); // 添加到调度器
     set_state(co_env_state::busy);
 
-    CO_O_DEBUG("add ctx wake up env: %p", this);
+    // CO_O_DEBUG("add ctx wake up env: %p", this);
     wake_up();
 }
 
@@ -88,7 +88,7 @@ co_ret co_env::wait_ctx(co_ctx* ctx)
     while (ctx->state() != co_state::finished)
     {
         schedule_switch();
-        // CO_O_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
+        // // CO_O_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
     }
     return ctx->ret_ref();
 }
@@ -154,7 +154,7 @@ void co_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
     {
         curr->set_state(co_state::suspended);
     }
-    // CO_O_DEBUG("from %p to %p", curr, next);
+    // // CO_O_DEBUG("from %p to %p", curr, next);
     next->set_state(co_state::running);
 }
 
@@ -271,7 +271,7 @@ co_ctx* co_env::idle_ctx() const
 
 void co_env::stop_schedule()
 {
-    CO_O_DEBUG("set env to destorying, %p", this);
+    // CO_O_DEBUG("set env to destorying, %p", this);
     // created 状态说明没有调度线程，不能转为destroying状态
 
     std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
@@ -280,7 +280,7 @@ void co_env::stop_schedule()
         set_state(co_env_state::destorying);
     }
 
-    CO_O_DEBUG("%p : stop schedule wake up idle co", this);
+    // CO_O_DEBUG("%p : stop schedule wake up idle co", this);
     wake_up(); // 唤醒idle的ctx
 }
 
@@ -304,7 +304,7 @@ void co_env::start_schedule_routine__()
 
         // 切回idle之后，睡眠等待
         std::unique_lock<std::recursive_mutex> lock(mu_wake_up_idle__);
-        CO_O_DEBUG("idle co start wait add ctx or destroying ... %p", this);
+        // CO_O_DEBUG("idle co start wait add ctx or destroying ... %p", this);
         if (state() == co_env_state::destorying)
         {
             break;
@@ -315,7 +315,7 @@ void co_env::start_schedule_routine__()
         }
     }
 
-    CO_O_DEBUG("stop schedule, prepare to cleanup");
+    // CO_O_DEBUG("stop schedule, prepare to cleanup");
 
     remove_all_ctx__();
     remove_current_env__();
@@ -350,7 +350,7 @@ void co_env::remove_current_env__()
     if (current_env__ != nullptr)
     {
         assert(manager__ != nullptr);
-        CO_O_DEBUG("add self to clean up list: %p", current_env__);
+        // CO_O_DEBUG("add self to clean up list: %p", current_env__);
         manager__->remove_env(current_env__);
         current_env__ = nullptr;
     }
@@ -411,7 +411,7 @@ bool co_env::can_auto_destroy() const
 void co_env::wake_up()
 {
     std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
-    // CO_O_DEBUG("wake up env: %p", this);
+    // // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
 }
 

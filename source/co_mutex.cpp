@@ -12,12 +12,14 @@ void co_mutex::lock()
     std::unique_lock<co_spinlock> lck(spinlock__);
     if (owner__ == nullptr) // 锁处于空闲状态
     {
+        // CO_O_DEBUG("set owner %p", ctx);
         owner__ = ctx;
         return;
     }
 
     ctx->set_flag(CO_CTX_FLAG_WAITING); // 设置等待标记
-    waited_ctx_list__.push_back(ctx);   // 添加到等待队列
+    // CO_O_DEBUG("add to wait list %p", ctx);
+    waited_ctx_list__.push_back(ctx); // 添加到等待队列
 
     while (owner__ != ctx) // 被唤醒的有可能是idle ctx
     {
@@ -34,6 +36,7 @@ bool co_mutex::try_lock()
     std::lock_guard<co_spinlock> lck(spinlock__);
     if (owner__ == nullptr)
     {
+        // CO_O_DEBUG("set owner %p", ctx);
         owner__ = ctx;
         return true;
     }
@@ -54,6 +57,7 @@ void co_mutex::unlock()
     // 没有等待ctx，设置拥有者为nullptr
     if (waited_ctx_list__.empty())
     {
+        // CO_O_DEBUG("set owner nullptr");
         owner__ = nullptr;
         return;
     }
@@ -61,6 +65,7 @@ void co_mutex::unlock()
     // 锁拥有者设置为等待队列中第一个
     auto waked_ctx = waited_ctx_list__.front();
     waited_ctx_list__.pop_front();
+    // CO_O_DEBUG("set owner %p", waked_ctx);
     owner__ = waked_ctx;
 
     assert(waked_ctx != nullptr);

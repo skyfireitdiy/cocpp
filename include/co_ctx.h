@@ -1,6 +1,7 @@
 #pragma once
 #include "co_ctx.h"
 #include "co_ctx_config.h"
+#include "co_event.h"
 #include "co_flag_manager.h"
 #include "co_stack.h"
 
@@ -14,6 +15,8 @@ class co_env;
 class co_ctx final : public co_nocopy,
                      public co_flag_manager<CO_CTX_FLAG_MAX>
 {
+    RegCoEvent(co_finished, co_ctx*);
+
 private:
     co_stack*             stack__;  // 当前栈空间
     std::atomic<co_state> state__;  // 协程状态

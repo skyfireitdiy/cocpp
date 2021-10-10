@@ -14,6 +14,8 @@
 #include <thread>
 #include <type_traits>
 
+#include "co_event.h"
+
 class co_manager;
 class co_ctx;
 
@@ -25,6 +27,8 @@ concept co_not_void = !std::is_same_v<T, void>;
 
 class co final : public co_nocopy
 {
+    RegCoEvent(co_finished);
+
 private:
     co_ctx*            ctx__;
     static co_manager* manager__;
@@ -91,14 +95,17 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
     else
     {
         config.entry = [this, ... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
-            CO_O_DEBUG("before run");
+            // CO_O_DEBUG("before run");
             ret = std::forward<Func>(func)(std::forward<Args>(args)...);
-            CO_O_DEBUG("after run");
+            // CO_O_DEBUG("after run");
         };
     }
 
     ctx__ = co::manager__->ctx_factory()->create_ctx(config);
-    ctx__->lock_destroy(); // 被co对象持有
+    ctx__->lock_destroy();                                   // 被co对象持有
+    ctx__->co_finished().register_callback([this](co_ctx*) { // 事件转换
+        co_finished().emit();
+    });
     auto env = co::manager__->get_best_env();
     env->add_ctx(ctx__);
 }
@@ -133,14 +140,14 @@ co::co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& f
 template <co_not_void Ret>
 Ret co::wait()
 {
-    CO_O_DEBUG("start wait");
+    // CO_O_DEBUG("start wait");
     return manager__->current_env()->wait_ctx(ctx__);
 }
 
 template <co_is_void Ret>
 Ret co::wait()
 {
-    CO_O_DEBUG("start wait");
+    // CO_O_DEBUG("start wait");
     manager__->current_env()->wait_ctx(ctx__);
 }
 

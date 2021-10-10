@@ -1,3 +1,4 @@
+#include <chrono>
 #include <gtest/gtest.h>
 #include <mutex>
 #define private public
@@ -464,4 +465,37 @@ TEST_F(co_suite, co_condition_variable_notify_all)
     c1.wait<void>();
     c2.wait<void>();
     EXPECT_EQ(n, 35);
+}
+
+TEST_F(co_suite, co_condition_variable_notify_at_co_exit)
+{
+    co_mutex              mu;
+    co_condition_variable cond;
+    int                   n = 100;
+
+    co c1([&] {
+        notify_all_at_co_exit(cond);
+        co::sleep_for(std::chrono::seconds(1));
+        n /= 2;
+    });
+    c1.detach();
+    EXPECT_EQ(n, 100);
+    std::unique_lock<co_mutex> lck(mu);
+    cond.wait(lck);
+    EXPECT_EQ(n, 50);
+}
+
+TEST_F(co_suite, co_finished_event)
+{
+    int n = 100;
+    co  c1([&] {
+        co::sleep_for(std::chrono::milliseconds(100));
+    });
+    c1.detach();
+    EXPECT_EQ(n, 100);
+    c1.co_finished().register_callback([&]() {
+        n /= 2;
+    });
+    co::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_EQ(n, 50);
 }
