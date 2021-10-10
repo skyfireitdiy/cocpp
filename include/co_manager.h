@@ -39,9 +39,7 @@ private:
     std::atomic<unsigned int> max_thread_count__ { std::thread::hardware_concurrency() * 2 };
 
     co_scheduler_factory* const scheduler_factory__ { nullptr };
-    co_stack_factory* const     stack_factory__ { nullptr };
-    co_ctx_factory* const       ctx_factory__ { nullptr };
-    co_env_factory* const       env_factory__ { nullptr };
+    co_env_factory* const       env_factory__ { co_env_factory::instance() };
 
     mutable std::mutex                           mu_timing_duration__;
     std::chrono::high_resolution_clock::duration timing_duration__ { std::chrono::milliseconds(10) };
@@ -58,17 +56,11 @@ private:
     void redistribute_ctx__();
     void destroy_redundant_env__();
 
-    co_manager(co_scheduler_factory* scheduler_factory,
-               co_stack_factory*     stack_factory,
-               co_ctx_factory*       ctx_factory,
-               co_env_factory*       env_factory);
+    co_manager();
 
 public:
     co_env*               get_best_env();
     void                  set_env_shared_stack_size(size_t size);
-    co_env_factory*       env_factory();
-    co_ctx_factory*       ctx_factory();
-    co_stack_factory*     stack_factory();
     co_scheduler_factory* scheduler_factory();
     void                  remove_env(co_env* env);
     void                  create_env_from_this_thread();

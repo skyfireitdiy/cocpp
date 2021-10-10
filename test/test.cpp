@@ -1,9 +1,25 @@
 #if 1
 
+#include "co.h"
+#include "co_o1_scheduler_factory.h"
 #include <gtest/gtest.h>
+
+class CoEnvironment : public testing::Environment
+{
+public:
+    void SetUp() override
+    {
+        co::init_co(co_o1_scheduler_factory::instance());
+    }
+    void TearDown() override
+    {
+        co::uninit_co();
+    }
+};
 
 int main(int argc, char** argv)
 {
+    testing::AddGlobalTestEnvironment(new CoEnvironment);
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

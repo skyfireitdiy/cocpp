@@ -14,7 +14,3 @@ void co_stack_factory::destroy_stack(co_stack* stack)
     // CO_O_DEBUG("destory stack %p", stack);
     delete stack;
 }
-
-void co_stack_factory::set_manager(co_manager* manager)
-{
-}

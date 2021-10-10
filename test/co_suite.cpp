@@ -16,24 +16,7 @@
 #include "co_stack_factory.h"
 #include "co_timed_mutex.h"
 
-class co_suite : public testing::Test
-{
-public:
-    static void SetUpTestCase()
-    {
-        co::init_co(co_manager::instance(co_o1_scheduler_factory::instance(),
-                                         co_stack_factory::instance(),
-                                         co_ctx_factory::instance(),
-                                         co_env_factory::instance()));
-    }
-
-    static void TearDownTestCase()
-    {
-        co::uninit_co();
-    }
-};
-
-TEST_F(co_suite, name)
+TEST(co, name)
 {
     co c1({ with_name("test1") }, [this]() {
         EXPECT_EQ(co::this_co::name(), "test1");
@@ -41,7 +24,7 @@ TEST_F(co_suite, name)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, id)
+TEST(co, id)
 {
     auto f = []() {
         for (int i = 0; i < 10; ++i)
@@ -56,7 +39,7 @@ TEST_F(co_suite, id)
     c2.wait<void>();
 }
 
-TEST_F(co_suite, my_thread)
+TEST(co, my_thread)
 {
     std::thread th([]() {
         printf("new thread: %u\n", gettid());
@@ -71,19 +54,19 @@ TEST_F(co_suite, my_thread)
     th.detach();
 }
 
-TEST_F(co_suite, detach)
+TEST(co, detach)
 {
     co c1([]() {
-        for (int i = 0; i < 10000; ++i)
+        for (int i = 0; i < 100; ++i)
         {
             printf("count %d\n", i);
             co::schedule_switch();
         }
     });
-    c1.wait<void>();
+    c1.detach();
 }
 
-TEST_F(co_suite, ref)
+TEST(co, ref)
 {
     int t = 20;
     co  c1([](int& n) { n += 10; }, std::ref(t));
@@ -91,13 +74,13 @@ TEST_F(co_suite, ref)
     EXPECT_EQ(t, 30);
 }
 
-TEST_F(co_suite, return_value)
+TEST(co, return_value)
 {
     co c1([](int n) { return n + 10; }, 25);
     EXPECT_EQ(c1.wait<int>(), 35);
 }
 
-TEST_F(co_suite, wait_timeout)
+TEST(co, wait_timeout)
 {
     co   c1([]() {
         co::sleep_for(std::chrono::seconds(1));
@@ -109,7 +92,7 @@ TEST_F(co_suite, wait_timeout)
 }
 
 // 两个协程可能运行在不同的线程上，所以此处的优先级不起作用
-// TEST_F(co_suite, priority)
+// TEST(co, priority)
 // {
 //     std::vector<int> arr;
 //     co               c1(
@@ -140,7 +123,7 @@ TEST_F(co_suite, wait_timeout)
 //     EXPECT_EQ(arr, expect);
 // }
 
-TEST_F(co_suite, co_id)
+TEST(co, co_id)
 {
     co_id id;
     co    c1([&id]() {
@@ -150,7 +133,7 @@ TEST_F(co_suite, co_id)
     EXPECT_EQ(c1.id(), id);
 }
 
-TEST_F(co_suite, co_id_name_after_detach)
+TEST(co, co_id_name_after_detach)
 {
     co_id id;
     co    c1([&id]() {
@@ -161,14 +144,14 @@ TEST_F(co_suite, co_id_name_after_detach)
     EXPECT_EQ(c1.name(), "");
 }
 
-TEST_F(co_suite, other_co_name)
+TEST(co, other_co_name)
 {
     co c1({ with_name("zhangsan") }, []() {});
     c1.wait<void>();
     EXPECT_EQ(c1.name(), "zhangsan");
 }
 
-TEST_F(co_suite, co_spinlock_try_lock)
+TEST(co, co_spinlock_try_lock)
 {
     co_spinlock mu;
 
@@ -181,7 +164,7 @@ TEST_F(co_suite, co_spinlock_try_lock)
     EXPECT_FALSE(mu.try_lock());
 }
 
-TEST_F(co_suite, co_spinlock_lock)
+TEST(co, co_spinlock_lock)
 {
     co_spinlock mu;
 
@@ -205,7 +188,7 @@ TEST_F(co_suite, co_spinlock_lock)
     EXPECT_EQ(ret, 0);
 }
 
-TEST_F(co_suite, co_mutex_try_lock)
+TEST(co, co_mutex_try_lock)
 {
     co_mutex mu;
 
@@ -219,7 +202,7 @@ TEST_F(co_suite, co_mutex_try_lock)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_mutex_lock)
+TEST(co, co_mutex_lock)
 {
     co_mutex mu;
 
@@ -263,13 +246,13 @@ TEST_F(co_suite, co_mutex_lock)
     EXPECT_EQ(ret, 0);
 }
 
-TEST_F(co_suite, co_mutex_throw)
+TEST(co, co_mutex_throw)
 {
     co_mutex mu;
     EXPECT_THROW(mu.unlock(), co_error);
 }
 
-TEST_F(co_suite, co_recursive_mutex_lock)
+TEST(co, co_recursive_mutex_lock)
 {
     co_recursive_mutex mu;
     mu.lock();
@@ -280,7 +263,7 @@ TEST_F(co_suite, co_recursive_mutex_lock)
     mu.unlock();
 }
 
-TEST_F(co_suite, co_recursive_mutex_trylock)
+TEST(co, co_recursive_mutex_trylock)
 {
     co_recursive_mutex mu;
     EXPECT_TRUE(mu.try_lock());
@@ -291,7 +274,7 @@ TEST_F(co_suite, co_recursive_mutex_trylock)
     mu.unlock();
 }
 
-TEST_F(co_suite, co_timed_mutex)
+TEST(co, co_timed_mutex)
 {
     co_timed_mutex mu;
     co             c1([&] {
@@ -306,7 +289,7 @@ TEST_F(co_suite, co_timed_mutex)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_shared_mutex_shared_lock)
+TEST(co, co_shared_mutex_shared_lock)
 {
     co_shared_mutex mu;
 
@@ -321,7 +304,7 @@ TEST_F(co_suite, co_shared_mutex_shared_lock)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_shared_mutex_shared_lock_multi)
+TEST(co, co_shared_mutex_shared_lock_multi)
 {
     co_shared_mutex mu;
 
@@ -333,7 +316,7 @@ TEST_F(co_suite, co_shared_mutex_shared_lock_multi)
     mu.unlock_shared();
 }
 
-TEST_F(co_suite, co_shared_mutex_lock)
+TEST(co, co_shared_mutex_lock)
 {
     co_shared_mutex mu;
 
@@ -347,7 +330,7 @@ TEST_F(co_suite, co_shared_mutex_lock)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_shared_mutex_lock2)
+TEST(co, co_shared_mutex_lock2)
 {
     co_shared_mutex mu;
 
@@ -361,7 +344,7 @@ TEST_F(co_suite, co_shared_mutex_lock2)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_shared_mutex_lock3)
+TEST(co, co_shared_mutex_lock3)
 {
     co_shared_mutex mu;
 
@@ -375,7 +358,7 @@ TEST_F(co_suite, co_shared_mutex_lock3)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_shared_timed_mutex1)
+TEST(co, co_shared_timed_mutex1)
 {
     co_shared_timed_mutex mu;
 
@@ -391,7 +374,7 @@ TEST_F(co_suite, co_shared_timed_mutex1)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_shared_timed_mutex2)
+TEST(co, co_shared_timed_mutex2)
 {
     co_shared_timed_mutex mu;
 
@@ -407,7 +390,7 @@ TEST_F(co_suite, co_shared_timed_mutex2)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_shared_timed_mutex3)
+TEST(co, co_shared_timed_mutex3)
 {
     co_shared_timed_mutex mu;
 
@@ -423,7 +406,7 @@ TEST_F(co_suite, co_shared_timed_mutex3)
     c1.wait<void>();
 }
 
-TEST_F(co_suite, co_condition_variable_notify_one)
+TEST(co, co_condition_variable_notify_one)
 {
     co_mutex              mu;
     co_condition_variable cond;
@@ -442,7 +425,7 @@ TEST_F(co_suite, co_condition_variable_notify_one)
     EXPECT_EQ(n, 45);
 }
 
-TEST_F(co_suite, co_condition_variable_notify_all)
+TEST(co, co_condition_variable_notify_all)
 {
     co_mutex              mu;
     co_condition_variable cond;
@@ -467,7 +450,7 @@ TEST_F(co_suite, co_condition_variable_notify_all)
     EXPECT_EQ(n, 35);
 }
 
-TEST_F(co_suite, co_condition_variable_notify_at_co_exit)
+TEST(co, co_condition_variable_notify_at_co_exit)
 {
     co_mutex              mu;
     co_condition_variable cond;
@@ -485,7 +468,7 @@ TEST_F(co_suite, co_condition_variable_notify_at_co_exit)
     EXPECT_EQ(n, 50);
 }
 
-TEST_F(co_suite, co_finished_event)
+TEST(co, co_finished_event)
 {
     int n = 100;
     co  c1([&] {

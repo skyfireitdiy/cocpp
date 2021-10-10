@@ -30,6 +30,7 @@ class co final : public co_nocopy
     RegCoEvent(co_finished);
 
 private:
+    co_ctx_factory*    ctx_factory__ { co_ctx_factory::instance() };
     co_ctx*            ctx__;
     static co_manager* manager__;
 
@@ -44,9 +45,9 @@ public:
         static std::string name(); // 协程名称
     };
 
-    static void init_co(co_manager* manager); // 应该在所有协程功能使用前调用，传入manager对象
-    static void uninit_co();                  // 应该在所有协程功能使用完毕后调用，用于清理资源
-    static void schedule_switch();            // 主动让出cpu
+    static void init_co(co_scheduler_factory* scheduler_factory); // 应该在所有协程功能使用前调用
+    static void uninit_co();                                      // 应该在所有协程功能使用完毕后调用，用于清理资源
+    static void schedule_switch();                                // 主动让出cpu
 
     static void convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
     template <class Rep, class Period>
@@ -101,12 +102,12 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
         };
     }
 
-    ctx__ = co::manager__->ctx_factory()->create_ctx(config);
+    ctx__ = ctx_factory__->create_ctx(config);
     ctx__->lock_destroy();                                   // 被co对象持有
     ctx__->co_finished().register_callback([this](co_ctx*) { // 事件转换
         co_finished().emit();
     });
-    auto env = co::manager__->get_best_env();
+    auto env = manager__->get_best_env();
     env->add_ctx(ctx__);
 }
 

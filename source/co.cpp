@@ -1,13 +1,15 @@
 #include "co.h"
 #include "co_env_factory.h"
+#include "co_stack_factory.h"
 #include <cassert>
 #include <thread>
 
 co_manager* co::manager__ = nullptr;
 
-void co::init_co(co_manager* manager)
+void co::init_co(co_scheduler_factory* scheduler_factory)
 {
-    co::manager__ = manager;
+    manager__ = co_manager::instance();
+    co_env_factory::instance()->set_scheduler_factory(scheduler_factory);
 }
 
 void co::schedule_switch()

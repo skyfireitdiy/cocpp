@@ -60,7 +60,6 @@ co_env* co_manager::create_env__()
 {
     assert(!clean_up__);
     auto env = env_factory__->create_env(default_shared_stack_size__);
-    env->set_manager(this);
 
     std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     env_list__.push_back(env);
@@ -74,40 +73,14 @@ void co_manager::set_env_shared_stack_size(size_t size)
     default_shared_stack_size__ = size;
 }
 
-co_manager::co_manager(co_scheduler_factory* scheduler_factory,
-                       co_stack_factory*     stack_factory,
-                       co_ctx_factory*       ctx_factory,
-                       co_env_factory*       env_factory)
-    : scheduler_factory__(scheduler_factory)
-    , stack_factory__(stack_factory)
-    , ctx_factory__(ctx_factory)
-    , env_factory__(env_factory)
+co_manager::co_manager()
 {
-    scheduler_factory__->set_manager(this);
-    stack_factory__->set_manager(this);
-    env_factory__->set_scheduler_factory(scheduler_factory);
-
     background_task__.emplace_back(std::async([this]() {
         clean_env_routine__();
     }));
     background_task__.emplace_back(std::async([this]() {
         timing_routine__();
     }));
-}
-
-co_env_factory* co_manager::env_factory()
-{
-    return env_factory__;
-}
-
-co_ctx_factory* co_manager::ctx_factory()
-{
-    return ctx_factory__;
-}
-
-co_stack_factory* co_manager::stack_factory()
-{
-    return stack_factory__;
 }
 
 co_scheduler_factory* co_manager::scheduler_factory()
@@ -129,7 +102,6 @@ void co_manager::create_env_from_this_thread()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
-    current_env__->set_manager(this);
     std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     env_list__.push_back(current_env__);
     ++exist_env_count__;

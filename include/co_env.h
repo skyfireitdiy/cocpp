@@ -1,7 +1,9 @@
 #pragma once
 
+#include "co_ctx_factory.h"
 #include "co_define.h"
 #include "co_flag_manager.h"
+#include "co_manager.h"
 #include "co_nocopy.h"
 #include "co_ret.h"
 #include "co_type.h"
@@ -28,7 +30,8 @@ private:
 
     mutable std::shared_mutex mu_state__;
 
-    co_manager* manager__ = nullptr;
+    co_manager*           manager__ { co_manager::instance() };
+    co_ctx_factory* const ctx_factory__ { co_ctx_factory::instance() };
 
     co_scheduler* const scheduler__ = nullptr;
     co_ctx* const       idle_ctx__;
@@ -78,7 +81,6 @@ public:
     void                  stop_schedule();
     void                  start_schedule();
     void                  schedule_in_this_thread();
-    void                  set_manager(co_manager* manager);
     co_manager*           manager() const;
     co_scheduler*         scheduler() const;
     bool                  scheduled() const;

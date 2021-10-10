@@ -128,7 +128,7 @@ void co_env::remove_detached_ctx__()
         if (ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr)
         {
             scheduler__->remove_ctx(ctx);
-            manager__->ctx_factory()->destroy_ctx(ctx);
+            ctx_factory__->destroy_ctx(ctx);
         }
     }
 }
@@ -199,7 +199,7 @@ void co_env::schedule_switch()
 void co_env::remove_ctx(co_ctx* ctx)
 {
     scheduler__->remove_ctx(ctx);
-    manager__->ctx_factory()->destroy_ctx(ctx);
+    ctx_factory__->destroy_ctx(ctx);
 }
 
 void co_env::switch_to__(co_byte** curr, co_byte** next)
@@ -324,11 +324,6 @@ void co_env::start_schedule_routine__()
 void co_env::schedule_in_this_thread()
 {
     start_schedule_routine__();
-}
-
-void co_env::set_manager(co_manager* manager)
-{
-    manager__ = manager;
 }
 
 co_manager* co_env::manager() const

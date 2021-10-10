@@ -8,5 +8,4 @@ class co_scheduler_factory
 public:
     virtual co_scheduler* create_scheduler()                         = 0;
     virtual void          destroy_scheduler(co_scheduler* scheduler) = 0;
-    virtual void          set_manager(co_manager* manager)           = 0; // 设置manager
 };
