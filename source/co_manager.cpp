@@ -2,6 +2,7 @@
 #include "co_ctx_factory.h"
 #include "co_env.h"
 #include "co_env_factory.h"
+#include "co_stack_factory.h"
 #include <cassert>
 #include <cstddef>
 #include <future>
@@ -122,31 +123,25 @@ bool co_manager::clean_up() const
     return clean_up__;
 }
 
-void co_manager::set_clean_up()
+void co_manager::set_clean_up__()
 {
+    std::scoped_lock lock(mu_clean_up__, mu_env_list__);
+    // CO_O_DEBUG("set clean up!!!");
+    clean_up__         = true;
+    auto env_list_back = env_list__; // 在下面的清理操作中需要删除list中的元素导致迭代器失效，此处创建一个副本（也可以直接加入过期列表，然后清空env_list__，但是这样表达力会好些）
+    for (auto& env : env_list_back)
     {
-        std::scoped_lock lock(mu_clean_up__, mu_env_list__);
-        // CO_O_DEBUG("set clean up!!!");
-        clean_up__         = true;
-        auto env_list_back = env_list__; // 在下面的清理操作中需要删除list中的元素导致迭代器失效，此处创建一个副本（也可以直接加入过期列表，然后清空env_list__，但是这样表达力会好些）
-        for (auto& env : env_list_back)
+        if (!env->has_scheduler_thread())
         {
-            if (!env->has_scheduler_thread())
-            {
-                // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
-                remove_env(env);
-                // CO_O_DEBUG("push to clean up: %p", env);
-                continue;
-            }
-            // CO_O_DEBUG("call stop_schedule on %p", env);
-            env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
+            // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
+            remove_env(env);
+            // CO_O_DEBUG("push to clean up: %p", env);
+            continue;
         }
-        cond_expired_env__.notify_one();
+        // CO_O_DEBUG("call stop_schedule on %p", env);
+        env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
     }
-    for (auto& task : background_task__)
-    {
-        task.wait();
-    }
+    cond_expired_env__.notify_one();
 }
 
 void co_manager::clean_env_routine__()
@@ -288,4 +283,18 @@ const std::chrono::high_resolution_clock::duration& co_manager::timing_duration(
 {
     std::lock_guard<std::mutex> lock(mu_timing_duration__);
     return timing_duration__;
+}
+
+co_manager::~co_manager()
+{
+    set_clean_up__();
+    wait_background_task__();
+}
+
+void co_manager::wait_background_task__()
+{
+    for (auto& task : background_task__)
+    {
+        task.wait();
+    }
 }

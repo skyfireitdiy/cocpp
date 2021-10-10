@@ -55,6 +55,8 @@ private:
 
     void redistribute_ctx__();
     void destroy_redundant_env__();
+    void wait_background_task__();
+    void set_clean_up__();
 
     co_manager();
 
@@ -65,13 +67,13 @@ public:
     void                  remove_env(co_env* env);
     void                  create_env_from_this_thread();
     co_env*               current_env();
-    void                  set_clean_up();
     bool                  clean_up() const;
     void                  set_base_schedule_thread_count(size_t base_thread_count);
     void                  set_max_schedule_thread_count(size_t max_thread_count);
     void                  set_timing_duration(
                          const std::chrono::high_resolution_clock::duration& duration);
     const std::chrono::high_resolution_clock::duration& timing_duration() const;
+    ~co_manager();
 
     friend class co_singleton<co_manager>;
 };

@@ -45,9 +45,8 @@ public:
         static std::string name(); // 协程名称
     };
 
-    static void init_co(co_scheduler_factory* scheduler_factory); // 应该在所有协程功能使用前调用
-    static void uninit_co();                                      // 应该在所有协程功能使用完毕后调用，用于清理资源
-    static void schedule_switch();                                // 主动让出cpu
+    static void set_custom_scheduler_factory(co_scheduler_factory* scheduler_factory); // 应该在所有协程功能使用前调用
+    static void yield();                                                               // 主动让出cpu
 
     static void convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
     template <class Rep, class Period>
@@ -117,7 +116,7 @@ void co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 
     auto start = std::chrono::steady_clock::now();
     do
     {
-        schedule_switch();
+        yield();
     } while (std::chrono::steady_clock::now() - start < sleep_duration);
 }
 

@@ -4,22 +4,11 @@
 #include <cassert>
 #include <thread>
 
-co_manager* co::manager__ = nullptr;
+co_manager* co::manager__ = co_manager::instance();
 
-void co::init_co(co_scheduler_factory* scheduler_factory)
+void co::yield()
 {
-    manager__ = co_manager::instance();
-    co_env_factory::instance()->set_scheduler_factory(scheduler_factory);
-}
-
-void co::schedule_switch()
-{
-    co::manager__->current_env()->schedule_switch();
-}
-
-void co::uninit_co()
-{
-    co::manager__->set_clean_up();
+    manager__->current_env()->schedule_switch();
 }
 
 void co::detach()
@@ -28,7 +17,7 @@ void co::detach()
     {
         return;
     }
-    if (co::manager__->clean_up()) // manager已经设置了clean_up，所有的ctx都会被销毁
+    if (manager__->clean_up()) // manager已经设置了clean_up，所有的ctx都会被销毁
     {
         return;
     }
@@ -38,7 +27,7 @@ void co::detach()
 
 co_id co::this_co::id()
 {
-    return reinterpret_cast<co_id>(co::manager__->current_env()->current_ctx());
+    return reinterpret_cast<co_id>(manager__->current_env()->current_ctx());
 }
 
 std::string co::name() const
@@ -52,12 +41,12 @@ std::string co::name() const
 
 std::string co::this_co::name()
 {
-    return co::manager__->current_env()->current_ctx()->config().name;
+    return manager__->current_env()->current_ctx()->config().name;
 }
 
 void co::convert_to_schedule_thread()
 {
-    co::manager__->current_env()->schedule_in_this_thread();
+    manager__->current_env()->schedule_in_this_thread();
 }
 
 co::~co()
@@ -73,4 +62,9 @@ co_id co::id() const
 co_ctx* co::current_ctx()
 {
     return manager__->current_env()->current_ctx();
+}
+
+void co::set_custom_scheduler_factory(co_scheduler_factory* scheduler_factory)
+{
+    co_env_factory::instance()->set_scheduler_factory(scheduler_factory);
 }

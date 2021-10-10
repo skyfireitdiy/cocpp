@@ -33,6 +33,7 @@ task("test_cov")
 on_run(function()
     local exe = "$(buildir)/$(plat)/$(arch)/$(mode)"
     os.exec("lcov -d ./ -z")
+    -- os.exec(exe .. "/test --gtest_shuffle --gtest_repeat=10")
     os.exec(exe .. "/test --gtest_shuffle")
     os.exec("lcov -c -d ./ -o cover.info")
     os.exec(
