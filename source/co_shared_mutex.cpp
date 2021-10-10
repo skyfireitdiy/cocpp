@@ -21,7 +21,7 @@ void co_shared_mutex::lock()
         return;
     }
 
-    ctx->set_state(co_state::waitting);
+    ctx->set_flag(CO_CTX_FLAG_WAITING);
     wait_list__.push_back(context);
 
     while (owners__.empty() || owners__.front().ctx != ctx || owners__.front().type != lock_type::unique)
@@ -77,7 +77,7 @@ void co_shared_mutex::wake_up_owners__()
 {
     for (auto& c : owners__)
     {
-        c.ctx->set_state(co_state::suspended);
+        c.ctx->reset_flag(CO_CTX_FLAG_WAITING);
         c.ctx->env()->wake_up();
     }
 }
@@ -127,7 +127,7 @@ void co_shared_mutex::lock_shared()
         return;
     }
 
-    ctx->set_state(co_state::waitting);
+    ctx->set_flag(CO_CTX_FLAG_WAITING);
     wait_list__.push_back(context);
 
     reader_wait__(ctx, lck);

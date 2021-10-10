@@ -14,8 +14,7 @@
 class co_manager;
 class co_scheduler;
 
-class co_default_env final : public co_env,
-                             public co_flag_manager<CO_ENV_FLAG_MAX_VALUE>
+class co_default_env final : public co_env
 {
 private:
     std::future<void> worker__;

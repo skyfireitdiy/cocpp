@@ -99,6 +99,5 @@ bool co_o1_scheduler::can_schedule() const
 
 bool co_o1_scheduler::ctx_can_schedule__(co_ctx* ctx)
 {
-    auto state = ctx->state();
-    return state != co_state::finished && state != co_state::waitting;
+    return ctx->state() != co_state::finished && !ctx->test_flag(CO_CTX_FLAG_WAITING);
 }

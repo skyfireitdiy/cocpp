@@ -2,6 +2,7 @@
 #include <mutex>
 #define private public
 #include "co.h"
+#include "co_condition_variable.h"
 #include "co_default_ctx_factory.h"
 #include "co_default_env_factory.h"
 #include "co_default_manager.h"
@@ -419,4 +420,48 @@ TEST_F(co_suite, co_shared_timed_mutex3)
     EXPECT_TRUE(mu.try_lock_shared_for(std::chrono::milliseconds(800)));
     mu.unlock_shared();
     c1.wait<void>();
+}
+
+TEST_F(co_suite, co_condition_variable_notify_one)
+{
+    co_mutex              mu;
+    co_condition_variable cond;
+    int                   n = 100;
+
+    co c1([&] {
+        std::unique_lock<co_mutex> lck(mu);
+        cond.wait(lck);
+        n -= 5;
+    });
+    n /= 2;
+    co::sleep_for(std::chrono::seconds(1));
+    EXPECT_EQ(n, 50);
+    cond.notify_one();
+    c1.wait<void>();
+    EXPECT_EQ(n, 45);
+}
+
+TEST_F(co_suite, co_condition_variable_notify_all)
+{
+    co_mutex              mu;
+    co_condition_variable cond;
+    int                   n = 100;
+
+    co c1([&] {
+        std::unique_lock<co_mutex> lck(mu);
+        cond.wait(lck);
+        n -= 5;
+    });
+    co c2([&] {
+        std::unique_lock<co_mutex> lck(mu);
+        cond.wait(lck);
+        n -= 10;
+    });
+    n /= 2;
+    co::sleep_for(std::chrono::seconds(1));
+    EXPECT_EQ(n, 50);
+    cond.notify_all();
+    c1.wait<void>();
+    c2.wait<void>();
+    EXPECT_EQ(n, 35);
 }

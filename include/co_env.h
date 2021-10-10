@@ -14,7 +14,8 @@
 class co_manager;
 class co_scheduler;
 
-class co_env : public co_nocopy
+class co_env : public co_nocopy,
+               public co_flag_manager<CO_ENV_FLAG_MAX_VALUE>
 {
 public:
     virtual void                  init_ctx(co_ctx* ctx) = 0; // 初始化ctx

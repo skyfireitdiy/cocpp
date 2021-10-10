@@ -147,9 +147,7 @@ co_ctx* co_default_env::next_ctx__()
 void co_default_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
 {
     // 如果当前运行的ctx已经完成，状态不变
-    // 当前处于watting状态切换出去，状态不变
-    auto state = curr->state();
-    if (state != co_state::finished && state != co_state::waitting)
+    if (curr->state() != co_state::finished)
     {
         curr->set_state(co_state::suspended);
     }

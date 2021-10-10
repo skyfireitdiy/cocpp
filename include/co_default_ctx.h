@@ -9,8 +9,7 @@
 #include <bitset>
 #include <mutex>
 
-class co_default_ctx final : public co_ctx,
-                             public co_flag_manager<CO_CTX_FLAG_MAX>
+class co_default_ctx final : public co_ctx
 {
 private:
     co_stack*             stack__;  // 当前栈空间

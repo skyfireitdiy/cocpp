@@ -8,7 +8,7 @@
 constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
 
 // 协程flag
-constexpr int CO_CTX_FLAG_WAITING = 0; // 被等待
+constexpr int CO_CTX_FLAG_WAITING = 0; // 等待
 constexpr int CO_CTX_FLAG_LOCKED  = 1; // 被co对象持有，暂时不能销毁
 constexpr int CO_CTX_FLAG_MAX     = 8;
 

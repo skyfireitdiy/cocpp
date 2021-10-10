@@ -16,7 +16,7 @@ void co_mutex::lock()
         return;
     }
 
-    ctx->set_state(co_state::waitting); // 设置当前状态为等待状态
+    ctx->set_flag(CO_CTX_FLAG_WAITING); // 设置等待标记
     waited_ctx_list__.push_back(ctx);   // 添加到等待队列
 
     while (owner__ != ctx) // 被唤醒的有可能是idle ctx
@@ -65,7 +65,7 @@ void co_mutex::unlock()
 
     assert(waked_ctx != nullptr);
     // 状态设置为suspend，此状态可调度
-    waked_ctx->set_state(co_state::suspended);
+    waked_ctx->reset_flag(CO_CTX_FLAG_WAITING);
     // 唤醒对应的env
     waked_ctx->env()->wake_up();
 }

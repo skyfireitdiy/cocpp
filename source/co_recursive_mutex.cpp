@@ -17,7 +17,7 @@ void co_recursive_mutex::lock()
     }
 
     // 加入等待队列
-    ctx->set_state(co_state::waitting);
+    ctx->set_flag(CO_CTX_FLAG_WAITING);
     waited_ctx_list__.push_back(ctx);
 
     while (owner__ != ctx)
@@ -72,7 +72,7 @@ void co_recursive_mutex::unlock()
 
     assert(waked_ctx != nullptr);
     // 状态设置为suspend，此状态可调度
-    waked_ctx->set_state(co_state::suspended);
+    waked_ctx->reset_flag(CO_CTX_FLAG_WAITING);
     // 唤醒对应的env
     waked_ctx->env()->wake_up();
 }

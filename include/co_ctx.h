@@ -1,6 +1,7 @@
 #pragma once
 
 #include "co_ctx_config.h"
+#include "co_flag_manager.h"
 #include "co_nocopy.h"
 #include "co_stack.h"
 #include "co_type.h"
@@ -8,7 +9,8 @@
 class co_env;
 
 // 协程上下文
-class co_ctx : public co_nocopy
+class co_ctx : public co_nocopy,
+               public co_flag_manager<CO_CTX_FLAG_MAX>
 {
 public:
     virtual co_stack*            stack() const              = 0; // 获取协程栈
