@@ -25,7 +25,6 @@ struct co_ctx_config
 // 以下注释的两项配置由实现自动生成，不需要用户配置，所以将配置接口注释掉
 // CO_GEN_CTX_CONFIG_OPTION(std::function<void(std::any&)>, entry)
 CO_GEN_CTX_CONFIG_OPTION(size_t, stack_size)
-// CO_GEN_CTX_CONFIG_OPTION(co_startup_functype, startup)
 CO_GEN_CTX_CONFIG_OPTION(std::string, name)
 CO_GEN_CTX_CONFIG_OPTION(int, priority)
 CO_GEN_CTX_CONFIG_OPTION(bool, share_stack)
