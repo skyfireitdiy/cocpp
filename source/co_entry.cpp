@@ -1,12 +1,12 @@
-#include "co_default_entry.h"
 #include "co_ctx.h"
 #include "co_define.h"
+#include "co_entry.h"
 #include "co_env.h"
 #include <any>
 #include <cassert>
 #include <functional>
 
-void co_default_entry(co_ctx* ctx)
+void co_entry(co_ctx* ctx)
 {
     ctx->config().entry(ctx->ret_ref());
     CO_DEBUG("ctx %s %p finished", ctx->config().name.c_str(), ctx);

@@ -1,17 +1,21 @@
 #pragma once
-
+#include "co_define.h"
 #include "co_nocopy.h"
 #include "co_type.h"
 
-#include <cstddef>
-
-// 栈
-class co_stack : public co_nocopy
+class co_stack final : public co_nocopy
 {
-public:
-    virtual size_t   stack_size() const = 0; // 栈大小
-    virtual co_byte* stack() const      = 0; // 栈内存（低地址）
-    virtual co_byte* stack_top() const  = 0; // 栈内存（高地址）
+    co_byte* raw_mem__;
+    co_byte* stack__;
+    size_t   size__;
 
-    virtual ~co_stack() = default;
+    co_stack(size_t stack_size = CO_DEFAULT_STACK_SIZE);
+
+public:
+    size_t   stack_size() const;
+    co_byte* stack() const;
+    co_byte* stack_top() const;
+    ~co_stack();
+
+    friend class co_stack_factory;
 };

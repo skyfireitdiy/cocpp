@@ -1,9 +1,9 @@
-#include "co_default_stack.h"
+#include "co_stack.h"
 
 #include <cassert>
 #include <cstdlib>
 
-co_default_stack::co_default_stack(size_t stack_size)
+co_stack::co_stack(size_t stack_size)
     : size__(stack_size)
 {
     assert(size__ % sizeof(void*) == 0);
@@ -18,22 +18,22 @@ co_default_stack::co_default_stack(size_t stack_size)
     CO_O_DEBUG("malloc raw_mem__ = %p", raw_mem__);
 }
 
-size_t co_default_stack::stack_size() const
+size_t co_stack::stack_size() const
 {
     return size__;
 }
 
-co_byte* co_default_stack::stack() const
+co_byte* co_stack::stack() const
 {
     return stack__;
 }
 
-co_byte* co_default_stack::stack_top() const
+co_byte* co_stack::stack_top() const
 {
     return stack__ + size__;
 }
 
-co_default_stack::~co_default_stack()
+co_stack::~co_stack()
 {
     CO_O_DEBUG("free raw_mem__ = %p", raw_mem__);
     free(raw_mem__);

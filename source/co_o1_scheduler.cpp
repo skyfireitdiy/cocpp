@@ -1,7 +1,7 @@
 #include "co_o1_scheduler.h"
 #include "co_ctx.h"
-#include "co_default_entry.h"
 #include "co_define.h"
+#include "co_entry.h"
 #include <cassert>
 #include <mutex>
 

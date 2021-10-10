@@ -3,16 +3,16 @@
 #define private public
 #include "co.h"
 #include "co_condition_variable.h"
-#include "co_default_ctx_factory.h"
-#include "co_default_env_factory.h"
-#include "co_default_manager.h"
-#include "co_default_stack_factory.h"
+#include "co_ctx_factory.h"
+#include "co_env_factory.h"
 #include "co_error.h"
+#include "co_manager.h"
 #include "co_mutex.h"
 #include "co_o1_scheduler_factory.h"
 #include "co_recursive_mutex.h"
 #include "co_shared_mutex.h"
 #include "co_shared_timed_mutex.h"
+#include "co_stack_factory.h"
 #include "co_timed_mutex.h"
 
 class co_suite : public testing::Test
@@ -20,10 +20,10 @@ class co_suite : public testing::Test
 public:
     static void SetUpTestCase()
     {
-        co::init_co(co_default_manager::instance(co_o1_scheduler_factory::instance(),
-                                                 co_default_stack_factory::instance(),
-                                                 co_default_ctx_factory::instance(),
-                                                 co_default_env_factory::instance()));
+        co::init_co(co_manager::instance(co_o1_scheduler_factory::instance(),
+                                         co_stack_factory::instance(),
+                                         co_ctx_factory::instance(),
+                                         co_env_factory::instance()));
     }
 
     static void TearDownTestCase()

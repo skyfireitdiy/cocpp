@@ -1,13 +1,13 @@
-#include "co_default_manager.h"
 #include "co_ctx_factory.h"
 #include "co_env.h"
 #include "co_env_factory.h"
+#include "co_manager.h"
 #include <cassert>
 #include <cstddef>
 #include <future>
 #include <mutex>
 
-co_env* co_default_manager::get_best_env()
+co_env* co_manager::get_best_env()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     if (env_list__.empty())
@@ -50,13 +50,13 @@ co_env* co_default_manager::get_best_env()
     return env;
 }
 
-bool co_default_manager::can_schedule_ctx__(co_env* env) const
+bool co_manager::can_schedule_ctx__(co_env* env) const
 {
     auto state = env->state();
     return !(state == co_env_state::blocked || state == co_env_state::destorying || !env->has_scheduler_thread());
 }
 
-co_env* co_default_manager::create_env__()
+co_env* co_manager::create_env__()
 {
     assert(!clean_up__);
     auto env = env_factory__->create_env(default_shared_stack_size__);
@@ -69,15 +69,15 @@ co_env* co_default_manager::create_env__()
     return env;
 }
 
-void co_default_manager::set_env_shared_stack_size(size_t size)
+void co_manager::set_env_shared_stack_size(size_t size)
 {
     default_shared_stack_size__ = size;
 }
 
-co_default_manager::co_default_manager(co_scheduler_factory* scheduler_factory,
-                                       co_stack_factory*     stack_factory,
-                                       co_ctx_factory*       ctx_factory,
-                                       co_env_factory*       env_factory)
+co_manager::co_manager(co_scheduler_factory* scheduler_factory,
+                       co_stack_factory*     stack_factory,
+                       co_ctx_factory*       ctx_factory,
+                       co_env_factory*       env_factory)
     : scheduler_factory__(scheduler_factory)
     , stack_factory__(stack_factory)
     , ctx_factory__(ctx_factory)
@@ -96,27 +96,27 @@ co_default_manager::co_default_manager(co_scheduler_factory* scheduler_factory,
     }));
 }
 
-co_env_factory* co_default_manager::env_factory()
+co_env_factory* co_manager::env_factory()
 {
     return env_factory__;
 }
 
-co_ctx_factory* co_default_manager::ctx_factory()
+co_ctx_factory* co_manager::ctx_factory()
 {
     return ctx_factory__;
 }
 
-co_stack_factory* co_default_manager::stack_factory()
+co_stack_factory* co_manager::stack_factory()
 {
     return stack_factory__;
 }
 
-co_scheduler_factory* co_default_manager::scheduler_factory()
+co_scheduler_factory* co_manager::scheduler_factory()
 {
     return scheduler_factory__;
 }
 
-void co_default_manager::remove_env(co_env* env)
+void co_manager::remove_env(co_env* env)
 {
     std::scoped_lock lock(mu_env_list__, mu_clean_up__);
     env_list__.remove(env);
@@ -126,7 +126,7 @@ void co_default_manager::remove_env(co_env* env)
     cond_expired_env__.notify_one();
 }
 
-void co_default_manager::create_env_from_this_thread()
+void co_manager::create_env_from_this_thread()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
@@ -137,7 +137,7 @@ void co_default_manager::create_env_from_this_thread()
     CO_O_DEBUG("create env from this thread : %p", current_env__);
 }
 
-co_env* co_default_manager::current_env()
+co_env* co_manager::current_env()
 {
     if (current_env__ == nullptr)
     {
@@ -146,12 +146,12 @@ co_env* co_default_manager::current_env()
     return current_env__;
 }
 
-bool co_default_manager::clean_up() const
+bool co_manager::clean_up() const
 {
     return clean_up__;
 }
 
-void co_default_manager::set_clean_up()
+void co_manager::set_clean_up()
 {
     {
         std::scoped_lock lock(mu_clean_up__, mu_env_list__);
@@ -178,7 +178,7 @@ void co_default_manager::set_clean_up()
     }
 }
 
-void co_default_manager::clean_env_routine__()
+void co_manager::clean_env_routine__()
 {
     std::unique_lock<std::recursive_mutex> lck(mu_clean_up__);
     while (!clean_up__ || exist_env_count__ != 0)
@@ -197,7 +197,7 @@ void co_default_manager::clean_env_routine__()
     CO_O_DEBUG("clean up env finished\n");
 }
 
-void co_default_manager::set_base_schedule_thread_count(size_t base_thread_count)
+void co_manager::set_base_schedule_thread_count(size_t base_thread_count)
 {
     if (base_thread_count == 0)
     {
@@ -205,7 +205,7 @@ void co_default_manager::set_base_schedule_thread_count(size_t base_thread_count
     }
     base_thread_count__ = base_thread_count;
 }
-void co_default_manager::set_max_schedule_thread_count(size_t max_thread_count)
+void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
 {
     if (max_thread_count == 0)
     {
@@ -214,7 +214,7 @@ void co_default_manager::set_max_schedule_thread_count(size_t max_thread_count)
     max_thread_count__ = max_thread_count;
 }
 
-void co_default_manager::redistribute_ctx__()
+void co_manager::redistribute_ctx__()
 {
     // 此处也需要锁定mu_env_list__，上层锁定
     std::lock_guard<std::recursive_mutex> lock(mu_clean_up__);
@@ -254,7 +254,7 @@ void co_default_manager::redistribute_ctx__()
     }
 }
 
-void co_default_manager::destroy_redundant_env__()
+void co_manager::destroy_redundant_env__()
 {
     std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     // 然后删除多余的处于idle状态的env
@@ -283,7 +283,7 @@ void co_default_manager::destroy_redundant_env__()
     }
 }
 
-void co_default_manager::timing_routine__()
+void co_manager::timing_routine__()
 {
     while (!clean_up__)
     {
@@ -293,13 +293,13 @@ void co_default_manager::timing_routine__()
     }
 }
 
-bool co_default_manager::is_blocked__(co_env* env) const
+bool co_manager::is_blocked__(co_env* env) const
 {
     auto state = env->state();
     return state != co_env_state::idle && state != co_env_state::created && !env->scheduled();
 }
 
-void co_default_manager::set_timing_duration(
+void co_manager::set_timing_duration(
     const std::chrono::high_resolution_clock::duration& duration)
 {
     std::lock_guard<std::mutex> lock(mu_timing_duration__);
@@ -313,7 +313,7 @@ void co_default_manager::set_timing_duration(
     }
 }
 
-const std::chrono::high_resolution_clock::duration& co_default_manager::timing_duration() const
+const std::chrono::high_resolution_clock::duration& co_manager::timing_duration() const
 {
     std::lock_guard<std::mutex> lock(mu_timing_duration__);
     return timing_duration__;

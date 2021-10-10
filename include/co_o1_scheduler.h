@@ -1,7 +1,7 @@
 #pragma once
 
-#include "co_default_entry.h"
 #include "co_define.h"
+#include "co_entry.h"
 #include "co_scheduler.h"
 
 #include <list>

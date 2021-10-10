@@ -1,16 +1,16 @@
 #pragma once
+#include "co_nocopy.h"
+#include "co_singleton.h"
 
-#include "co_stack.h"
+#include <cstddef>
 
+class co_stack;
 class co_manager;
 
-// stack工厂
-class co_stack_factory
+class co_stack_factory final : public co_singleton<co_stack_factory>
 {
 public:
-    virtual co_stack* create_stack(size_t size)        = 0; // 根据大小创建栈空间
-    virtual void      destroy_stack(co_stack* stack)   = 0; // 销毁栈空间
-    virtual void      set_manager(co_manager* manager) = 0; // 设置manager
-
-    virtual ~co_stack_factory() = default;
+    co_stack* create_stack(size_t size);
+    void      destroy_stack(co_stack* stack);
+    void      set_manager(co_manager* manager);
 };
