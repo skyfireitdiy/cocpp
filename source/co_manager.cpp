@@ -85,7 +85,6 @@ co_manager::co_manager(co_scheduler_factory* scheduler_factory,
 {
     scheduler_factory__->set_manager(this);
     stack_factory__->set_manager(this);
-    ctx_factory__->set_manager(this);
     env_factory__->set_manager(this);
 
     background_task__.emplace_back(std::async([this]() {
