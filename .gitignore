@@ -10,3 +10,4 @@ cover_report
 final.info
 compile_commands.json
 vgcore*
+.vscode
