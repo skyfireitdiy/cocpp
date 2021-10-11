@@ -10,6 +10,8 @@
 #include <bitset>
 #include <mutex>
 
+CO_NAMESPACE_BEGIN
+
 class co_env;
 
 class co_ctx final : public co_nocopy,
@@ -99,3 +101,5 @@ public:
     friend void co_entry(co_ctx* ctx);
     friend class co_ctx_factory;
 };
+
+CO_NAMESPACE_END

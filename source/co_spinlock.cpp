@@ -2,6 +2,8 @@
 
 #include "co.h"
 
+CO_NAMESPACE_BEGIN
+
 void co_spinlock::lock()
 {
     bool lock = false;
@@ -27,3 +29,5 @@ bool co_spinlock::try_lock()
     bool lock = false;
     return locked__.compare_exchange_strong(lock, true);
 }
+
+CO_NAMESPACE_END

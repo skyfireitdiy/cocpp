@@ -1,5 +1,9 @@
 #pragma once
 
+#include "co_define.h"
+
+CO_NAMESPACE_BEGIN
+
 class co_ctx;
 
 using co_byte = unsigned char;
@@ -21,3 +25,5 @@ enum class co_env_state : unsigned char
     destorying, // 正在销毁状态，不再调度ctx
     created,    // 创建完成状态，此env不能用于调度ctx，通常是普通线程适配产生的env
 };
+
+CO_NAMESPACE_END

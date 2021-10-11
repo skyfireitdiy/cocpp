@@ -5,6 +5,8 @@
 
 #include <cassert>
 
+CO_NAMESPACE_BEGIN
+
 co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config)
 {
     auto ret = new co_ctx(co_stack_factory::instance()->create_stack(config.stack_size), config);
@@ -21,3 +23,5 @@ void co_ctx_factory::destroy_ctx(co_ctx* ctx)
     delete ctx;
     co_stack_factory::instance()->destroy_stack(stack);
 }
+
+CO_NAMESPACE_END

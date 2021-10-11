@@ -1,7 +1,10 @@
 #pragma once
+#include "co_define.h"
 #include "co_nocopy.h"
 #include <atomic>
 #include <utility>
+
+CO_NAMESPACE_BEGIN
 
 class co_once_flag : public co_nocopy
 {
@@ -18,3 +21,5 @@ void co_call_once(co_once_flag& flag, Callable&& f, Args&&... args)
         std::forward<Callable>(f)(std::forward<Args>(args)...);
     }
 }
+
+CO_NAMESPACE_END

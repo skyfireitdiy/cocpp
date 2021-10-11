@@ -1,7 +1,11 @@
 #pragma once
 
+#include "co_define.h"
+
 #include <bitset>
 #include <mutex>
+
+CO_NAMESPACE_BEGIN
 
 template <size_t MAX_FLAG_COUNT>
 class co_flag_manager
@@ -27,3 +31,5 @@ public:
         return flags__.test(flag);
     }
 };
+
+CO_NAMESPACE_END

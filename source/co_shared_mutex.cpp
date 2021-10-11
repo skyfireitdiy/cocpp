@@ -5,6 +5,8 @@
 #include <cassert>
 #include <mutex>
 
+CO_NAMESPACE_BEGIN
+
 void co_shared_mutex::lock()
 {
     auto ctx = co::current_ctx();
@@ -236,3 +238,5 @@ void co_shared_mutex::select_competitors_to_wake_up__()
         select_all_reader_to_wake_up__();
     }
 }
+
+CO_NAMESPACE_END

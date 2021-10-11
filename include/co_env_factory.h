@@ -5,6 +5,8 @@
 #include "co_singleton.h"
 #include "co_stack_factory.h"
 
+CO_NAMESPACE_BEGIN
+
 class co_scheduler;
 class co_stack_factory;
 class co_scheduler_factory;
@@ -22,3 +24,5 @@ public:
     void    destroy_env(co_env* env);
     void    set_scheduler_factory(co_scheduler_factory* scheduler_factory);
 };
+
+CO_NAMESPACE_END

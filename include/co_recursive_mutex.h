@@ -1,7 +1,10 @@
 #pragma once
 
+#include "co_define.h"
 #include "co_nocopy.h"
 #include "co_spinlock.h"
+
+CO_NAMESPACE_BEGIN
 
 class co_ctx;
 
@@ -17,3 +20,5 @@ public:
     void unlock();
     bool try_lock();
 };
+
+CO_NAMESPACE_END

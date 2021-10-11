@@ -3,6 +3,8 @@
 #include "co_nocopy.h"
 #include "co_type.h"
 
+CO_NAMESPACE_BEGIN
+
 class co_stack final : public co_nocopy
 {
     co_byte* raw_mem__;
@@ -19,3 +21,5 @@ public:
 
     friend class co_stack_factory;
 };
+
+CO_NAMESPACE_END

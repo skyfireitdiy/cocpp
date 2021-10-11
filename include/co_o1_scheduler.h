@@ -8,6 +8,8 @@
 #include <mutex>
 #include <vector>
 
+CO_NAMESPACE_BEGIN
+
 class co_o1_scheduler : public co_scheduler
 {
 private:
@@ -30,3 +32,5 @@ public:
 
     friend class co_o1_scheduler_factory;
 };
+
+CO_NAMESPACE_END

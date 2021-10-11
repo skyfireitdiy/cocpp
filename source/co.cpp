@@ -4,6 +4,8 @@
 #include <cassert>
 #include <thread>
 
+CO_NAMESPACE_BEGIN
+
 co_manager* co::manager__ = co_manager::instance();
 
 void this_co::yield()
@@ -73,3 +75,5 @@ co_env* co::current_env()
 {
     return manager__->current_env();
 }
+
+CO_NAMESPACE_END

@@ -5,6 +5,8 @@
 #include <cassert>
 #include <mutex>
 
+CO_NAMESPACE_BEGIN
+
 co_o1_scheduler::co_o1_scheduler()
     : all_ctx__(CO_MAX_PRIORITY)
 {
@@ -101,3 +103,5 @@ bool co_o1_scheduler::ctx_can_schedule__(co_ctx* ctx)
 {
     return ctx->state() != co_state::finished && !ctx->test_flag(CO_CTX_FLAG_WAITING);
 }
+
+CO_NAMESPACE_END

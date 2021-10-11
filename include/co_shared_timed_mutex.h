@@ -3,7 +3,10 @@
 #include <chrono>
 
 #include "co.h"
+#include "co_define.h"
 #include "co_timed_addition.h"
+
+CO_NAMESPACE_BEGIN
 
 class co_shared_timed_mutex : public co_timed_addition<co_shared_mutex>
 {
@@ -34,3 +37,5 @@ bool co_shared_timed_mutex::try_lock_shared_until(const std::chrono::time_point<
 {
     return try_lock_shared_for(timeout_time - std::chrono::steady_clock::now());
 }
+
+CO_NAMESPACE_END

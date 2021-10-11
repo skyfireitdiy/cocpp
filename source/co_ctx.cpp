@@ -2,6 +2,8 @@
 #include "co_define.h"
 #include <cassert>
 
+CO_NAMESPACE_BEGIN
+
 co_stack* co_ctx::stack() const
 {
     return stack__;
@@ -86,3 +88,5 @@ void co_ctx::unlock_destroy()
 {
     reset_flag(CO_CTX_FLAG_LOCKED);
 }
+
+CO_NAMESPACE_END

@@ -8,6 +8,8 @@
 #include <future>
 #include <mutex>
 
+CO_NAMESPACE_BEGIN
+
 co_env* co_manager::get_best_env()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
@@ -298,3 +300,5 @@ void co_manager::wait_background_task__()
         task.wait();
     }
 }
+
+CO_NAMESPACE_END

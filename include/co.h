@@ -7,7 +7,7 @@
 #include "co_env.h"
 #include "co_manager.h"
 #include "co_nocopy.h"
-#include "co_ret.h"
+#include "co_return_value.h"
 #include <chrono>
 #include <initializer_list>
 #include <optional>
@@ -15,6 +15,8 @@
 #include <type_traits>
 
 #include "co_event.h"
+
+CO_NAMESPACE_BEGIN
 
 class co_manager;
 class co_ctx;
@@ -65,7 +67,7 @@ public:
 
     // 等待指定时间
     template <class Rep, class Period>
-    std::optional<co_ret> wait(const std::chrono::duration<Rep, Period>& wait_duration);
+    std::optional<co_return_value> wait(const std::chrono::duration<Rep, Period>& wait_duration);
 
     // 分离协程，之后此协程就不再受到co对象的管理了
     void detach();
@@ -151,7 +153,9 @@ Ret co::wait()
 }
 
 template <class Rep, class Period>
-std::optional<co_ret> co::wait(const std::chrono::duration<Rep, Period>& wait_duration)
+std::optional<co_return_value> co::wait(const std::chrono::duration<Rep, Period>& wait_duration)
 {
     return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
 }
+
+CO_NAMESPACE_END

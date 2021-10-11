@@ -18,6 +18,8 @@
 #include "co_stack_factory.h"
 #include "co_timed_mutex.h"
 
+using namespace cocpp;
+
 TEST(co, name)
 {
     co c1({ with_name("test1") }, [this]() {

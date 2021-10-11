@@ -4,6 +4,8 @@
 #include <cassert>
 #include <mutex>
 
+CO_NAMESPACE_BEGIN
+
 void co_recursive_mutex::lock()
 {
     auto ctx = co::current_ctx();
@@ -76,3 +78,5 @@ void co_recursive_mutex::unlock()
     // 唤醒对应的env
     waked_ctx->env()->wake_up();
 }
+
+CO_NAMESPACE_END

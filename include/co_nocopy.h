@@ -1,5 +1,7 @@
 #pragma once
+#include "co_define.h"
 
+CO_NAMESPACE_BEGIN
 class co_nocopy
 {
 private:
@@ -12,3 +14,5 @@ public:
     co_nocopy()  = default;
     ~co_nocopy() = default;
 };
+
+CO_NAMESPACE_END

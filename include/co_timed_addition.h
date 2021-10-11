@@ -3,6 +3,9 @@
 #include <chrono>
 
 #include "co.h"
+#include "co_define.h"
+
+CO_NAMESPACE_BEGIN
 
 template <class Lock>
 class co_timed_addition : public Lock
@@ -36,3 +39,5 @@ bool co_timed_addition<Lock>::try_lock_until(const std::chrono::time_point<Clock
 {
     return try_lock_for(timeout_time - std::chrono::steady_clock::now());
 }
+
+CO_NAMESPACE_END

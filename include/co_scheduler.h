@@ -2,7 +2,10 @@
 
 #include <list>
 
+#include "co_define.h"
 #include "co_nocopy.h"
+
+CO_NAMESPACE_BEGIN
 
 class co_ctx;
 
@@ -19,3 +22,5 @@ public:
 
     virtual ~co_scheduler() = default;
 };
+
+CO_NAMESPACE_END

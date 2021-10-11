@@ -4,6 +4,14 @@
 
 #include <unistd.h>
 
+#define CO_NAMESPACE cocpp
+#define CO_NAMESPACE_BEGIN \
+    namespace CO_NAMESPACE \
+    {
+
+#define CO_NAMESPACE_END }
+
+CO_NAMESPACE_BEGIN
 // 默认栈大小
 constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
 
@@ -20,6 +28,8 @@ constexpr int CO_ENV_FLAG_MAX_VALUE      = 8;
 // 协程优先级
 constexpr int CO_IDLE_CTX_PRIORITY = 99;
 constexpr int CO_MAX_PRIORITY      = 100;
+
+CO_NAMESPACE_END
 
 // 调试宏
 #define CO_OUTPUT(level, fmt, ...)                              \

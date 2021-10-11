@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cstdlib>
 
+CO_NAMESPACE_BEGIN
+
 co_stack::co_stack(size_t stack_size)
     : size__(stack_size)
 {
@@ -38,3 +40,5 @@ co_stack::~co_stack()
     // CO_O_DEBUG("free raw_mem__ = %p", raw_mem__);
     free(raw_mem__);
 }
+
+CO_NAMESPACE_END

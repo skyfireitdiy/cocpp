@@ -3,8 +3,11 @@
 #include <list>
 #include <mutex>
 
+#include "co_define.h"
 #include "co_nocopy.h"
 #include "co_spinlock.h"
+
+CO_NAMESPACE_BEGIN
 
 class co_ctx* ctx;
 
@@ -42,3 +45,5 @@ public:
     void unlock_shared();
     bool try_lock_shared();
 };
+
+CO_NAMESPACE_END

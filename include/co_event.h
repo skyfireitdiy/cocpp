@@ -1,10 +1,13 @@
 #pragma once
 
+#include "co_define.h"
 #include "co_nocopy.h"
 #include "co_spinlock.h"
 #include <functional>
 #include <mutex>
 #include <utility>
+
+CO_NAMESPACE_BEGIN
 
 template <typename... Args>
 class co_event final : public co_nocopy
@@ -36,6 +39,8 @@ void co_event<Args...>::emit(Args&&... args) const
         cb(std::forward<Args>(args)...);
     }
 }
+
+CO_NAMESPACE_END
 
 #define RegCoEvent(eventName, ...)       \
 private:                                 \

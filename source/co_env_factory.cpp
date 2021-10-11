@@ -4,6 +4,8 @@
 #include "co_manager.h"
 #include <cassert>
 
+CO_NAMESPACE_BEGIN
+
 co_env* co_env_factory::create_env(size_t stack_size)
 {
     auto idle_ctx = create_idle_ctx__();
@@ -48,3 +50,5 @@ co_ctx* co_env_factory::create_idle_ctx__()
     config.priority   = CO_IDLE_CTX_PRIORITY;
     return co_ctx_factory::instance()->create_ctx(config);
 }
+
+CO_NAMESPACE_END

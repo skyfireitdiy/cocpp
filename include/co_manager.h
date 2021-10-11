@@ -14,6 +14,8 @@
 #include <map>
 #include <mutex>
 
+CO_NAMESPACE_BEGIN
+
 class co_env;
 class co_ctx;
 class co_env_factory;
@@ -77,3 +79,5 @@ public:
 
     friend class co_singleton<co_manager>;
 };
+
+CO_NAMESPACE_END

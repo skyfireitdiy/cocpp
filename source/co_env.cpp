@@ -13,6 +13,8 @@
 #include <iterator>
 #include <mutex>
 
+CO_NAMESPACE_BEGIN
+
 thread_local co_env* current_env__ = nullptr;
 
 #ifdef _MSC_VER
@@ -68,10 +70,10 @@ void co_env::add_ctx(co_ctx* ctx)
     wake_up();
 }
 
-std::optional<co_ret> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
+std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
 {
-    std::optional<co_ret> ret;
-    auto                  now = std::chrono::high_resolution_clock::now();
+    std::optional<co_return_value> ret;
+    auto                           now = std::chrono::high_resolution_clock::now();
     while (ctx->state() != co_state::finished)
     {
         if (std::chrono::high_resolution_clock::now() - now > timeout)
@@ -83,7 +85,7 @@ std::optional<co_ret> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanosecon
     return ctx->ret_ref();
 }
 
-co_ret co_env::wait_ctx(co_ctx* ctx)
+co_return_value co_env::wait_ctx(co_ctx* ctx)
 {
     while (ctx->state() != co_state::finished)
     {
@@ -470,3 +472,5 @@ void co_env::init_ctx(co_ctx* ctx)
 #endif
 #endif
 }
+
+CO_NAMESPACE_END

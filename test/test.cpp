@@ -1,7 +1,6 @@
 
 
 #include "co.h"
-#include "co_o1_scheduler_factory.h"
 #include <gtest/gtest.h>
 
 int main(int argc, char** argv)
