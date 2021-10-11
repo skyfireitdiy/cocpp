@@ -21,7 +21,7 @@ template <class Lock>
 template <class Rep, class Period>
 bool co_timed_addition<Lock>::try_lock_for(const std::chrono::duration<Rep, Period>& timeout_duration)
 {
-    auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     do
     {
         if (Lock::try_lock())
@@ -29,7 +29,7 @@ bool co_timed_addition<Lock>::try_lock_for(const std::chrono::duration<Rep, Peri
             return true;
         }
         this_co::yield();
-    } while (std::chrono::steady_clock::now() - start < timeout_duration);
+    } while (std::chrono::high_resolution_clock::now() - start < timeout_duration);
     return false;
 }
 
@@ -37,7 +37,7 @@ template <class Lock>
 template <class Clock, class Duration>
 bool co_timed_addition<Lock>::try_lock_until(const std::chrono::time_point<Clock, Duration>& timeout_time)
 {
-    return try_lock_for(timeout_time - std::chrono::steady_clock::now());
+    return try_lock_for(timeout_time - std::chrono::high_resolution_clock::now());
 }
 
 CO_NAMESPACE_END

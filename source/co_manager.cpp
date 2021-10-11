@@ -290,7 +290,16 @@ const std::chrono::high_resolution_clock::duration& co_manager::timing_duration(
 co_manager::~co_manager()
 {
     set_clean_up__();
-    wait_background_task__();
+    wait_background_task__(); // 此处所有的流程都已经结束了，可以清理一些单例的资源了
+    destroy_all_factory__();
+}
+
+void co_manager::destroy_all_factory__()
+{
+    delete scheduler_factory__;
+    co_stack_factory::destroy_instance();
+    co_ctx_factory::destroy_instance();
+    co_env_factory::destroy_instance();
 }
 
 void co_manager::wait_background_task__()

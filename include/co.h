@@ -114,11 +114,11 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
 template <class Rep, class Period>
 void co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
 {
-    auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     do
     {
         this_co::yield();
-    } while (std::chrono::steady_clock::now() - start < sleep_duration);
+    } while (std::chrono::high_resolution_clock::now() - start < sleep_duration);
 }
 
 template <typename Func, typename... Args>

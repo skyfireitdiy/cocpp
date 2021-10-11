@@ -23,7 +23,7 @@ class co_ctx_factory;
 class co_stack_factory;
 class co_scheduler_factory;
 
-class co_manager final : public co_singleton<co_manager>
+class co_manager final : public co_singleton_static<co_manager>
 {
 private:
     std::list<co_env*>   env_list__;
@@ -59,6 +59,7 @@ private:
     void destroy_redundant_env__();
     void wait_background_task__();
     void set_clean_up__();
+    void destroy_all_factory__();
 
     co_manager();
 
@@ -77,7 +78,7 @@ public:
     const std::chrono::high_resolution_clock::duration& timing_duration() const;
     ~co_manager();
 
-    friend class co_singleton<co_manager>;
+    friend class co_singleton_static<co_manager>;
 };
 
 CO_NAMESPACE_END

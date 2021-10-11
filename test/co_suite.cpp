@@ -4,8 +4,10 @@
 #include <mutex>
 #define private public
 #include "co.h"
+#include "co_binary_semaphore.h"
 #include "co_call_once.h"
 #include "co_condition_variable.h"
+#include "co_counting_semaphore.h"
 #include "co_ctx_factory.h"
 #include "co_env_factory.h"
 #include "co_error.h"
@@ -166,6 +168,7 @@ TEST(co, co_spinlock_try_lock)
 
     co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock());
+    c1.wait<void>();
 }
 
 TEST(co, co_spinlock_lock)
@@ -506,4 +509,26 @@ TEST(co, co_call_once)
     c1.wait<void>();
     c2.wait<void>();
     EXPECT_TRUE(n == 5 || n == 10);
+}
+
+TEST(co, co_counting_semaphore_normal)
+{
+    co_counting_semaphore<5> sem(0);
+
+    co c1([&] {
+        sem.acquire();
+        sem.acquire();
+        sem.acquire();
+        sem.acquire();
+        sem.acquire();
+        sem.acquire();
+        sem.acquire();
+        sem.acquire();
+        sem.acquire();
+        sem.acquire();
+        EXPECT_FALSE(sem.try_acquire());
+        EXPECT_FALSE(sem.try_acquire_until(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(50)));
+    });
+    sem.release(10);
+    c1.wait<void>();
 }
