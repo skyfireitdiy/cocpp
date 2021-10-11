@@ -1,8 +1,10 @@
+#include <atomic>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <mutex>
 #define private public
 #include "co.h"
+#include "co_call_once.h"
 #include "co_condition_variable.h"
 #include "co_ctx_factory.h"
 #include "co_env_factory.h"
@@ -30,7 +32,7 @@ TEST(co, id)
         for (int i = 0; i < 10; ++i)
         {
             printf("%s %llu %d\n", co::this_co::name().c_str(), co::this_co::id(), i);
-            co::schedule_switch();
+            co::yield();
         }
     };
     co c1({ with_name("test1") }, f);
@@ -60,7 +62,7 @@ TEST(co, detach)
         for (int i = 0; i < 100; ++i)
         {
             printf("count %d\n", i);
-            co::schedule_switch();
+            co::yield();
         }
     });
     c1.detach();
@@ -99,22 +101,22 @@ TEST(co, wait_timeout)
 //         { with_priority(0) }, [](std::vector<int>& arr) {
 //             co::sleep_for(std::chrono::milliseconds(50));
 //             arr.push_back(100);
-//             co::schedule_switch();
+//             co::yield()();
 //             arr.push_back(200);
-//             co::schedule_switch();
+//             co::yield()();
 //             arr.push_back(300);
-//             co::schedule_switch();
+//             co::yield()();
 //         },
 //         std::ref(arr));
 //     co c2(
 //         { with_priority(1) }, [](std::vector<int>& arr) {
 //             co::sleep_for(std::chrono::milliseconds(50));
 //             arr.push_back(400);
-//             co::schedule_switch();
+//             co::yield()();
 //             arr.push_back(500);
-//             co::schedule_switch();
+//             co::yield()();
 //             arr.push_back(600);
-//             co::schedule_switch();
+//             co::yield()();
 //         },
 //         std::ref(arr));
 //     c1.wait<void>();
@@ -213,7 +215,7 @@ TEST(co, co_mutex_lock)
         {
             std::lock_guard<co_mutex> lock(mu);
             ret += i;
-            co::schedule_switch();
+            co::yield();
         }
     });
     co c2([&]() {
@@ -221,7 +223,7 @@ TEST(co, co_mutex_lock)
         {
             std::lock_guard<co_mutex> lock(mu);
             ret += i;
-            co::schedule_switch();
+            co::yield();
         }
     });
     co c3([&]() {
@@ -229,14 +231,14 @@ TEST(co, co_mutex_lock)
         {
             std::lock_guard<co_mutex> lock(mu);
             ret -= i;
-            co::schedule_switch();
+            co::yield();
         }
     });
     for (int i = 0; i < 1000; ++i)
     {
         std::lock_guard<co_mutex> lock(mu);
         ret -= i;
-        co::schedule_switch();
+        co::yield();
     }
 
     c1.wait<void>();
@@ -481,4 +483,25 @@ TEST(co, co_finished_event)
     });
     co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_EQ(n, 50);
+}
+
+TEST(co, co_call_once)
+{
+    co_once_flag     flag;
+    std::atomic<int> n = 0;
+
+    auto f = [&](int t) {
+        n += t;
+    };
+
+    co c1([&] {
+        co_call_once(flag, f, 5);
+    });
+    co c2([&] {
+        co_call_once(flag, f, 10);
+    });
+
+    c1.wait<void>();
+    c2.wait<void>();
+    EXPECT_TRUE(n == 5 || n == 10);
 }
