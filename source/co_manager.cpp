@@ -122,6 +122,7 @@ co_env* co_manager::current_env()
 
 bool co_manager::clean_up() const
 {
+    std::lock_guard<std::recursive_mutex> lock(mu_clean_up__);
     return clean_up__;
 }
 

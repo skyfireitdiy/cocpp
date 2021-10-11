@@ -6,6 +6,7 @@
 #include "co.h"
 #include "co_binary_semaphore.h"
 #include "co_call_once.h"
+#include "co_chan.h"
 #include "co_condition_variable.h"
 #include "co_counting_semaphore.h"
 #include "co_ctx_factory.h"
@@ -479,15 +480,15 @@ TEST(co, co_finished_event)
 {
     int n = 100;
     co  c1([&] {
-        co::sleep_for(std::chrono::milliseconds(100));
+        co::sleep_for(std::chrono::milliseconds(500));
     });
-    c1.detach();
     EXPECT_EQ(n, 100);
     c1.co_finished().register_callback([&]() {
         n /= 2;
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    co::sleep_for(std::chrono::milliseconds(1000));
     EXPECT_EQ(n, 50);
+    c1.wait<void>();
 }
 
 TEST(co, co_call_once)
@@ -530,5 +531,57 @@ TEST(co, co_counting_semaphore_normal)
         EXPECT_FALSE(sem.try_acquire_until(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(50)));
     });
     sem.release(10);
+    c1.wait<void>();
+}
+
+TEST(co, co_chan_buffered)
+{
+    co_chan<int, 5> ch;
+    ch.push(1);
+    ch.push(2);
+    ch.push(3);
+    ch.push(4);
+    ch.push(5);
+}
+
+TEST(co, co_chan_buffered2)
+{
+    co_chan<int, 2> ch;
+
+    co  c1([&] {
+        for (int i = 0; i < 10; ++i)
+        {
+            ch.push(i);
+        }
+        ch.close();
+    });
+    int t;
+    for (int i = 0; i < 10; ++i)
+    {
+        t = ch.pop().value();
+        EXPECT_EQ(t, i);
+    }
+    EXPECT_FALSE(ch.pop());
+    c1.wait<void>();
+}
+
+TEST(co, co_chan_no_buffered)
+{
+    co_chan<int, 0> ch;
+
+    co  c1([&] {
+        for (int i = 0; i < 10; ++i)
+        {
+            ch.push(i);
+        }
+        ch.close();
+    });
+    int t;
+    for (int i = 0; i < 10; ++i)
+    {
+        t = ch.pop().value();
+        EXPECT_EQ(t, i);
+    }
+    EXPECT_FALSE(ch.pop());
     c1.wait<void>();
 }

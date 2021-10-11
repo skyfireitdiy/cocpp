@@ -23,6 +23,7 @@ void co::detach()
     {
         return;
     }
+    ctx__->co_finished().remove_callback(co_finished_handler);
     ctx__->unlock_destroy();
     ctx__ = nullptr;
 }

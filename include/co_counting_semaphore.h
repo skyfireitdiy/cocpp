@@ -41,13 +41,10 @@ void co_counting_semaphore<LeastMaxValue>::acquire()
 {
     std::unique_lock<co_mutex> lock(mu__);
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
-    if (desired__ > 0)
+    if (desired__ == 0)
     {
-        --desired__;
-        full_cond__.notify_one();
-        return;
+        empty_cond__.wait(lock, [this] { return desired__ > 0; });
     }
-    empty_cond__.wait(lock, [this] { return desired__ > 0; });
     --desired__;
     full_cond__.notify_one();
 }
@@ -57,13 +54,10 @@ void co_counting_semaphore<LeastMaxValue>::release_one__()
 {
     std::unique_lock<co_mutex> lock(mu__);
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
-    if (desired__ < LeastMaxValue)
+    if (desired__ == LeastMaxValue)
     {
-        ++desired__;
-        empty_cond__.notify_one();
-        return;
+        full_cond__.wait(lock, [this] { return desired__ < LeastMaxValue; });
     }
-    full_cond__.wait(lock, [this] { return desired__ < LeastMaxValue; });
     ++desired__;
     empty_cond__.notify_one();
 }
@@ -82,13 +76,13 @@ bool co_counting_semaphore<LeastMaxValue>::try_acquire() noexcept
 {
     std::unique_lock<co_mutex> lock(mu__);
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
-    if (desired__ > 0)
+    if (desired__ == 0)
     {
-        --desired__;
-        full_cond__.notify_one();
-        return true;
+        return false;
     }
-    return false;
+    --desired__;
+    full_cond__.notify_one();
+    return true;
 }
 
 template <std::ptrdiff_t LeastMaxValue>
