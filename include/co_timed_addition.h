@@ -25,7 +25,7 @@ bool co_timed_addition<Lock>::try_lock_for(const std::chrono::duration<Rep, Peri
         {
             return true;
         }
-        co::yield();
+        this_co::yield();
     } while (std::chrono::steady_clock::now() - start < timeout_duration);
     return false;
 }

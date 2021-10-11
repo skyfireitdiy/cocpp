@@ -24,7 +24,7 @@ bool co_shared_timed_mutex::try_lock_shared_for(const std::chrono::duration<Rep,
         {
             return true;
         }
-        co::yield();
+        this_co::yield();
     } while (std::chrono::steady_clock::now() - start < timeout_duration);
     return false;
 }

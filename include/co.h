@@ -38,21 +38,13 @@ private:
     void init__(co_ctx_config config, Func&& func, Args&&... args);
 
 public:
-    class this_co
-    {
-    public:
-        static co_id       id();   // 协程id
-        static std::string name(); // 协程名称
-    };
-
     static void set_custom_scheduler_factory(co_scheduler_factory* scheduler_factory); // 应该在所有协程功能使用前调用
-    static void yield();                                                               // 主动让出cpu
 
     static void convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
     template <class Rep, class Period>
-    static void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration); // 协程睡眠
-
-    static co_ctx* current_ctx(); // 当前协程ctx
+    static void    sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration); // 协程睡眠
+    static co_env* current_env();                                                       // 当前协程env
+    static co_ctx* current_ctx();                                                       // 当前协程ctx
 
     co_id       id() const;
     std::string name() const;
@@ -79,6 +71,13 @@ public:
     void detach();
 
     ~co();
+};
+
+namespace this_co
+{
+co_id       id();    // 协程id
+std::string name();  // 协程名称
+void        yield(); // 主动让出cpu
 };
 
 ///// 模板实现
@@ -116,7 +115,7 @@ void co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 
     auto start = std::chrono::steady_clock::now();
     do
     {
-        yield();
+        this_co::yield();
     } while (std::chrono::steady_clock::now() - start < sleep_duration);
 }
 

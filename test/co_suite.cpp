@@ -21,7 +21,7 @@
 TEST(co, name)
 {
     co c1({ with_name("test1") }, [this]() {
-        EXPECT_EQ(co::this_co::name(), "test1");
+        EXPECT_EQ(this_co::name(), "test1");
     });
     c1.wait<void>();
 }
@@ -31,8 +31,8 @@ TEST(co, id)
     auto f = []() {
         for (int i = 0; i < 10; ++i)
         {
-            printf("%s %llu %d\n", co::this_co::name().c_str(), co::this_co::id(), i);
-            co::yield();
+            printf("%s %llu %d\n", this_co::name().c_str(), this_co::id(), i);
+            this_co::yield();
         }
     };
     co c1({ with_name("test1") }, f);
@@ -49,7 +49,7 @@ TEST(co, my_thread)
     });
 
     co c1([]() {
-        printf("new co %llu in thread %u\n", co::this_co::id(), gettid());
+        printf("new co %llu in thread %u\n", this_co::id(), gettid());
     });
 
     c1.wait<void>();
@@ -62,7 +62,7 @@ TEST(co, detach)
         for (int i = 0; i < 100; ++i)
         {
             printf("count %d\n", i);
-            co::yield();
+            this_co::yield();
         }
     });
     c1.detach();
@@ -101,22 +101,22 @@ TEST(co, wait_timeout)
 //         { with_priority(0) }, [](std::vector<int>& arr) {
 //             co::sleep_for(std::chrono::milliseconds(50));
 //             arr.push_back(100);
-//             co::yield()();
+//             this_co::yield()();
 //             arr.push_back(200);
-//             co::yield()();
+//             this_co::yield()();
 //             arr.push_back(300);
-//             co::yield()();
+//             this_co::yield()();
 //         },
 //         std::ref(arr));
 //     co c2(
 //         { with_priority(1) }, [](std::vector<int>& arr) {
 //             co::sleep_for(std::chrono::milliseconds(50));
 //             arr.push_back(400);
-//             co::yield()();
+//             this_co::yield()();
 //             arr.push_back(500);
-//             co::yield()();
+//             this_co::yield()();
 //             arr.push_back(600);
-//             co::yield()();
+//             this_co::yield()();
 //         },
 //         std::ref(arr));
 //     c1.wait<void>();
@@ -129,7 +129,7 @@ TEST(co, co_id)
 {
     co_id id;
     co    c1([&id]() {
-        id = co::this_co::id();
+        id = this_co::id();
     });
     c1.wait<void>();
     EXPECT_EQ(c1.id(), id);
@@ -215,7 +215,7 @@ TEST(co, co_mutex_lock)
         {
             std::lock_guard<co_mutex> lock(mu);
             ret += i;
-            co::yield();
+            this_co::yield();
         }
     });
     co c2([&]() {
@@ -223,7 +223,7 @@ TEST(co, co_mutex_lock)
         {
             std::lock_guard<co_mutex> lock(mu);
             ret += i;
-            co::yield();
+            this_co::yield();
         }
     });
     co c3([&]() {
@@ -231,14 +231,14 @@ TEST(co, co_mutex_lock)
         {
             std::lock_guard<co_mutex> lock(mu);
             ret -= i;
-            co::yield();
+            this_co::yield();
         }
     });
     for (int i = 0; i < 1000; ++i)
     {
         std::lock_guard<co_mutex> lock(mu);
         ret -= i;
-        co::yield();
+        this_co::yield();
     }
 
     c1.wait<void>();

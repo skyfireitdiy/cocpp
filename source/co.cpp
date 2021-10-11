@@ -6,9 +6,9 @@
 
 co_manager* co::manager__ = co_manager::instance();
 
-void co::yield()
+void this_co::yield()
 {
-    manager__->current_env()->schedule_switch();
+    co::current_env()->schedule_switch();
 }
 
 void co::detach()
@@ -25,9 +25,9 @@ void co::detach()
     ctx__ = nullptr;
 }
 
-co_id co::this_co::id()
+co_id this_co::id()
 {
-    return reinterpret_cast<co_id>(manager__->current_env()->current_ctx());
+    return reinterpret_cast<co_id>(co::current_ctx());
 }
 
 std::string co::name() const
@@ -39,9 +39,9 @@ std::string co::name() const
     return ctx__->config().name;
 }
 
-std::string co::this_co::name()
+std::string this_co::name()
 {
-    return manager__->current_env()->current_ctx()->config().name;
+    return co::current_ctx()->config().name;
 }
 
 void co::convert_to_schedule_thread()
@@ -67,4 +67,9 @@ co_ctx* co::current_ctx()
 void co::set_custom_scheduler_factory(co_scheduler_factory* scheduler_factory)
 {
     co_env_factory::instance()->set_scheduler_factory(scheduler_factory);
+}
+
+co_env* co::current_env()
+{
+    return manager__->current_env();
 }
