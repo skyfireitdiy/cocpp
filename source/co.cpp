@@ -77,4 +77,9 @@ co_env* co::current_env()
     return manager__->current_env();
 }
 
+co_env* co::create_env()
+{
+    return manager__->create_env(true);
+}
+
 CO_NAMESPACE_END

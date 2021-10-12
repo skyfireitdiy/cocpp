@@ -47,6 +47,7 @@ public:
 
     static co_env* current_env(); // 当前协程env
     static co_ctx* current_ctx(); // 当前协程ctx
+    static co_env* create_env();  // 创建env
 
     co_id       id() const;
     std::string name() const;

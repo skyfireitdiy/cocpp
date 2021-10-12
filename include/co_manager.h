@@ -48,8 +48,7 @@ private:
 
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
 
-    co_env* create_env__();
-    bool    can_schedule_ctx__(co_env* env) const;
+    bool can_schedule_ctx__(co_env* env) const;
 
     void clean_env_routine__();
     void timing_routine__();
@@ -65,6 +64,7 @@ private:
     co_manager();
 
 public:
+    co_env*               create_env(bool dont_auto_destory = false);
     void                  add_ctx(co_ctx* ctx);
     void                  set_env_shared_stack_size(size_t size);
     co_scheduler_factory* scheduler_factory();

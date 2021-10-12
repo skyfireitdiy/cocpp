@@ -16,7 +16,7 @@ co_env* co_manager::get_best_env__()
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     if (env_list__.empty())
     {
-        return create_env__();
+        return create_env();
     }
 
     auto   env                    = env_list__.front();
@@ -43,13 +43,13 @@ co_env* co_manager::get_best_env__()
     // 如果没有可用的env，就创建
     if (env == nullptr)
     {
-        return create_env__();
+        return create_env();
     }
 
     // 如果可用于调度的env数量小于基础线程数量，创建一个来调度新的ctx
     if (can_schedule_env_count < base_thread_count__)
     {
-        return create_env__();
+        return create_env();
     }
     return env;
 }
@@ -60,12 +60,15 @@ bool co_manager::can_schedule_ctx__(co_env* env) const
     return !(state == co_env_state::blocked || state == co_env_state::destorying || !env->has_scheduler_thread());
 }
 
-co_env* co_manager::create_env__()
+co_env* co_manager::create_env(bool dont_auto_destory)
 {
     assert(!clean_up__);
     auto env = env_factory__->create_env(default_shared_stack_size__);
-
-    std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
+    if (dont_auto_destory)
+    {
+        env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
+    }
+    std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     env_list__.push_back(env);
     ++exist_env_count__;
     // CO_O_DEBUG("create env : %p", env);

@@ -51,7 +51,7 @@ co_env::co_env(co_scheduler* scheduler, co_ctx* idle_ctx, bool create_new_thread
     else
     {
         set_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
-        set_flag(CO_ENV_FLAG_COVERTED_ENV);
+        set_flag(CO_ENV_FLAG_COVERTED);
         current_env__ = this;
     }
 }
@@ -402,7 +402,7 @@ void co_env::take_ctx(co_ctx* ctx)
 bool co_env::can_auto_destroy() const
 {
     // 如果是用户自己转换的env，不能被选中销毁
-    return !test_flag(CO_ENV_FLAG_COVERTED_ENV);
+    return !test_flag(CO_ENV_FLAG_COVERTED) && !test_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
 }
 
 void co_env::wake_up()

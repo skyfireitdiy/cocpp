@@ -102,34 +102,32 @@ TEST(co, priority)
 {
     std::vector<int> arr;
 
-    co c0([&] {
-        auto env = co::current_env();
-        co   c1(
-            { with_priority(0), with_bind_env(env) }, [](std::vector<int>& arr) {
-                this_co::sleep_for(std::chrono::milliseconds(50));
-                arr.push_back(100);
-                this_co::yield();
-                arr.push_back(200);
-                this_co::yield();
-                arr.push_back(300);
-                this_co::yield();
-            },
-            std::ref(arr));
-        co c2(
-            { with_priority(1), with_bind_env(env) }, [](std::vector<int>& arr) {
-                this_co::sleep_for(std::chrono::milliseconds(50));
-                arr.push_back(400);
-                this_co::yield();
-                arr.push_back(500);
-                this_co::yield();
-                arr.push_back(600);
-                this_co::yield();
-            },
-            std::ref(arr));
-        c1.wait<void>();
-        c2.wait<void>();
-    });
-    c0.wait<void>();
+    auto env = co::create_env();
+    co   c1(
+        { with_priority(0), with_bind_env(env) }, [](std::vector<int>& arr) {
+            this_co::sleep_for(std::chrono::milliseconds(50));
+            arr.push_back(100);
+            this_co::yield();
+            arr.push_back(200);
+            this_co::yield();
+            arr.push_back(300);
+            this_co::yield();
+        },
+        std::ref(arr));
+    co c2(
+        { with_priority(1), with_bind_env(env) }, [](std::vector<int>& arr) {
+            this_co::sleep_for(std::chrono::milliseconds(50));
+            arr.push_back(400);
+            this_co::yield();
+            arr.push_back(500);
+            this_co::yield();
+            arr.push_back(600);
+            this_co::yield();
+        },
+        std::ref(arr));
+    c1.wait<void>();
+    c2.wait<void>();
+
     std::vector<int> expect { 100, 200, 300, 400, 500, 600 };
     EXPECT_EQ(arr, expect);
 }

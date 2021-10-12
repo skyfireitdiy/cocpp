@@ -25,7 +25,7 @@ class co_scheduler;
 class co_ctx;
 
 class co_env final : public co_nocopy,
-                     public co_flag_manager<CO_ENV_FLAG_MAX_VALUE>
+                     public co_flag_manager<CO_ENV_FLAG_MAX>
 {
 private:
     std::future<void> worker__;
