@@ -11,6 +11,10 @@ co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config)
 {
     auto ret = new co_ctx(co_stack_factory::instance()->create_stack(config.stack_size), config);
     assert(ret != nullptr);
+    if (config.bind_env != nullptr)
+    {
+        ret->set_flag(CO_CTX_FLAG_BIND);
+    }
     // CO_O_DEBUG("create ctx: %s %p", ret->config().name.c_str(), ret);
     return ret;
 }

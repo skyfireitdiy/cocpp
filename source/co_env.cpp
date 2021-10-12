@@ -384,8 +384,8 @@ std::list<co_ctx*> co_env::moveable_ctx_list()
     std::list<co_ctx*> ret;
     for (auto& ctx : all_ctx)
     {
-        // 共享栈协程和当前协程不能移动
-        if (ctx->config().share_stack || ctx->state() == co_state::running)
+        // 绑定env的协程和当前协程不能移动
+        if (ctx->state() == co_state::running || ctx->test_flag(CO_CTX_FLAG_BIND))
         {
             continue;
         }

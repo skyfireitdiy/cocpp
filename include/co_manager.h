@@ -55,16 +55,17 @@ private:
     void timing_routine__();
     bool is_blocked__(co_env* env) const;
 
-    void redistribute_ctx__();
-    void destroy_redundant_env__();
-    void wait_background_task__();
-    void set_clean_up__();
-    void destroy_all_factory__();
+    void    redistribute_ctx__();
+    void    destroy_redundant_env__();
+    void    wait_background_task__();
+    void    set_clean_up__();
+    void    destroy_all_factory__();
+    co_env* get_best_env__();
 
     co_manager();
 
 public:
-    co_env*               get_best_env();
+    void                  add_ctx(co_ctx* ctx);
     void                  set_env_shared_stack_size(size_t size);
     co_scheduler_factory* scheduler_factory();
     void                  remove_env(co_env* env);

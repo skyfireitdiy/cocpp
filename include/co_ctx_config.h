@@ -6,13 +6,16 @@
 #include <functional>
 
 CO_NAMESPACE_BEGIN
+
+class co_env;
+
 struct co_ctx_config
 {
-    std::function<void(std::any&)> entry;                               // 协程执行入口，该入口是被上层调用者使用函数对象或者lambda表达式封装的对象，直接调用
-    size_t                         stack_size  = CO_DEFAULT_STACK_SIZE; // 栈大小
-    std::string                    name        = "__unknown__";         // 协程名称
-    int                            priority    = 99;                    // 优先级 (0~99，数字越小，优先级约高)
-    bool                           share_stack = false;                 // 共享栈
+    std::function<void(std::any&)> entry;                              // 协程执行入口，该入口是被上层调用者使用函数对象或者lambda表达式封装的对象，直接调用
+    size_t                         stack_size = CO_DEFAULT_STACK_SIZE; // 栈大小
+    std::string                    name       = "__unknown__";         // 协程名称
+    int                            priority   = 99;                    // 优先级 (0~99，数字越小，优先级约高)
+    co_env*                        bind_env   = nullptr;               // 指定env
 };
 
 CO_NAMESPACE_END
@@ -34,4 +37,4 @@ CO_NAMESPACE_END
 CO_GEN_CTX_CONFIG_OPTION_HELPER(size_t, stack_size)
 CO_GEN_CTX_CONFIG_OPTION_HELPER(std::string, name)
 CO_GEN_CTX_CONFIG_OPTION_HELPER(int, priority)
-CO_GEN_CTX_CONFIG_OPTION_HELPER(bool, share_stack)
+CO_GEN_CTX_CONFIG_OPTION_HELPER(co_env*, bind_env)

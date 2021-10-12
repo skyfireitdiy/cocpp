@@ -18,6 +18,7 @@ constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
 // 协程flag
 constexpr int CO_CTX_FLAG_WAITING = 0; // 等待
 constexpr int CO_CTX_FLAG_LOCKED  = 1; // 被co对象持有，暂时不能销毁
+constexpr int CO_CTX_FLAG_BIND    = 2; // 绑定env，不可移动
 constexpr int CO_CTX_FLAG_MAX     = 8;
 
 constexpr int CO_ENV_FLAG_NO_SCHE_THREAD = 0; // 没有调度线程

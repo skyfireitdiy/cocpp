@@ -1,4 +1,5 @@
 #include "co_manager.h"
+#include "co_ctx.h"
 #include "co_ctx_factory.h"
 #include "co_env.h"
 #include "co_env_factory.h"
@@ -10,7 +11,7 @@
 
 CO_NAMESPACE_BEGIN
 
-co_env* co_manager::get_best_env()
+co_env* co_manager::get_best_env__()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     if (env_list__.empty())
@@ -219,7 +220,7 @@ void co_manager::redistribute_ctx__()
     // 重新选择合适的env进行调度
     for (auto& ctx : moved_ctx_list)
     {
-        get_best_env()->add_ctx(ctx);
+        get_best_env__()->add_ctx(ctx);
     }
 }
 
@@ -308,6 +309,19 @@ void co_manager::wait_background_task__()
     for (auto& task : background_task__)
     {
         task.wait();
+    }
+}
+
+void co_manager::add_ctx(co_ctx* ctx)
+{
+    auto bind_env = ctx->config().bind_env;
+    if (bind_env != nullptr)
+    {
+        bind_env->add_ctx(ctx);
+    }
+    else
+    {
+        get_best_env__()->add_ctx(ctx);
     }
 }
 

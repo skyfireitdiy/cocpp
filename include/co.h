@@ -44,10 +44,9 @@ public:
     static void set_custom_scheduler_factory(co_scheduler_factory* scheduler_factory); // 应该在所有协程功能使用前调用
 
     static void convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
-    template <class Rep, class Period>
-    static void    sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration); // 协程睡眠
-    static co_env* current_env();                                                       // 当前协程env
-    static co_ctx* current_ctx();                                                       // 当前协程ctx
+
+    static co_env* current_env(); // 当前协程env
+    static co_ctx* current_ctx(); // 当前协程ctx
 
     co_id       id() const;
     std::string name() const;
@@ -81,6 +80,8 @@ namespace this_co
 co_id       id();    // 协程id
 std::string name();  // 协程名称
 void        yield(); // 主动让出cpu
+template <class Rep, class Period>
+void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration); // 协程睡眠
 };
 
 ///// 模板实现
@@ -108,12 +109,12 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
     co_finished_handler = ctx__->co_finished().register_callback([this](co_ctx*) { // 事件转换
         co_finished().emit();
     });
-    auto env            = manager__->get_best_env();
-    env->add_ctx(ctx__);
+
+    manager__->add_ctx(ctx__);
 }
 
 template <class Rep, class Period>
-void co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
+void this_co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
 {
     auto start = std::chrono::high_resolution_clock::now();
     do

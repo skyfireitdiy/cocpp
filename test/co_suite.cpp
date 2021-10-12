@@ -90,7 +90,7 @@ TEST(co, return_value)
 TEST(co, wait_timeout)
 {
     co   c1([]() {
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
     });
     auto ret = c1.wait(std::chrono::milliseconds(1));
     EXPECT_FALSE(ret);
@@ -98,37 +98,41 @@ TEST(co, wait_timeout)
     EXPECT_TRUE(ret);
 }
 
-// 两个协程可能运行在不同的线程上，所以此处的优先级不起作用
-// TEST(co, priority)
-// {
-//     std::vector<int> arr;
-//     co               c1(
-//         { with_priority(0) }, [](std::vector<int>& arr) {
-//             co::sleep_for(std::chrono::milliseconds(50));
-//             arr.push_back(100);
-//             this_co::yield()();
-//             arr.push_back(200);
-//             this_co::yield()();
-//             arr.push_back(300);
-//             this_co::yield()();
-//         },
-//         std::ref(arr));
-//     co c2(
-//         { with_priority(1) }, [](std::vector<int>& arr) {
-//             co::sleep_for(std::chrono::milliseconds(50));
-//             arr.push_back(400);
-//             this_co::yield()();
-//             arr.push_back(500);
-//             this_co::yield()();
-//             arr.push_back(600);
-//             this_co::yield()();
-//         },
-//         std::ref(arr));
-//     c1.wait<void>();
-//     c2.wait<void>();
-//     std::vector<int> expect { 100, 200, 300, 400, 500, 600 };
-//     EXPECT_EQ(arr, expect);
-// }
+TEST(co, priority)
+{
+    std::vector<int> arr;
+
+    co c0([&] {
+        auto env = co::current_env();
+        co   c1(
+            { with_priority(0), with_bind_env(env) }, [](std::vector<int>& arr) {
+                this_co::sleep_for(std::chrono::milliseconds(50));
+                arr.push_back(100);
+                this_co::yield();
+                arr.push_back(200);
+                this_co::yield();
+                arr.push_back(300);
+                this_co::yield();
+            },
+            std::ref(arr));
+        co c2(
+            { with_priority(1), with_bind_env(env) }, [](std::vector<int>& arr) {
+                this_co::sleep_for(std::chrono::milliseconds(50));
+                arr.push_back(400);
+                this_co::yield();
+                arr.push_back(500);
+                this_co::yield();
+                arr.push_back(600);
+                this_co::yield();
+            },
+            std::ref(arr));
+        c1.wait<void>();
+        c2.wait<void>();
+    });
+    c0.wait<void>();
+    std::vector<int> expect { 100, 200, 300, 400, 500, 600 };
+    EXPECT_EQ(arr, expect);
+}
 
 TEST(co, co_id)
 {
@@ -164,10 +168,10 @@ TEST(co, co_spinlock_try_lock)
 
     co c1([&]() {
         std::lock_guard<co_spinlock> lock(mu);
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
     });
 
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock());
     c1.wait<void>();
 }
@@ -202,10 +206,10 @@ TEST(co, co_mutex_try_lock)
 
     co c1([&]() {
         std::lock_guard<co_mutex> lock(mu);
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
     });
 
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock());
     c1.wait<void>();
 }
@@ -287,10 +291,10 @@ TEST(co, co_timed_mutex)
     co_timed_mutex mu;
     co             c1([&] {
         mu.lock();
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock();
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock_for(std::chrono::milliseconds(100)));
     EXPECT_TRUE(mu.try_lock_for(std::chrono::milliseconds(600)));
     mu.unlock();
@@ -303,10 +307,10 @@ TEST(co, co_shared_mutex_shared_lock)
 
     co c1([&] {
         mu.lock_shared();
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock_shared();
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_TRUE(mu.try_lock_shared());
     mu.unlock_shared();
     c1.wait<void>();
@@ -330,10 +334,10 @@ TEST(co, co_shared_mutex_lock)
 
     co c1([&] {
         mu.lock();
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock();
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock_shared());
     c1.wait<void>();
 }
@@ -344,10 +348,10 @@ TEST(co, co_shared_mutex_lock2)
 
     co c1([&] {
         mu.lock_shared();
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock_shared();
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock());
     c1.wait<void>();
 }
@@ -358,10 +362,10 @@ TEST(co, co_shared_mutex_lock3)
 
     co c1([&] {
         mu.lock();
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock();
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock());
     c1.wait<void>();
 }
@@ -372,10 +376,10 @@ TEST(co, co_shared_timed_mutex1)
 
     co c1([&] {
         mu.lock_shared();
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock_shared();
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock_for(std::chrono::milliseconds(100)));
     EXPECT_TRUE(mu.try_lock_for(std::chrono::milliseconds(600)));
     mu.unlock();
@@ -388,10 +392,10 @@ TEST(co, co_shared_timed_mutex2)
 
     co c1([&] {
         mu.lock();
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock();
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock_for(std::chrono::milliseconds(100)));
     EXPECT_TRUE(mu.try_lock_for(std::chrono::milliseconds(600)));
     mu.unlock();
@@ -404,10 +408,10 @@ TEST(co, co_shared_timed_mutex3)
 
     co c1([&] {
         mu.lock();
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock();
     });
-    co::sleep_for(std::chrono::milliseconds(500));
+    this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock_shared_for(std::chrono::milliseconds(100)));
     EXPECT_TRUE(mu.try_lock_shared_for(std::chrono::milliseconds(800)));
     mu.unlock_shared();
@@ -426,7 +430,7 @@ TEST(co, co_condition_variable_notify_one)
         n -= 5;
     });
     n /= 2;
-    co::sleep_for(std::chrono::seconds(1));
+    this_co::sleep_for(std::chrono::seconds(1));
     EXPECT_EQ(n, 50);
     cond.notify_one();
     c1.wait<void>();
@@ -450,7 +454,7 @@ TEST(co, co_condition_variable_notify_all)
         n -= 10;
     });
     n /= 2;
-    co::sleep_for(std::chrono::seconds(1));
+    this_co::sleep_for(std::chrono::seconds(1));
     EXPECT_EQ(n, 50);
     cond.notify_all();
     c1.wait<void>();
@@ -466,7 +470,7 @@ TEST(co, co_condition_variable_notify_at_co_exit)
 
     co c1([&] {
         notify_all_at_co_exit(cond);
-        co::sleep_for(std::chrono::seconds(1));
+        this_co::sleep_for(std::chrono::seconds(1));
         n /= 2;
     });
     c1.detach();
@@ -480,13 +484,13 @@ TEST(co, co_finished_event)
 {
     int n = 100;
     co  c1([&] {
-        co::sleep_for(std::chrono::milliseconds(500));
+        this_co::sleep_for(std::chrono::milliseconds(500));
     });
     EXPECT_EQ(n, 100);
     c1.co_finished().register_callback([&]() {
         n /= 2;
     });
-    co::sleep_for(std::chrono::milliseconds(1000));
+    this_co::sleep_for(std::chrono::milliseconds(1000));
     EXPECT_EQ(n, 50);
     c1.wait<void>();
 }
