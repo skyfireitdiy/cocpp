@@ -68,6 +68,13 @@ private:
     static constexpr int reg_index_MXCSR__ = 9;
     static constexpr int reg_index_FCW__   = 10;
 
+    struct
+    {
+        co_ctx* from { nullptr };
+        co_ctx* to { nullptr };
+        bool    need_switch { false };
+    } shared_stack_switch_context__;
+
 public:
     void                           init_ctx(co_ctx* ctx);
     void                           add_ctx(co_ctx* ctx);

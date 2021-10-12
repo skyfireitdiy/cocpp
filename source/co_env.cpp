@@ -201,6 +201,14 @@ void co_env::schedule_switch()
             init_ctx(next);
         }
 
+        if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK) || next->test_flag(CO_CTX_FLAG_SHARED_STACK))
+        {
+            shared_stack_switch_context__.from        = curr;
+            shared_stack_switch_context__.to          = next;
+            shared_stack_switch_context__.need_switch = true;
+            next                                      = idle_ctx__;
+        }
+
         update_ctx_state__(curr, next);
 
         if (curr == next)
