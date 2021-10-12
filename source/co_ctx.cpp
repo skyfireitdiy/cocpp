@@ -1,5 +1,7 @@
 #include "co_ctx.h"
 #include "co_define.h"
+#include "co_env.h"
+#include "co_scheduler.h"
 #include <cassert>
 
 CO_NAMESPACE_BEGIN
@@ -63,6 +65,7 @@ int co_ctx::priority() const
 
 void co_ctx::set_priority(int priority)
 {
+    int old_priority = priority__;
     if (priority >= CO_MAX_PRIORITY)
     {
         priority = CO_MAX_PRIORITY - 1;
@@ -72,6 +75,14 @@ void co_ctx::set_priority(int priority)
         priority = 0;
     }
     priority__ = priority;
+    if (env__ == nullptr) // 首次调用的时候env为空
+    {
+        return;
+    }
+    if (old_priority != priority__ && !test_flag(CO_CTX_FLAG_IDLE))
+    {
+        env__->scheduler()->change_priority(old_priority, priority__, this);
+    }
 }
 
 bool co_ctx::can_destroy() const

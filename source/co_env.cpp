@@ -1,6 +1,7 @@
 #include "co_env.h"
 #include "co_ctx.h"
 #include "co_ctx_factory.h"
+#include "co_defer.h"
 #include "co_define.h"
 #include "co_env_factory.h"
 #include "co_manager.h"
@@ -72,8 +73,16 @@ void co_env::add_ctx(co_ctx* ctx)
 
 std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
 {
+    // 反转优先级，防止高优先级ctx永久等待低优先级ctx
+    auto old_priority = current_ctx()->priority();
+    current_ctx()->set_priority(ctx->priority());
+    CoDefer([this, old_priority] {
+        current_ctx()->set_priority(old_priority);
+    });
+
     std::optional<co_return_value> ret;
-    auto                           now = std::chrono::high_resolution_clock::now();
+
+    auto now = std::chrono::high_resolution_clock::now();
     while (ctx->state() != co_state::finished)
     {
         if (std::chrono::high_resolution_clock::now() - now > timeout)
@@ -87,6 +96,13 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
 
 co_return_value co_env::wait_ctx(co_ctx* ctx)
 {
+    auto old_priority = current_ctx()->priority();
+    current_ctx()->set_priority(ctx->priority());
+
+    CoDefer([this, old_priority] {
+        current_ctx()->set_priority(old_priority);
+    });
+
     while (ctx->state() != co_state::finished)
     {
         schedule_switch();

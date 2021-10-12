@@ -4,6 +4,7 @@
 #include "co_event.h"
 #include "co_flag_manager.h"
 #include "co_stack.h"
+#include "co_type.h"
 
 #include <any>
 #include <atomic>
@@ -20,13 +21,13 @@ class co_ctx final : public co_nocopy,
     RegCoEvent(co_finished, co_ctx*);
 
 private:
-    co_stack*             stack__;  // 当前栈空间
-    std::atomic<co_state> state__;  // 协程状态
-    co_ctx_config         config__; // 协程配置
-    std::any              ret__;    // 协程返回值，会被传递给 config 中的 entry
-    co_env*               env__;    // 协程当前对应的运行环境
+    co_stack*             stack__ { nullptr };           // 当前栈空间
+    std::atomic<co_state> state__ { co_state::created }; // 协程状态
+    co_ctx_config         config__ {};                   // 协程配置
+    std::any              ret__;                         // 协程返回值，会被传递给 config 中的 entry
+    co_env*               env__ { nullptr };             // 协程当前对应的运行环境
 
-    std::atomic<int> priority__; // 优先级
+    std::atomic<int> priority__ { CO_IDLE_CTX_PRIORITY }; // 优先级
 
 #if defined(_MSC_VER)
 #if defined(_WIN64)
@@ -75,7 +76,7 @@ private:
 #ifdef __GNUC__
 #ifdef __x86_64__
 
-    co_byte* regs__[11];
+    co_byte* regs__[11] {};
 #else
 #error only supported x86_64
 #endif

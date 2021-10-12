@@ -1,0 +1,22 @@
+#pragma once
+
+#include "co_defer.h"
+#include "co_nocopy.h"
+#include <functional>
+
+CO_NAMESPACE_BEGIN
+
+class co_defer final : public cocpp::co_nocopy
+{
+private:
+    std::function<void()> defer_func__;
+
+public:
+    co_defer(std::function<void()> f);
+    ~co_defer();
+};
+
+CO_NAMESPACE_END
+
+#define CO_DERFER_HELPER(line, ...) cocpp::co_defer defer_##line(__VA_ARGS__)
+#define CoDefer(...) CO_DERFER_HELPER(__LINE__, __VA_ARGS__)

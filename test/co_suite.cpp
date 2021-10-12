@@ -1,3 +1,4 @@
+#include "co_ctx_config.h"
 #include <atomic>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -680,4 +681,19 @@ TEST(co, co_chan_no_buffered_operator_shift)
     EXPECT_EQ(e, 4);
 
     EXPECT_ANY_THROW(ch >> a);
+}
+
+TEST(co, co_wait_priority)
+{
+    auto env = co::create_env();
+
+    co c1({ with_priority(99), with_bind_env(env) }, [] {
+        this_co::sleep_for(std::chrono::seconds(1));
+    });
+
+    co c2({ with_priority(0), with_bind_env(env) }, [&] {
+        c1.wait<void>();
+    });
+
+    c2.wait<void>();
 }

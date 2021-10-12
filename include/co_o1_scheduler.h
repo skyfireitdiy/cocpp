@@ -15,7 +15,7 @@ class co_o1_scheduler : public co_scheduler
 private:
     std::vector<std::list<co_ctx*>> all_ctx__;
     mutable std::mutex              mu_all_ctx__;
-    co_ctx*                         curr__ = nullptr;
+    co_ctx*                         curr__ { nullptr };
 
     static bool ctx_can_schedule__(co_ctx* ctx);
 
@@ -29,6 +29,7 @@ public:
     size_t             count() const override;
     co_ctx*            current_ctx() const override;
     bool               can_schedule() const override;
+    void               change_priority(int old, int new_, co_ctx* ctx) override;
 
     friend class co_o1_scheduler_factory;
 };

@@ -104,4 +104,19 @@ bool co_o1_scheduler::ctx_can_schedule__(co_ctx* ctx)
     return ctx->state() != co_state::finished && !ctx->test_flag(CO_CTX_FLAG_WAITING);
 }
 
+void co_o1_scheduler::change_priority(int old, int new_, co_ctx* ctx)
+{
+    std::lock_guard<std::mutex> lock(mu_all_ctx__);
+    for (auto iter = all_ctx__[old].begin(); iter != all_ctx__[old].end(); ++iter)
+    {
+        if (*iter == ctx)
+        {
+            all_ctx__[old].erase(iter);
+            all_ctx__[new_].push_back(ctx);
+            return;
+        }
+    }
+    assert(false);
+}
+
 CO_NAMESPACE_END

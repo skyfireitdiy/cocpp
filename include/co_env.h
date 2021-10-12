@@ -35,9 +35,9 @@ private:
     co_manager* const     manager__ { co_manager::instance() };
     co_ctx_factory* const ctx_factory__ { co_ctx_factory::instance() };
     co_scheduler* const   scheduler__ = nullptr;
-    co_ctx* const         idle_ctx__;
+    co_ctx* const         idle_ctx__ { nullptr };
 
-    co_env_state state__;
+    co_env_state state__ { co_env_state::idle };
 
     mutable std::recursive_mutex mu_wake_up_idle__;
     std::condition_variable_any  cond_wake_schedule__;
