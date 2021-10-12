@@ -6,6 +6,7 @@
 #include "co_env_factory.h"
 #include "co_manager.h"
 #include "co_scheduler.h"
+#include "co_stack.h"
 #include "co_type.h"
 
 #include <cassert>
@@ -37,8 +38,9 @@ extern "C" void __switch_to_msvc_x64(co_byte**, co_byte**);
 #endif
 #endif
 
-co_env::co_env(co_scheduler* scheduler, co_ctx* idle_ctx, bool create_new_thread)
+co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
     : scheduler__(scheduler)
+    , shared_stack__(shared_stack)
     , idle_ctx__(idle_ctx)
     , state__(co_env_state::created)
 {
@@ -280,11 +282,6 @@ co_ctx* co_env::current_ctx() const
         return idle_ctx__;
     }
     return ret;
-}
-
-co_ctx* co_env::idle_ctx() const
-{
-    return idle_ctx__;
 }
 
 void co_env::stop_schedule()

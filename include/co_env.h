@@ -6,6 +6,7 @@
 #include "co_manager.h"
 #include "co_nocopy.h"
 #include "co_return_value.h"
+#include "co_stack.h"
 #include "co_type.h"
 
 #include <atomic>
@@ -35,6 +36,7 @@ private:
     co_manager* const     manager__ { co_manager::instance() };
     co_ctx_factory* const ctx_factory__ { co_ctx_factory::instance() };
     co_scheduler* const   scheduler__ = nullptr;
+    co_stack*             shared_stack__ { nullptr };
     co_ctx* const         idle_ctx__ { nullptr };
 
     co_env_state state__ { co_env_state::idle };
@@ -44,7 +46,7 @@ private:
 
     std::mutex mu_schedule__;
 
-    co_env(co_scheduler* scheduler, co_ctx* idle_ctx, bool create_new_thread);
+    co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
     void        start_schedule_routine__();
     void        remove_detached_ctx__();
@@ -79,7 +81,6 @@ public:
     void                           schedule_switch();
     void                           remove_ctx(co_ctx* ctx);
     co_ctx*                        current_ctx() const;
-    co_ctx*                        idle_ctx() const;
     void                           stop_schedule();
     void                           start_schedule();
     void                           schedule_in_this_thread();

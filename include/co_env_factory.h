@@ -16,7 +16,9 @@ class co_env_factory final : public co_singleton<co_env_factory>
 {
 private:
     co_scheduler_factory* scheduler_factory__ { co_o1_scheduler_factory::instance() };
-    co_ctx*               create_idle_ctx__();
+    co_stack_factory*     stack_factory__ { co_stack_factory::instance() };
+
+    co_ctx* create_idle_ctx__();
 
 public:
     co_env* create_env(size_t stack_size);
