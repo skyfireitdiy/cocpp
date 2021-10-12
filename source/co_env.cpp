@@ -449,8 +449,12 @@ static void __get_fcw_gcc_x64(void*)
 
 void co_env::init_ctx(co_ctx* ctx)
 {
-    auto regs   = ctx->regs();
-    auto stack  = ctx->stack();
+    auto      regs  = ctx->regs();
+    co_stack* stack = ctx->stack();
+    if (ctx->test_flag(CO_CTX_FLAG_SHARED_STACK))
+    {
+        stack = shared_stack__;
+    }
     auto config = ctx->config();
 #ifdef _MSC_VER
 #ifdef _WIN64
