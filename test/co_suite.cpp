@@ -585,3 +585,97 @@ TEST(co, co_chan_no_buffered)
     EXPECT_FALSE(ch.pop());
     c1.wait<void>();
 }
+
+TEST(co, co_chan_no_buffered_iterator)
+{
+    co_chan<int, 0> ch;
+
+    std::vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    std::vector<int> pop;
+
+    co c1([&] {
+        for (auto p : push)
+        {
+            ch.push(p);
+        }
+        ch.close();
+    });
+
+    for (auto& p : ch)
+    {
+        pop.push_back(p);
+    }
+    c1.wait<void>();
+    EXPECT_EQ(push, pop);
+}
+
+TEST(co, co_chan_buffered_empty_iterator)
+{
+    co_chan<int, 10> ch;
+    std::vector<int> pop;
+    std::vector<int> push;
+
+    ch.close();
+
+    for (auto& p : ch)
+    {
+        pop.push_back(p);
+    }
+    EXPECT_EQ(pop, push);
+}
+
+TEST(co, co_chan_no_buffered_operator_less)
+{
+    co_chan<int, 0> ch;
+
+    std::vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    std::vector<int> pop;
+
+    co c1([&] {
+        for (auto p : push)
+        {
+            ch < p;
+        }
+        ch.close();
+    });
+
+    while (true)
+    {
+        int n;
+        if (ch > n)
+        {
+            pop.push_back(n);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    c1.wait<void>();
+    EXPECT_EQ(push, pop);
+}
+
+TEST(co, co_chan_no_buffered_operator_shift)
+{
+    co_chan<int, 0> ch;
+
+    std::vector<int> pop;
+
+    co c1([&] {
+        ch << 0 << 1 << 2 << 3 << 4;
+        ch.close();
+    });
+
+    int a, b, c, d, e;
+    ch >> a >> b >> c >> d >> e;
+
+    c1.wait<void>();
+    EXPECT_EQ(a, 0);
+    EXPECT_EQ(b, 1);
+    EXPECT_EQ(c, 2);
+    EXPECT_EQ(d, 3);
+    EXPECT_EQ(e, 4);
+
+    EXPECT_ANY_THROW(ch >> a);
+}
