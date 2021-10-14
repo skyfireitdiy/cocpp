@@ -1,5 +1,6 @@
 #include "co_env.h"
 #include "co_ctx.h"
+#include "co_ctx_config.h"
 #include "co_ctx_factory.h"
 #include "co_defer.h"
 #include "co_define.h"
@@ -18,25 +19,6 @@
 CO_NAMESPACE_BEGIN
 
 thread_local co_env* current_env__ = nullptr;
-
-#ifdef _MSC_VER
-#ifdef _WIN64
-extern "C" void __get_mxcsr_msvc_x64(co_byte**);
-extern "C" void __get_fcw_msvc_x64(co_byte**);
-extern "C" void __get_TEB_8_msvc_x64(co_byte**);
-extern "C" void __get_TEB_16_msvc_x64(co_byte**);
-extern "C" void __get_TEB_24_msvc_x64(co_byte**);
-extern "C" void __get_TEB_5240_msvc_x64(co_byte**);
-#endif
-#endif
-
-#ifdef _MSC_VER
-#ifdef _WIN64
-extern "C" void __switch_to_msvc_x64(co_byte**, co_byte**);
-#else
-#error only support x86_64 in msvc
-#endif
-#endif
 
 co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
     : scheduler__(scheduler)
@@ -108,7 +90,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
     while (ctx->state() != co_state::finished)
     {
         schedule_switch();
-        // // CO_O_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
+        // CO_O_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
     }
     return ctx->ret_ref();
 }
@@ -174,7 +156,7 @@ void co_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
     {
         curr->set_state(co_state::suspended);
     }
-    // // CO_O_DEBUG("from %p to %p", curr, next);
+    // CO_O_DEBUG("from %p to %p", curr, next);
     next->set_state(co_state::running);
 }
 
@@ -216,7 +198,23 @@ void co_env::schedule_switch()
             shared_stack_switch_context__.from        = curr;
             shared_stack_switch_context__.to          = next;
             shared_stack_switch_context__.need_switch = true;
-            next                                      = idle_ctx__;
+
+            // CO_O_DEBUG("prepare from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
+
+            // 设置正在切换状态，防止被转移到其他env上，因为to已经是running状态了，所以不用担心他
+            if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK))
+            {
+                // CO_O_DEBUG("set ctx %p CO_CTX_FLAG_SWITCHING flag", curr);
+                curr->set_flag(CO_CTX_FLAG_SWITCHING);
+            }
+
+            if (curr == idle_ctx__)
+            {
+                return;
+            }
+
+            next = idle_ctx__;
+            // CO_O_DEBUG("from %p to idle %p", curr, idle_ctx__);
         }
     }
     switch_to__(curr->regs(), next->regs());
@@ -313,13 +311,54 @@ void co_env::start_schedule()
     });
 }
 
+void co_env::switch_shared_stack_ctx__()
+{
+    shared_stack_switch_context__.need_switch = false;
+
+    // CO_O_DEBUG("switch from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
+
+    if (shared_stack_switch_context__.from->test_flag(CO_CTX_FLAG_SHARED_STACK))
+    {
+        // CO_O_DEBUG("save ctx %p stack", shared_stack_switch_context__.from);
+        save_shared_stack__(shared_stack_switch_context__.from);
+        // 保存栈完成后退出切换状态
+        shared_stack_switch_context__.from->reset_flag(CO_CTX_FLAG_SWITCHING);
+    }
+    if (shared_stack_switch_context__.to->test_flag(CO_CTX_FLAG_SHARED_STACK))
+    {
+        // CO_O_DEBUG("restore ctx %p stack", shared_stack_switch_context__.from);
+        restore_shared_stack__(shared_stack_switch_context__.to);
+    }
+
+    // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
+    // 切换到to
+    switch_to__(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
+}
+
 void co_env::start_schedule_routine__()
 {
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
     {
-        schedule_switch();
+        // 检测是否需要切换共享栈
+        if (shared_stack_switch_context__.need_switch)
+        {
+            // CO_O_DEBUG("need switch shared stack");
+            switch_shared_stack_ctx__();
+        }
+        else
+        {
+            // CO_O_DEBUG("dont need switch shared stack");
+            schedule_switch();
+        }
+
+        // 切换回来检测是否需要执行共享栈切换
+        if (shared_stack_switch_context__.need_switch)
+        {
+            continue;
+        }
+
         set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
         remove_detached_ctx__();       // 切换回来之后，将完成的ctx删除
 
@@ -404,7 +443,7 @@ std::list<co_ctx*> co_env::moveable_ctx_list()
     for (auto& ctx : all_ctx)
     {
         // 绑定env的协程和当前协程不能移动
-        if (ctx->state() == co_state::running || ctx->test_flag(CO_CTX_FLAG_BIND) || ctx->test_flag(CO_CTX_FLAG_SHARED_STACK))
+        if (ctx->state() == co_state::running || ctx->test_flag(CO_CTX_FLAG_BIND) || ctx->test_flag(CO_CTX_FLAG_SHARED_STACK) || ctx->test_flag(CO_CTX_FLAG_SWITCHING))
         {
             continue;
         }
@@ -427,7 +466,7 @@ bool co_env::can_auto_destroy() const
 void co_env::wake_up()
 {
     std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
-    // // CO_O_DEBUG("wake up env: %p", this);
+    // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
 }
 
@@ -462,24 +501,6 @@ void co_env::init_ctx(co_ctx* ctx)
         stack = shared_stack__;
     }
     auto config = ctx->config();
-#ifdef _MSC_VER
-#ifdef _WIN64
-    regs[reg_index_RSP__] = stack->stack_top();
-    regs[reg_index_RBP__] = regs[reg_index_RSP__];
-    regs[reg_index_RIP__] = reinterpret_cast<co_byte*>(config.startup);
-    regs[reg_index_RCX__] = reinterpret_cast<co_byte*>(ctx);
-
-    __get_mxcsr_msvc_x64(&regs[reg_index_MXCSR__]);
-    __get_fcw_msvc_x64(&regs[reg_index_FCW__]);
-    __get_TEB_8_msvc_x64(&regs[reg_index_TEB_8__]);
-    __get_TEB_16_msvc_x64(&regs[reg_index_TEB_16__]);
-    __get_TEB_24_msvc_x64(&regs[reg_index_TEB_24__]);
-    __get_TEB_5240_msvc_x64(&regs[reg_index_TEB_5240__]);
-
-#else
-#error only support x86_64 in msvc
-#endif
-#endif
 
 #ifdef __GNUC__
 #ifdef __x86_64__
@@ -494,6 +515,37 @@ void co_env::init_ctx(co_ctx* ctx)
 #error only supported x86_64
 #endif
 #endif
+}
+
+size_t co_env::get_valid_stack_size(co_ctx* ctx)
+{
+    return ctx->stack()->stack_top() - ctx->regs()[reg_index_RSP__];
+}
+
+void co_env::save_shared_stack__(co_ctx* ctx)
+{
+    auto stack_size = get_valid_stack_size(ctx);
+    // CO_O_DEBUG("ctx %p valid stack size is %lu", ctx, stack_size);
+    auto tmp_stack = stack_factory__->create_stack(stack_size);
+    memcpy(tmp_stack->stack(), ctx->regs()[reg_index_RSP__], stack_size);
+    ctx->set_stack(tmp_stack);
+}
+
+void co_env::restore_shared_stack__(co_ctx* ctx)
+{
+    // 第一次调度的时候stack为nullptr
+    if (ctx->stack() != nullptr)
+    {
+        memcpy(shared_stack__->stack_top() - ctx->stack()->stack_size(), ctx->stack()->stack(), ctx->stack()->stack_size());
+        // 销毁原stack
+        stack_factory__->destroy_stack(ctx->stack());
+    }
+    else
+    {
+        // CO_O_DEBUG("ctx %p  stack is nullptr", ctx);
+    }
+    // 设置为共享栈
+    ctx->set_stack(shared_stack__);
 }
 
 CO_NAMESPACE_END

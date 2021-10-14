@@ -100,4 +100,10 @@ void co_ctx::unlock_destroy()
     reset_flag(CO_CTX_FLAG_LOCKED);
 }
 
+void co_ctx::set_stack(co_stack* stack)
+{
+    // CO_O_DEBUG("set stack: %p", stack);
+    stack__ = stack;
+}
+
 CO_NAMESPACE_END

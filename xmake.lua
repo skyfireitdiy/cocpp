@@ -33,8 +33,9 @@ task("test_cov")
 on_run(function()
     local exe = "$(buildir)/$(plat)/$(arch)/$(mode)"
     os.exec("lcov -d ./ -z")
-    os.exec(exe .. "/test --gtest_shuffle --gtest_repeat=10")
-    -- os.exec(exe .. "/test --gtest_shuffle")
+    -- os.exec(exe .. "/test --gtest_shuffle --gtest_repeat=10")
+    os.exec(exe .. "/test --gtest_shuffle")
+    -- os.exec(exe .. "/test --gtest_filter='*shared_stack*'")
     os.exec("lcov -c -d ./ -o cover.info")
     os.exec(
         "lcov --remove cover.info '*/usr/include/*' '*/usr/lib/*' '*/usr/lib64/*' '*/usr/local/include/*' '*/usr/local/lib/*' '*/usr/local/lib64/*' -o final.info")

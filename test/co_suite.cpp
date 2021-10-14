@@ -697,3 +697,23 @@ TEST(co, co_wait_priority)
 
     c2.wait<void>();
 }
+
+TEST(co, co_shared_stack)
+{
+    auto env = co::create_env();
+
+    auto routine = [](int n) {
+        int sum = 0;
+        for (int i = 0; i < 1000; ++i)
+        {
+            sum += i;
+            this_co::yield();
+        }
+        return sum;
+    };
+    co c1({ with_name("shared stack ctx 1"), with_shared_stack(true), with_bind_env(env) }, routine, 1);
+    co c2({ with_name("shared stack ctx 2"), with_shared_stack(true), with_bind_env(env) }, routine, 2);
+
+    EXPECT_EQ(c1.wait<int>(), 499500);
+    EXPECT_EQ(c2.wait<int>(), 499500);
+}

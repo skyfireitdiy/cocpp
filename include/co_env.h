@@ -7,6 +7,7 @@
 #include "co_nocopy.h"
 #include "co_return_value.h"
 #include "co_stack.h"
+#include "co_stack_factory.h"
 #include "co_type.h"
 
 #include <atomic>
@@ -33,11 +34,13 @@ private:
 
     mutable std::shared_mutex mu_state__;
 
-    co_manager* const     manager__ { co_manager::instance() };
-    co_ctx_factory* const ctx_factory__ { co_ctx_factory::instance() };
-    co_scheduler* const   scheduler__ = nullptr;
-    co_stack*             shared_stack__ { nullptr };
-    co_ctx* const         idle_ctx__ { nullptr };
+    co_manager* const       manager__ { co_manager::instance() };
+    co_ctx_factory* const   ctx_factory__ { co_ctx_factory::instance() };
+    co_stack_factory* const stack_factory__ { co_stack_factory::instance() };
+
+    co_scheduler* const scheduler__ = nullptr;
+    co_stack*           shared_stack__ { nullptr };
+    co_ctx* const       idle_ctx__ { nullptr };
 
     co_env_state state__ { co_env_state::idle };
 
@@ -48,13 +51,18 @@ private:
 
     co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
-    void        start_schedule_routine__();
-    void        remove_detached_ctx__();
-    void        remove_all_ctx__();
-    void        remove_current_env__();
-    co_ctx*     next_ctx__();
-    void        update_ctx_state__(co_ctx* curr, co_ctx* next);
-    static void switch_to__(co_byte** curr_regs, co_byte** next_regs);
+    void    start_schedule_routine__();
+    void    remove_detached_ctx__();
+    void    remove_all_ctx__();
+    void    remove_current_env__();
+    co_ctx* next_ctx__();
+    void    update_ctx_state__(co_ctx* curr, co_ctx* next);
+    void    save_shared_stack__(co_ctx* ctx);
+    void    restore_shared_stack__(co_ctx* ctx);
+    void    switch_shared_stack_ctx__();
+
+    static void   switch_to__(co_byte** curr_regs, co_byte** next_regs);
+    static size_t get_valid_stack_size(co_ctx* ctx);
 
     static constexpr int reg_index_RDI__   = 0;
     static constexpr int reg_index_RIP__   = 1;
