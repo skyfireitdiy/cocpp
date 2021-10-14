@@ -72,6 +72,10 @@ public:
     ~co();
 };
 
+#define CoLocal(name, type) []() -> type& {              \
+    return cocpp::co::current_ctx()->local<type>(#name); \
+}()
+
 ///// 模板实现
 
 template <typename Func, typename... Args>

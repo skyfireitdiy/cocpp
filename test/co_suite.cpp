@@ -17,7 +17,6 @@
 #include "co_manager.h"
 #include "co_mutex.h"
 #include "co_o1_scheduler_factory.h"
-#include "co_pre_run.h"
 #include "co_recursive_mutex.h"
 #include "co_shared_mutex.h"
 #include "co_shared_timed_mutex.h"
@@ -703,4 +702,17 @@ TEST(co, co_shared_stack)
 
     EXPECT_EQ(c1.wait<int>(), 499500);
     EXPECT_EQ(c2.wait<int>(), 499500);
+}
+
+TEST(co, co_local)
+{
+    co c1([]() {
+        CoLocal(name, std::string) = "hello";
+        auto& value                = CoLocal(name, std::string);
+        EXPECT_EQ(value, "hello");
+    });
+
+    c1.wait<void>();
+    auto& value = CoLocal(name, std::string);
+    EXPECT_EQ(value, "");
 }
