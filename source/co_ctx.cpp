@@ -81,8 +81,13 @@ void co_ctx::set_priority(int priority)
     }
     if (old_priority != priority__ && !test_flag(CO_CTX_FLAG_IDLE))
     {
-        env__->scheduler()->change_priority(old_priority, priority__, this);
+        env__->scheduler()->change_priority(old_priority, this);
     }
+}
+
+bool co_ctx::can_schedule() const
+{
+    return state() != co_state::finished && !test_flag(CO_CTX_FLAG_WAITING);
 }
 
 bool co_ctx::can_destroy() const
@@ -104,6 +109,11 @@ void co_ctx::set_stack(co_stack* stack)
 {
     // CO_O_DEBUG("set stack: %p", stack);
     stack__ = stack;
+}
+
+bool co_ctx::can_move() const
+{
+    return !(state() == co_state::running || test_flag(CO_CTX_FLAG_BIND) || test_flag(CO_CTX_FLAG_SHARED_STACK) || test_flag(CO_CTX_FLAG_SWITCHING));
 }
 
 CO_NAMESPACE_END

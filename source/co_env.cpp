@@ -48,7 +48,7 @@ void co_env::add_ctx(co_ctx* ctx)
 
     std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     ctx->set_env(this);
-    scheduler__->add_ctx(ctx); // 添加到调度器
+    scheduler__->add_obj(ctx); // 添加到调度器
     set_state(co_env_state::busy);
 
     // CO_O_DEBUG("add ctx wake up env: %p", this);
@@ -122,14 +122,15 @@ void co_env::set_state(co_env_state state)
 
 void co_env::remove_detached_ctx__()
 {
-    auto curr    = scheduler__->current_ctx();
-    auto all_ctx = scheduler__->all_ctx();
-    for (auto& ctx : all_ctx)
+    auto curr    = scheduler__->current_obj();
+    auto all_ctx = scheduler__->all_obj();
+    for (auto o : all_ctx)
     {
+        auto ctx = dynamic_cast<co_ctx*>(o);
         // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
         if (ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr)
         {
-            scheduler__->remove_ctx(ctx);
+            scheduler__->remove_obj(o);
             ctx_factory__->destroy_ctx(ctx);
         }
     }
@@ -144,8 +145,8 @@ co_ctx* co_env::next_ctx__()
     }
     else
     {
-        auto next = scheduler__->choose_ctx();
-        return next == nullptr ? idle_ctx__ : next;
+        auto next = scheduler__->choose_obj();
+        return dynamic_cast<co_ctx*>(next == nullptr ? idle_ctx__ : next);
     }
 }
 
@@ -222,7 +223,7 @@ void co_env::schedule_switch()
 
 void co_env::remove_ctx(co_ctx* ctx)
 {
-    scheduler__->remove_ctx(ctx);
+    scheduler__->remove_obj(ctx);
     ctx_factory__->destroy_ctx(ctx);
 }
 
@@ -280,12 +281,12 @@ void co_env::switch_to__(co_byte** curr, co_byte** next)
 
 co_ctx* co_env::current_ctx() const
 {
-    auto ret = scheduler__->current_ctx();
+    auto ret = scheduler__->current_obj();
     if (ret == nullptr)
     {
         return idle_ctx__;
     }
-    return ret;
+    return dynamic_cast<co_ctx*>(ret);
 }
 
 void co_env::stop_schedule()
@@ -393,10 +394,10 @@ co_manager* co_env::manager() const
 
 void co_env::remove_all_ctx__()
 {
-    auto all_ctx = scheduler__->all_ctx();
-    for (auto& ctx : all_ctx)
+    auto all_obj = scheduler__->all_obj();
+    for (auto& obj : all_obj)
     {
-        remove_ctx(ctx);
+        remove_ctx(dynamic_cast<co_ctx*>(obj));
     }
 }
 
@@ -438,12 +439,13 @@ void co_env::unlock_schedule()
 
 std::list<co_ctx*> co_env::moveable_ctx_list()
 {
-    auto               all_ctx = scheduler__->all_ctx();
+    auto               all_obj = scheduler__->all_obj();
     std::list<co_ctx*> ret;
-    for (auto& ctx : all_ctx)
+    for (auto& o : all_obj)
     {
+        auto ctx = dynamic_cast<co_ctx*>(o);
         // 绑定env的协程和当前协程不能移动
-        if (ctx->state() == co_state::running || ctx->test_flag(CO_CTX_FLAG_BIND) || ctx->test_flag(CO_CTX_FLAG_SHARED_STACK) || ctx->test_flag(CO_CTX_FLAG_SWITCHING))
+        if (!ctx->can_move())
         {
             continue;
         }
@@ -454,7 +456,7 @@ std::list<co_ctx*> co_env::moveable_ctx_list()
 
 void co_env::take_ctx(co_ctx* ctx)
 {
-    scheduler__->remove_ctx(ctx);
+    scheduler__->remove_obj(ctx);
 }
 
 bool co_env::can_auto_destroy() const

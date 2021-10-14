@@ -3,6 +3,7 @@
 #include "co_ctx_config.h"
 #include "co_event.h"
 #include "co_flag_manager.h"
+#include "co_scheduler.h"
 #include "co_stack.h"
 #include "co_type.h"
 
@@ -16,7 +17,8 @@ CO_NAMESPACE_BEGIN
 class co_env;
 
 class co_ctx final : public co_nocopy,
-                     public co_flag_manager<CO_CTX_FLAG_MAX>
+                     public co_flag_manager<CO_CTX_FLAG_MAX>,
+                     public schedulable
 {
     RegCoEvent(co_finished, co_ctx*);
 
@@ -41,6 +43,10 @@ private:
     co_ctx(co_stack* stack, const co_ctx_config& config);
 
 public:
+    void set_priority(int priority) override;
+    int  priority() const override;
+    bool can_schedule() const override;
+
     co_stack*            stack() const;
     co_state             state() const;
     co_byte**            regs();
@@ -49,12 +55,11 @@ public:
     std::any&            ret_ref();
     void                 set_env(co_env* env);
     co_env*              env() const;
-    void                 set_priority(int priority);
-    int                  priority() const;
     bool                 can_destroy() const;
     void                 lock_destroy();
     void                 unlock_destroy();
     void                 set_stack(co_stack* stack);
+    bool                 can_move() const;
 
     friend void co_entry(co_ctx* ctx);
     friend class co_ctx_factory;

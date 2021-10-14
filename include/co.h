@@ -29,13 +29,10 @@ concept co_not_void = !std::is_same_v<T, void>;
 
 class co final : public co_nocopy
 {
-    RegCoEvent(co_finished);
-
 private:
-    co_event_handler_type<co_ctx*> co_finished_handler;
-    co_ctx_factory*                ctx_factory__ { co_ctx_factory::instance() };
-    co_ctx*                        ctx__;
-    static co_manager*             manager__;
+    co_ctx_factory*    ctx_factory__ { co_ctx_factory::instance() };
+    co_ctx*            ctx__;
+    static co_manager* manager__;
 
     template <typename Func, typename... Args>
     void init__(co_ctx_config config, Func&& func, Args&&... args);
@@ -106,10 +103,7 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
     }
 
     ctx__ = ctx_factory__->create_ctx(config);
-    ctx__->lock_destroy();                                                         // 被co对象持有
-    co_finished_handler = ctx__->co_finished().register_callback([this](co_ctx*) { // 事件转换
-        co_finished().emit();
-    });
+    ctx__->lock_destroy(); // 被co对象持有
 
     manager__->add_ctx(ctx__);
 }

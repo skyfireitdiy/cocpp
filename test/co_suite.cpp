@@ -479,21 +479,6 @@ TEST(co, co_condition_variable_notify_at_co_exit)
     EXPECT_EQ(n, 50);
 }
 
-TEST(co, co_finished_event)
-{
-    int n = 100;
-    co  c1([&] {
-        this_co::sleep_for(std::chrono::milliseconds(500));
-    });
-    EXPECT_EQ(n, 100);
-    c1.co_finished().register_callback([&]() {
-        n /= 2;
-    });
-    this_co::sleep_for(std::chrono::milliseconds(1000));
-    EXPECT_EQ(n, 50);
-    c1.wait<void>();
-}
-
 TEST(co, co_call_once)
 {
     co_once_flag     flag;
