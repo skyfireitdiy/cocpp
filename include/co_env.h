@@ -31,7 +31,7 @@ class co_env final : public co_nocopy,
                      public co_flag_manager<CO_ENV_FLAG_MAX>
 {
 
-    RegCoEvent(env_task_finished, co_env*);
+    RegCoEvent(env_task_finished);
 
 private:
     std::future<void> worker__;

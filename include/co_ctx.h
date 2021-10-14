@@ -20,7 +20,8 @@ class co_ctx final : public co_nocopy,
                      public co_flag_manager<CO_CTX_FLAG_MAX>,
                      public schedulable
 {
-    RegCoEvent(finished, co_ctx*);
+    RegCoEvent(finished);
+    RegCoEvent(priority_changed, int);
 
 private:
     co_stack*             stack__ { nullptr };           // 当前栈空间

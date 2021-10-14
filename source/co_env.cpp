@@ -396,7 +396,7 @@ void co_env::remove_current_env__()
     if (current_env__ != nullptr)
     {
         // CO_O_DEBUG("add self to clean up list: %p", current_env__);
-        env_task_finished().emit(std::move(current_env__));
+        env_task_finished().emit();
         current_env__ = nullptr;
     }
 }

@@ -81,7 +81,7 @@ void co_ctx::set_priority(int priority)
     }
     if (old_priority != priority__ && !test_flag(CO_CTX_FLAG_IDLE))
     {
-        env__->scheduler()->change_priority(old_priority, this);
+        priority_changed().emit(std::move(old_priority));
     }
 }
 

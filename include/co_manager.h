@@ -63,6 +63,7 @@ private:
     co_env* get_best_env__();
     void    remove_env__(co_env* env);
     void    sub_env_event__(co_env* env);
+    void    sub_ctx_event__(co_ctx* env);
 
     co_manager();
 

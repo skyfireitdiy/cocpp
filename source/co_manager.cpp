@@ -62,8 +62,15 @@ bool co_manager::can_schedule_ctx__(co_env* env) const
 
 void co_manager::sub_env_event__(co_env* env)
 {
-    env->env_task_finished().register_callback([this](co_env* env) {
+    env->env_task_finished().register_callback([this, env]() {
         remove_env__(env);
+    });
+}
+
+void co_manager::sub_ctx_event__(co_ctx* ctx)
+{
+    ctx->priority_changed().register_callback([ctx](int old) {
+        ctx->env()->scheduler()->change_priority(old, ctx);
     });
 }
 
@@ -314,6 +321,7 @@ void co_manager::wait_background_task__()
 co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lock_destroy)
 {
     auto ctx = ctx_factory__->create_ctx(config);
+    sub_ctx_event__(ctx);
     if (lock_destroy)
     {
         ctx->lock_destroy();
