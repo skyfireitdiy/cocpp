@@ -1,6 +1,6 @@
 #include "co_spinlock.h"
-
 #include "co.h"
+#include "co_this_co.h"
 
 CO_NAMESPACE_BEGIN
 

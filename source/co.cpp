@@ -8,11 +8,6 @@ CO_NAMESPACE_BEGIN
 
 co_manager* co::manager__ = co_manager::instance();
 
-void this_co::yield()
-{
-    co::current_env()->schedule_switch();
-}
-
 void co::detach()
 {
     if (ctx__ == nullptr)
@@ -23,11 +18,6 @@ void co::detach()
     ctx__ = nullptr;
 }
 
-co_id this_co::id()
-{
-    return reinterpret_cast<co_id>(co::current_ctx());
-}
-
 std::string co::name() const
 {
     if (ctx__ == nullptr)
@@ -35,11 +25,6 @@ std::string co::name() const
         return "";
     }
     return ctx__->config().name;
-}
-
-std::string this_co::name()
-{
-    return co::current_ctx()->config().name;
 }
 
 void co::convert_to_schedule_thread()

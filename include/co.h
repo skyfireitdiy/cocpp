@@ -72,15 +72,6 @@ public:
     ~co();
 };
 
-namespace this_co
-{
-co_id       id();    // 协程id
-std::string name();  // 协程名称
-void        yield(); // 主动让出cpu
-template <class Rep, class Period>
-void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration); // 协程睡眠
-};
-
 ///// 模板实现
 
 template <typename Func, typename... Args>
@@ -102,16 +93,6 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
     }
 
     ctx__ = manager__->create_and_schedule_ctx(config, true);
-}
-
-template <class Rep, class Period>
-void this_co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
-{
-    auto start = std::chrono::high_resolution_clock::now();
-    do
-    {
-        this_co::yield();
-    } while (std::chrono::high_resolution_clock::now() - start < sleep_duration);
 }
 
 template <typename Func, typename... Args>
