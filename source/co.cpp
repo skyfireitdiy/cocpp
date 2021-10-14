@@ -19,10 +19,6 @@ void co::detach()
     {
         return;
     }
-    if (manager__->clean_up()) // manager已经设置了clean_up，所有的ctx都会被销毁
-    {
-        return;
-    }
     ctx__->unlock_destroy();
     ctx__ = nullptr;
 }

@@ -42,6 +42,7 @@ private:
 
     co_scheduler_factory* const scheduler_factory__ { nullptr };
     co_env_factory* const       env_factory__ { co_env_factory::instance() };
+    co_ctx_factory* const       ctx_factory__ { co_ctx_factory::instance() };
 
     mutable std::mutex                           mu_timing_duration__;
     std::chrono::high_resolution_clock::duration timing_duration__ { std::chrono::milliseconds(10) };
@@ -60,22 +61,21 @@ private:
     void    set_clean_up__();
     void    destroy_all_factory__();
     co_env* get_best_env__();
+    void    remove_env__(co_env* env);
+    void    sub_env_event__(co_env* env);
 
     co_manager();
 
 public:
-    co_env*               create_env(bool dont_auto_destory = false);
-    void                  add_ctx(co_ctx* ctx);
-    void                  set_env_shared_stack_size(size_t size);
-    co_scheduler_factory* scheduler_factory();
-    void                  remove_env(co_env* env);
-    void                  create_env_from_this_thread();
-    co_env*               current_env();
-    bool                  clean_up() const;
-    void                  set_base_schedule_thread_count(size_t base_thread_count);
-    void                  set_max_schedule_thread_count(size_t max_thread_count);
-    void                  set_timing_duration(
-                         const std::chrono::high_resolution_clock::duration& duration);
+    co_env* create_env(bool dont_auto_destory = false);
+    co_ctx* create_and_schedule_ctx(const co_ctx_config& config, bool lock_destroy = true);
+    void    set_env_shared_stack_size(size_t size);
+    void    create_env_from_this_thread();
+    co_env* current_env();
+    void    set_base_schedule_thread_count(size_t base_thread_count);
+    void    set_max_schedule_thread_count(size_t max_thread_count);
+    void    set_timing_duration(
+           const std::chrono::high_resolution_clock::duration& duration);
     const std::chrono::high_resolution_clock::duration& timing_duration() const;
     ~co_manager();
 

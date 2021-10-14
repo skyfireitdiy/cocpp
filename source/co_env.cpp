@@ -407,7 +407,7 @@ void co_env::remove_current_env__()
     {
         assert(manager__ != nullptr);
         // CO_O_DEBUG("add self to clean up list: %p", current_env__);
-        manager__->remove_env(current_env__);
+        env_task_finished().emit(std::move(current_env__));
         current_env__ = nullptr;
     }
 }

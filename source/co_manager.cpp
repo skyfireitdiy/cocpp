@@ -60,10 +60,20 @@ bool co_manager::can_schedule_ctx__(co_env* env) const
     return !(state == co_env_state::blocked || state == co_env_state::destorying || !env->has_scheduler_thread());
 }
 
+void co_manager::sub_env_event__(co_env* env)
+{
+    env->env_task_finished().register_callback([this](co_env* env) {
+        remove_env__(env);
+    });
+}
+
 co_env* co_manager::create_env(bool dont_auto_destory)
 {
     assert(!clean_up__);
     auto env = env_factory__->create_env(default_shared_stack_size__);
+
+    sub_env_event__(env);
+
     if (dont_auto_destory)
     {
         env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
@@ -90,12 +100,7 @@ co_manager::co_manager()
     }));
 }
 
-co_scheduler_factory* co_manager::scheduler_factory()
-{
-    return scheduler_factory__;
-}
-
-void co_manager::remove_env(co_env* env)
+void co_manager::remove_env__(co_env* env)
 {
     std::scoped_lock lock(mu_env_list__, mu_clean_up__);
     env_list__.remove(env);
@@ -109,6 +114,9 @@ void co_manager::create_env_from_this_thread()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
+
+    sub_env_event__(current_env__);
+
     std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     env_list__.push_back(current_env__);
     ++exist_env_count__;
@@ -124,12 +132,6 @@ co_env* co_manager::current_env()
     return current_env__;
 }
 
-bool co_manager::clean_up() const
-{
-    std::lock_guard<std::recursive_mutex> lock(mu_clean_up__);
-    return clean_up__;
-}
-
 void co_manager::set_clean_up__()
 {
     std::scoped_lock lock(mu_clean_up__, mu_env_list__);
@@ -141,7 +143,7 @@ void co_manager::set_clean_up__()
         if (!env->has_scheduler_thread())
         {
             // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
-            remove_env(env);
+            remove_env__(env);
             // CO_O_DEBUG("push to clean up: %p", env);
             continue;
         }
@@ -315,8 +317,13 @@ void co_manager::wait_background_task__()
     }
 }
 
-void co_manager::add_ctx(co_ctx* ctx)
+co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lock_destroy)
 {
+    auto ctx = ctx_factory__->create_ctx(config);
+    if (lock_destroy)
+    {
+        ctx->lock_destroy();
+    }
     auto bind_env = ctx->config().bind_env;
     if (bind_env != nullptr)
     {
@@ -326,6 +333,8 @@ void co_manager::add_ctx(co_ctx* ctx)
     {
         get_best_env__()->add_ctx(ctx);
     }
+
+    return ctx;
 }
 
 CO_NAMESPACE_END

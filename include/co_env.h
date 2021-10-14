@@ -2,6 +2,7 @@
 
 #include "co_ctx_factory.h"
 #include "co_define.h"
+#include "co_event.h"
 #include "co_flag_manager.h"
 #include "co_manager.h"
 #include "co_nocopy.h"
@@ -29,6 +30,9 @@ class co_ctx;
 class co_env final : public co_nocopy,
                      public co_flag_manager<CO_ENV_FLAG_MAX>
 {
+
+    RegCoEvent(env_task_finished, co_env*);
+
 private:
     std::future<void> worker__;
 

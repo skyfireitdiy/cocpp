@@ -30,7 +30,6 @@ concept co_not_void = !std::is_same_v<T, void>;
 class co final : public co_nocopy
 {
 private:
-    co_ctx_factory*    ctx_factory__ { co_ctx_factory::instance() };
     co_ctx*            ctx__;
     static co_manager* manager__;
 
@@ -102,10 +101,7 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
         };
     }
 
-    ctx__ = ctx_factory__->create_ctx(config);
-    ctx__->lock_destroy(); // 被co对象持有
-
-    manager__->add_ctx(ctx__);
+    ctx__ = manager__->create_and_schedule_ctx(config, true);
 }
 
 template <class Rep, class Period>
