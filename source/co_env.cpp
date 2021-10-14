@@ -100,11 +100,6 @@ int co_env::workload() const
     return scheduler__->count();
 }
 
-bool co_env::has_scheduler_thread() const
-{
-    return !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
-}
-
 co_env_state co_env::state() const
 {
     std::shared_lock<std::shared_mutex> lock(mu_state__);
@@ -387,11 +382,6 @@ void co_env::schedule_in_this_thread()
     start_schedule_routine__();
 }
 
-co_manager* co_env::manager() const
-{
-    return manager__;
-}
-
 void co_env::remove_all_ctx__()
 {
     auto all_obj = scheduler__->all_obj();
@@ -405,7 +395,6 @@ void co_env::remove_current_env__()
 {
     if (current_env__ != nullptr)
     {
-        assert(manager__ != nullptr);
         // CO_O_DEBUG("add self to clean up list: %p", current_env__);
         env_task_finished().emit(std::move(current_env__));
         current_env__ = nullptr;
@@ -422,22 +411,22 @@ bool co_env::scheduled() const
     return test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
-void co_env::reset_scheduled()
+void co_env::reset_scheduled_flag()
 {
     reset_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
-void co_env::lock_schedule()
+void co_env::lock_schedule__()
 {
     mu_schedule__.lock();
 }
 
-void co_env::unlock_schedule()
+void co_env::unlock_schedule__()
 {
     mu_schedule__.unlock();
 }
 
-std::list<co_ctx*> co_env::moveable_ctx_list()
+std::list<co_ctx*> co_env::moveable_ctx_list__()
 {
     auto               all_obj = scheduler__->all_obj();
     std::list<co_ctx*> ret;
@@ -454,7 +443,7 @@ std::list<co_ctx*> co_env::moveable_ctx_list()
     return ret;
 }
 
-void co_env::take_ctx(co_ctx* ctx)
+void co_env::take_ctx__(co_ctx* ctx)
 {
     scheduler__->remove_obj(ctx);
 }
@@ -548,6 +537,20 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
     }
     // 设置为共享栈
     ctx->set_stack(shared_stack__);
+}
+
+std::list<co_ctx*> co_env::take_moveable_ctx()
+{
+    lock_schedule__();
+    CoDefer([this] {
+        unlock_schedule__();
+    });
+    auto ret = moveable_ctx_list__();
+    for (auto& ctx : ret)
+    {
+        take_ctx__(ctx);
+    }
+    return ret;
 }
 
 CO_NAMESPACE_END

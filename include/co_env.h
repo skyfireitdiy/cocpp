@@ -38,7 +38,6 @@ private:
 
     mutable std::shared_mutex mu_state__;
 
-    co_manager* const       manager__ { co_manager::instance() };
     co_ctx_factory* const   ctx_factory__ { co_ctx_factory::instance() };
     co_stack_factory* const stack_factory__ { co_stack_factory::instance() };
 
@@ -55,15 +54,19 @@ private:
 
     co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
-    void    start_schedule_routine__();
-    void    remove_detached_ctx__();
-    void    remove_all_ctx__();
-    void    remove_current_env__();
-    co_ctx* next_ctx__();
-    void    update_ctx_state__(co_ctx* curr, co_ctx* next);
-    void    save_shared_stack__(co_ctx* ctx);
-    void    restore_shared_stack__(co_ctx* ctx);
-    void    switch_shared_stack_ctx__();
+    void               start_schedule_routine__();
+    void               remove_detached_ctx__();
+    void               remove_all_ctx__();
+    void               remove_current_env__();
+    co_ctx*            next_ctx__();
+    void               update_ctx_state__(co_ctx* curr, co_ctx* next);
+    void               save_shared_stack__(co_ctx* ctx);
+    void               restore_shared_stack__(co_ctx* ctx);
+    void               switch_shared_stack_ctx__();
+    void               lock_schedule__();
+    void               unlock_schedule__();
+    std::list<co_ctx*> moveable_ctx_list__();
+    void               take_ctx__(co_ctx* ctx);
 
     static void   switch_to__(co_byte** curr_regs, co_byte** next_regs);
     static size_t get_valid_stack_size(co_ctx* ctx);
@@ -94,7 +97,6 @@ public:
                                             const std::chrono::nanoseconds& timeout);
     co_return_value                wait_ctx(co_ctx* ctx);
     int                            workload() const;
-    bool                           has_scheduler_thread() const;
     co_env_state                   state() const;
     void                           set_state(co_env_state state);
     void                           schedule_switch();
@@ -103,14 +105,10 @@ public:
     void                           stop_schedule();
     void                           start_schedule();
     void                           schedule_in_this_thread();
-    co_manager*                    manager() const;
     co_scheduler*                  scheduler() const;
     bool                           scheduled() const;
-    void                           reset_scheduled();
-    void                           lock_schedule();
-    void                           unlock_schedule();
-    std::list<co_ctx*>             moveable_ctx_list();
-    void                           take_ctx(co_ctx* ctx);
+    void                           reset_scheduled_flag();
+    std::list<co_ctx*>             take_moveable_ctx();
     bool                           can_auto_destroy() const;
     void                           wake_up();
 

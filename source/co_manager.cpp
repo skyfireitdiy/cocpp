@@ -57,7 +57,7 @@ co_env* co_manager::get_best_env__()
 bool co_manager::can_schedule_ctx__(co_env* env) const
 {
     auto state = env->state();
-    return !(state == co_env_state::blocked || state == co_env_state::destorying || !env->has_scheduler_thread());
+    return !(state == co_env_state::blocked || state == co_env_state::destorying || !env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD));
 }
 
 void co_manager::sub_env_event__(co_env* env)
@@ -140,7 +140,7 @@ void co_manager::set_clean_up__()
     auto env_list_back = env_list__; // 在下面的清理操作中需要删除list中的元素导致迭代器失效，此处创建一个副本（也可以直接加入过期列表，然后清空env_list__，但是这样表达力会好些）
     for (auto& env : env_list_back)
     {
-        if (!env->has_scheduler_thread())
+        if (env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
         {
             // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
             remove_env__(env);
@@ -209,18 +209,12 @@ void co_manager::redistribute_ctx__()
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
         if (is_blocked__(env))
         {
+            // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
+            env->set_state(co_env_state::blocked);
             // CO_O_DEBUG("env %p is blocked, redistribute ctx", env);
-            env->lock_schedule();
-            env->set_state(co_env_state::blocked); // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
-            auto tmp_moveable_ctx = env->moveable_ctx_list();
-            merge_list(moved_ctx_list, tmp_moveable_ctx); // 将阻塞的env中可移动的ctx收集起来
-            for (auto& ctx : tmp_moveable_ctx)            // 将收集到的可转移的ctx从阻塞的env中取出
-            {
-                env->take_ctx(ctx);
-            }
-            env->unlock_schedule(); // 恢复调度
+            merge_list(moved_ctx_list, env->take_moveable_ctx()); // 将阻塞的env中可移动的ctx收集起来
         }
-        env->reset_scheduled();
+        env->reset_scheduled_flag();
     }
     // 重新选择合适的env进行调度
     for (auto& ctx : moved_ctx_list)
