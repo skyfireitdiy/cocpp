@@ -62,14 +62,14 @@ bool co_manager::can_schedule_ctx__(co_env* env) const
 
 void co_manager::sub_env_event__(co_env* env)
 {
-    env->env_task_finished().register_callback([this, env]() {
+    env->env_task_finished().sub([this, env]() {
         remove_env__(env);
     });
 }
 
 void co_manager::sub_ctx_event__(co_ctx* ctx)
 {
-    ctx->priority_changed().register_callback([ctx](int old) {
+    ctx->priority_changed().sub([ctx](int old, int new_) {
         ctx->env()->scheduler()->change_priority(old, ctx);
     });
 }

@@ -53,6 +53,7 @@ void co_env::add_ctx(co_ctx* ctx)
 
     // CO_O_DEBUG("add ctx wake up env: %p", this);
     wake_up();
+    ctx_added().pub(ctx);
 }
 
 std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
@@ -71,10 +72,12 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
     {
         if (std::chrono::high_resolution_clock::now() - now > timeout)
         {
+            wait_ctx_timeout().pub(ctx);
             return ret;
         }
         schedule_switch();
     }
+    wait_ctx_finished().pub(ctx);
     return ctx->ret_ref();
 }
 
@@ -92,6 +95,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
         schedule_switch();
         // CO_O_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
     }
+    wait_ctx_finished().pub(ctx);
     return ctx->ret_ref();
 }
 
@@ -111,7 +115,9 @@ void co_env::set_state(co_env_state state)
     std::unique_lock<std::shared_mutex> lock(mu_state__);
     if (state__ != co_env_state::destorying) // destorying 状态不允许迁移到其他状态
     {
-        state__ = state;
+        co_env_state old_state = state__;
+        state__                = state;
+        state_changed().pub(old_state, state__);
     }
 }
 
@@ -214,12 +220,14 @@ void co_env::schedule_switch()
         }
     }
     switch_to__(curr->regs(), next->regs());
+    switched_to().pub(curr);
 }
 
 void co_env::remove_ctx(co_ctx* ctx)
 {
     scheduler__->remove_obj(ctx);
     ctx_factory__->destroy_ctx(ctx);
+    ctx_removed().pub(ctx);
 }
 
 void co_env::switch_to__(co_byte** curr, co_byte** next)
@@ -297,6 +305,7 @@ void co_env::stop_schedule()
 
     // CO_O_DEBUG("%p : stop schedule wake up idle co", this);
     wake_up(); // 唤醒idle的ctx
+    schedule_stopped().pub();
 }
 
 void co_env::start_schedule()
@@ -329,10 +338,12 @@ void co_env::switch_shared_stack_ctx__()
     // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
     // 切换到to
     switch_to__(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
+    switched_to().pub(idle_ctx__);
 }
 
 void co_env::start_schedule_routine__()
 {
+    schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
@@ -367,14 +378,17 @@ void co_env::start_schedule_routine__()
         }
         if (!scheduler__->can_schedule())
         {
+            idle_waited().pub();
             cond_wake_schedule__.wait(lock);
+            idle_waked().pub();
         }
     }
 
     // CO_O_DEBUG("stop schedule, prepare to cleanup");
 
     remove_all_ctx__();
-    remove_current_env__();
+    env_task_finished().pub();
+    current_env__ = nullptr;
 }
 
 void co_env::schedule_in_this_thread()
@@ -389,16 +403,7 @@ void co_env::remove_all_ctx__()
     {
         remove_ctx(dynamic_cast<co_ctx*>(obj));
     }
-}
-
-void co_env::remove_current_env__()
-{
-    if (current_env__ != nullptr)
-    {
-        // CO_O_DEBUG("add self to clean up list: %p", current_env__);
-        env_task_finished().emit();
-        current_env__ = nullptr;
-    }
+    all_ctx_removed().pub();
 }
 
 co_scheduler* co_env::scheduler() const
@@ -414,16 +419,19 @@ bool co_env::scheduled() const
 void co_env::reset_scheduled_flag()
 {
     reset_flag(CO_ENV_FLAG_SCHEDULED);
+    scheduled_flag_reset().pub();
 }
 
 void co_env::lock_schedule__()
 {
     mu_schedule__.lock();
+    schedule_locked().pub();
 }
 
 void co_env::unlock_schedule__()
 {
     mu_schedule__.unlock();
+    schedule_unlocked().pub();
 }
 
 std::list<co_ctx*> co_env::moveable_ctx_list__()
@@ -446,6 +454,7 @@ std::list<co_ctx*> co_env::moveable_ctx_list__()
 void co_env::take_ctx__(co_ctx* ctx)
 {
     scheduler__->remove_obj(ctx);
+    ctx_taked().pub(ctx);
 }
 
 bool co_env::can_auto_destroy() const
@@ -459,6 +468,7 @@ void co_env::wake_up()
     std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
+    wakeup_notified().pub();
 }
 
 #ifdef __GNUC__
@@ -506,6 +516,8 @@ void co_env::init_ctx(co_ctx* ctx)
 #error only supported x86_64
 #endif
 #endif
+
+    ctx_inited().pub(ctx);
 }
 
 size_t co_env::get_valid_stack_size(co_ctx* ctx)
@@ -520,6 +532,7 @@ void co_env::save_shared_stack__(co_ctx* ctx)
     auto tmp_stack = stack_factory__->create_stack(stack_size);
     memcpy(tmp_stack->stack(), ctx->regs()[reg_index_RSP__], stack_size);
     ctx->set_stack(tmp_stack);
+    shared_stack_saved().pub(ctx);
 }
 
 void co_env::restore_shared_stack__(co_ctx* ctx)
@@ -537,6 +550,7 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
     }
     // 设置为共享栈
     ctx->set_stack(shared_stack__);
+    shared_stack_restored().pub(ctx);
 }
 
 std::list<co_ctx*> co_env::take_moveable_ctx()
@@ -550,6 +564,7 @@ std::list<co_ctx*> co_env::take_moveable_ctx()
     {
         take_ctx__(ctx);
     }
+    moveable_ctx_taken().pub(ret);
     return ret;
 }
 

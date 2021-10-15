@@ -16,20 +16,20 @@ template <typename... Args>
 class co_event final : public co_nocopy
 {
 private:
-    std::unordered_map<int, std::function<void(Args&&... args)>> cb_list__;
-    mutable co_spinlock                                          spinlock__;
-    co_event_handler                                             current_handler__ { 0 };
+    std::unordered_map<int, std::function<void(Args... args)>> cb_list__;
+    mutable co_spinlock                                        spinlock__;
+    co_event_handler                                           current_handler__ { 0 };
 
 public:
-    co_event_handler register_callback(std::function<void(Args&&... args)> cb);
-    void             emit(Args&&... args) const;
-    void             remove_callback(co_event_handler h);
+    co_event_handler sub(std::function<void(Args... args)> cb);
+    void             pub(Args... args) const;
+    void             unsub(co_event_handler h);
 };
 
 // 模板实现
 
 template <typename... Args>
-co_event_handler co_event<Args...>::register_callback(std::function<void(Args&&... args)> cb)
+co_event_handler co_event<Args...>::sub(std::function<void(Args... args)> cb)
 {
     std::lock_guard<co_spinlock> lck(spinlock__);
     cb_list__[current_handler__] = cb;
@@ -37,19 +37,19 @@ co_event_handler co_event<Args...>::register_callback(std::function<void(Args&&.
 }
 
 template <typename... Args>
-void co_event<Args...>::remove_callback(co_event_handler h)
+void co_event<Args...>::unsub(co_event_handler h)
 {
     std::lock_guard<co_spinlock> lck(spinlock__);
     cb_list__.erase(h);
 }
 
 template <typename... Args>
-void co_event<Args...>::emit(Args&&... args) const
+void co_event<Args...>::pub(Args... args) const
 {
     std::lock_guard<co_spinlock> lck(spinlock__);
     for (auto& [_, cb] : cb_list__)
     {
-        cb(std::forward<Args>(args)...);
+        cb(args...);
     }
 }
 

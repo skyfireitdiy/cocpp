@@ -30,8 +30,27 @@ class co_ctx;
 class co_env final : public co_nocopy,
                      public co_flag_manager<CO_ENV_FLAG_MAX>
 {
-
     RegCoEvent(env_task_finished);
+    RegCoEvent(ctx_added, co_ctx*);                        // 被加入的ctx
+    RegCoEvent(wait_ctx_timeout, co_ctx*);                 // 等待的ctx
+    RegCoEvent(wait_ctx_finished, co_ctx*);                // 等待的ctx
+    RegCoEvent(state_changed, co_env_state, co_env_state); // 原状态，当期状态
+    RegCoEvent(switched_to, co_ctx*);                      // 切换到
+    RegCoEvent(ctx_removed, co_ctx*);                      // 删除的ctx
+    RegCoEvent(schedule_stopped);
+    RegCoEvent(schedule_started);
+    RegCoEvent(idle_waited);
+    RegCoEvent(idle_waked);
+    RegCoEvent(all_ctx_removed);
+    RegCoEvent(scheduled_flag_reset);
+    RegCoEvent(schedule_locked);
+    RegCoEvent(schedule_unlocked);
+    RegCoEvent(ctx_taked, co_ctx*);
+    RegCoEvent(wakeup_notified);
+    RegCoEvent(ctx_inited, co_ctx*);
+    RegCoEvent(shared_stack_saved, co_ctx*);
+    RegCoEvent(shared_stack_restored, co_ctx*);
+    RegCoEvent(moveable_ctx_taken, std::list<co_ctx*>);
 
 private:
     std::future<void> worker__;
@@ -57,7 +76,6 @@ private:
     void               start_schedule_routine__();
     void               remove_detached_ctx__();
     void               remove_all_ctx__();
-    void               remove_current_env__();
     co_ctx*            next_ctx__();
     void               update_ctx_state__(co_ctx* curr, co_ctx* next);
     void               save_shared_stack__(co_ctx* ctx);

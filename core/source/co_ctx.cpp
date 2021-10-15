@@ -21,7 +21,9 @@ void co_ctx::set_state(co_state state)
     // finished 状态的ctx不再更新
     if (state__ != co_state::finished)
     {
-        state__ = state;
+        co_state old_state = state__;
+        state__            = state;
+        state_changed().pub(old_state, state__);
     }
 }
 
@@ -43,6 +45,7 @@ std::any& co_ctx::ret_ref()
 void co_ctx::set_env(co_env* env)
 {
     env__ = env;
+    env_set().pub(env__);
 }
 
 co_env* co_ctx::env() const
@@ -81,7 +84,7 @@ void co_ctx::set_priority(int priority)
     }
     if (old_priority != priority__ && !test_flag(CO_CTX_FLAG_IDLE))
     {
-        priority_changed().emit(std::move(old_priority));
+        priority_changed().pub(std::move(old_priority), priority__.load());
     }
 }
 
@@ -98,17 +101,20 @@ bool co_ctx::can_destroy() const
 void co_ctx::lock_destroy()
 {
     set_flag(CO_CTX_FLAG_LOCKED);
+    locked_destroy().pub();
 }
 
 void co_ctx::unlock_destroy()
 {
     reset_flag(CO_CTX_FLAG_LOCKED);
+    unlocked_destroy().pub();
 }
 
 void co_ctx::set_stack(co_stack* stack)
 {
     // CO_O_DEBUG("set stack: %p", stack);
     stack__ = stack;
+    stack_set().pub(stack__);
 }
 
 bool co_ctx::can_move() const

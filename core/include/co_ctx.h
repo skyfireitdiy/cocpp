@@ -22,7 +22,12 @@ class co_ctx final : public co_nocopy,
                      public schedulable
 {
     RegCoEvent(finished);
-    RegCoEvent(priority_changed, int);
+    RegCoEvent(priority_changed, int, int);        // 原优先级
+    RegCoEvent(state_changed, co_state, co_state); // 原状态
+    RegCoEvent(env_set, co_env*);                  // 设置的env
+    RegCoEvent(locked_destroy);
+    RegCoEvent(unlocked_destroy);
+    RegCoEvent(stack_set, co_stack*); // 设置的stack
 
 private:
     class inner_local_base
