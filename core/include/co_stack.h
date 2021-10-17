@@ -1,6 +1,7 @@
 #pragma once
 #include "co_define.h"
 #include "co_nocopy.h"
+#include "co_object_pool.h"
 #include "co_type.h"
 
 CO_NAMESPACE_BEGIN
@@ -19,7 +20,7 @@ public:
     co_byte* stack_top() const;
     ~co_stack();
 
-    friend class co_stack_factory;
+    friend class co_object_pool<co_stack>;
 };
 
 CO_NAMESPACE_END

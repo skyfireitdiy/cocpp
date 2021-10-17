@@ -3,6 +3,7 @@
 #include "co_ctx_config.h"
 #include "co_event.h"
 #include "co_flag_manager.h"
+#include "co_object_pool.h"
 #include "co_scheduler.h"
 #include "co_stack.h"
 #include "co_type.h"
@@ -92,7 +93,7 @@ public:
     T& local(const std::string& name);
 
     friend void co_entry(co_ctx* ctx);
-    friend class co_ctx_factory;
+    friend class co_object_pool<co_ctx>;
 };
 
 // 模板实现

@@ -2,6 +2,7 @@
 
 #include "co_ctx_factory.h"
 #include "co_o1_scheduler_factory.h"
+#include "co_object_pool.h"
 #include "co_singleton.h"
 #include "co_stack_factory.h"
 
@@ -15,6 +16,8 @@ class co_env;
 class co_env_factory final : public co_singleton<co_env_factory>
 {
 private:
+    co_object_pool<co_env> env_pool__;
+
     co_scheduler_factory* scheduler_factory__ { co_o1_scheduler_factory::instance() };
     co_stack_factory*     stack_factory__ { co_stack_factory::instance() };
 

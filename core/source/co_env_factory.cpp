@@ -3,6 +3,7 @@
 #include "co_env.h"
 #include "co_manager.h"
 #include <cassert>
+#include <utility>
 
 CO_NAMESPACE_BEGIN
 
@@ -10,7 +11,7 @@ co_env* co_env_factory::create_env(size_t stack_size)
 {
     auto idle_ctx     = create_idle_ctx__();
     auto shared_stack = stack_factory__->create_stack(stack_size);
-    auto ret          = new co_env(scheduler_factory__->create_scheduler(), shared_stack, idle_ctx, true);
+    auto ret          = env_pool__.create_obj(scheduler_factory__->create_scheduler(), shared_stack, idle_ctx, true);
     assert(ret != nullptr);
     idle_ctx->set_state(co_state::running);
     // CO_O_DEBUG("create env: %p", ret);
@@ -25,7 +26,7 @@ void co_env_factory::destroy_env(co_env* env)
     auto idle_ctx     = env->idle_ctx__;
     auto scheduler    = env->scheduler();
     auto shared_stack = env->shared_stack__;
-    delete env;
+    env_pool__.destroy_obj(env);
     co_ctx_factory::instance()->destroy_ctx(idle_ctx);
     scheduler_factory__->destroy_scheduler(scheduler);
     stack_factory__->destroy_stack(shared_stack);
@@ -40,7 +41,7 @@ co_env* co_env_factory::create_env_from_this_thread(size_t stack_size)
 {
     auto idle_ctx     = create_idle_ctx__();
     auto shared_stack = stack_factory__->create_stack(stack_size);
-    auto ret          = new co_env(scheduler_factory__->create_scheduler(), shared_stack, idle_ctx, false);
+    auto ret          = env_pool__.create_obj(scheduler_factory__->create_scheduler(), shared_stack, idle_ctx, false);
     idle_ctx->set_state(co_state::running);
     // CO_O_DEBUG("create env: %p", ret);
     return ret;

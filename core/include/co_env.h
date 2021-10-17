@@ -6,6 +6,7 @@
 #include "co_flag_manager.h"
 #include "co_manager.h"
 #include "co_nocopy.h"
+#include "co_object_pool.h"
 #include "co_return_value.h"
 #include "co_stack.h"
 #include "co_stack_factory.h"
@@ -132,6 +133,7 @@ public:
     bool                           can_auto_destroy() const;
     void                           wake_up();
 
+    friend class co_object_pool<co_env>;
     friend class co_env_factory;
 };
 
