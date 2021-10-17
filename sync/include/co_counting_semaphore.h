@@ -4,6 +4,7 @@
 #include "co_define.h"
 #include "co_mutex.h"
 #include "co_nocopy.h"
+#include "co_this_co.h"
 #include <cassert>
 #include <chrono>
 #include <mutex>
@@ -89,22 +90,22 @@ template <std::ptrdiff_t LeastMaxValue>
 template <class Rep, class Period>
 bool co_counting_semaphore<LeastMaxValue>::try_acquire_for(const std::chrono::duration<Rep, Period>& rel_time)
 {
-    auto start = std::chrono::high_resolution_clock::now();
-    do
-    {
-        if (try_acquire())
-        {
-            return true;
-        }
-    } while (std::chrono::high_resolution_clock::now() - start < rel_time);
-    return false;
+    return try_acquire_until(std::chrono::high_resolution_clock::now() + rel_time);
 }
 
 template <std::ptrdiff_t LeastMaxValue>
 template <class Clock, class Duration>
 bool co_counting_semaphore<LeastMaxValue>::try_acquire_until(const std::chrono::time_point<Clock, Duration>& abs_time)
 {
-    return try_acquire_for(abs_time - std::chrono::high_resolution_clock::now());
+    do
+    {
+        if (try_acquire())
+        {
+            return true;
+        }
+        this_co::yield();
+    } while (std::chrono::high_resolution_clock::now() < abs_time);
+    return false;
 }
 
 template <std::ptrdiff_t LeastMaxValue>
