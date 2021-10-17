@@ -1,6 +1,5 @@
 #include "co_ctx.h"
 #include "co_define.h"
-#include "co_env.h"
 #include "co_scheduler.h"
 #include <cassert>
 

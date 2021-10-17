@@ -43,6 +43,7 @@ class co_manager final : public co_singleton_static<co_manager>
     RegCoEvent(all_factory_destroyed);
     RegCoEvent(background_task_finished);
     RegCoEvent(ctx_created, co_ctx*);
+    RegCoEvent(timing_routine_timout);
 
 private:
     std::list<co_env*>   env_list__;
@@ -83,6 +84,7 @@ private:
     void    remove_env__(co_env* env);
     void    sub_env_event__(co_env* env);
     void    sub_ctx_event__(co_ctx* env);
+    void    sub_manager_event__();
     void    create_background_task__();
 
     co_manager();

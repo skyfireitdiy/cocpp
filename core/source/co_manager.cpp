@@ -118,8 +118,19 @@ void co_manager::create_background_task__()
     background_task_created().pub();
 }
 
+void co_manager::sub_manager_event__()
+{
+    timing_routine_timout().sub([this] {
+        redistribute_ctx__();
+    });
+    timing_routine_timout().sub([this] {
+        destroy_redundant_env__();
+    });
+}
+
 co_manager::co_manager()
 {
+    sub_manager_event__();
     create_background_task__();
 }
 
@@ -294,8 +305,8 @@ void co_manager::timing_routine__()
     while (!clean_up__)
     {
         std::this_thread::sleep_for(timing_duration());
-        redistribute_ctx__();
-        destroy_redundant_env__();
+
+        timing_routine_timout().pub();
     }
     timing_routine_finished().pub();
 }
