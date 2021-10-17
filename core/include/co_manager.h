@@ -4,6 +4,7 @@
 #include "co_ctx_factory.h"
 #include "co_define.h"
 #include "co_env_factory.h"
+#include "co_event.h"
 #include "co_nocopy.h"
 #include "co_singleton.h"
 #include "co_stack_factory.h"
@@ -25,6 +26,24 @@ class co_scheduler_factory;
 
 class co_manager final : public co_singleton_static<co_manager>
 {
+    RegCoEvent(best_env_got, co_env*);
+    RegCoEvent(env_created, co_env*);
+    RegCoEvent(env_shared_stack_size_set, size_t);
+    RegCoEvent(background_task_created);
+    RegCoEvent(env_removed, co_env*);
+    RegCoEvent(env_from_this_thread_created, co_env*);
+    RegCoEvent(clean_up_set);
+    RegCoEvent(env_routine_cleaned);
+    RegCoEvent(base_thread_count_set, size_t);
+    RegCoEvent(max_thread_count_set, size_t);
+    RegCoEvent(ctx_redistributed);
+    RegCoEvent(redundant_env_destroyed);
+    RegCoEvent(timing_routine_finished);
+    RegCoEvent(timing_duration_set);
+    RegCoEvent(all_factory_destroyed);
+    RegCoEvent(background_task_finished);
+    RegCoEvent(ctx_created, co_ctx*);
+
 private:
     std::list<co_env*>   env_list__;
     std::recursive_mutex mu_env_list__;
@@ -64,6 +83,7 @@ private:
     void    remove_env__(co_env* env);
     void    sub_env_event__(co_env* env);
     void    sub_ctx_event__(co_ctx* env);
+    void    create_background_task__();
 
     co_manager();
 

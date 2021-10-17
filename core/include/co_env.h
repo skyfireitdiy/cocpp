@@ -20,6 +20,7 @@
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
+#include <thread>
 
 CO_NAMESPACE_BEGIN
 
@@ -51,6 +52,7 @@ class co_env final : public co_nocopy,
     RegCoEvent(shared_stack_saved, co_ctx*);
     RegCoEvent(shared_stack_restored, co_ctx*);
     RegCoEvent(moveable_ctx_taken, std::list<co_ctx*>);
+    RegCoEvent(this_thread_converted_to_schedule_thread, std::thread::id);
 
 private:
     std::future<void> worker__;

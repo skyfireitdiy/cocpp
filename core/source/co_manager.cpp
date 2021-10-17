@@ -26,6 +26,7 @@ co_env* co_manager::get_best_env__()
     {
         if (p->state() == co_env_state::idle)
         {
+            best_env_got().pub(p);
             return p;
         }
         if (!can_schedule_ctx__(p))
@@ -43,14 +44,19 @@ co_env* co_manager::get_best_env__()
     // 如果没有可用的env，就创建
     if (env == nullptr)
     {
-        return create_env();
+        auto ret = create_env();
+        best_env_got().pub(ret);
+        return ret;
     }
 
     // 如果可用于调度的env数量小于基础线程数量，创建一个来调度新的ctx
     if (can_schedule_env_count < base_thread_count__)
     {
-        return create_env();
+        auto ret = create_env();
+        best_env_got().pub(ret);
+        return ret;
     }
+    best_env_got().pub(env);
     return env;
 }
 
@@ -89,15 +95,18 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     env_list__.push_back(env);
     ++exist_env_count__;
     // CO_O_DEBUG("create env : %p", env);
+
+    env_created().pub(env);
     return env;
 }
 
 void co_manager::set_env_shared_stack_size(size_t size)
 {
     default_shared_stack_size__ = size;
+    env_shared_stack_size_set().pub(size);
 }
 
-co_manager::co_manager()
+void co_manager::create_background_task__()
 {
     background_task__.emplace_back(std::async([this]() {
         clean_env_routine__();
@@ -105,6 +114,13 @@ co_manager::co_manager()
     background_task__.emplace_back(std::async([this]() {
         timing_routine__();
     }));
+
+    background_task_created().pub();
+}
+
+co_manager::co_manager()
+{
+    create_background_task__();
 }
 
 void co_manager::remove_env__(co_env* env)
@@ -115,6 +131,8 @@ void co_manager::remove_env__(co_env* env)
     // CO_O_DEBUG("push to clean up: %p", env);
     expired_env__.push_back(env);
     cond_expired_env__.notify_one();
+
+    env_removed().pub(env);
 }
 
 void co_manager::create_env_from_this_thread()
@@ -128,6 +146,8 @@ void co_manager::create_env_from_this_thread()
     env_list__.push_back(current_env__);
     ++exist_env_count__;
     // CO_O_DEBUG("create env from this thread : %p", current_env__);
+
+    env_from_this_thread_created().pub(current_env__);
 }
 
 co_env* co_manager::current_env()
@@ -158,6 +178,8 @@ void co_manager::set_clean_up__()
         env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
     }
     cond_expired_env__.notify_one();
+
+    clean_up_set().pub();
 }
 
 void co_manager::clean_env_routine__()
@@ -177,6 +199,8 @@ void co_manager::clean_env_routine__()
         expired_env__.clear();
     }
     // CO_O_DEBUG("clean up env finished\n");
+
+    env_routine_cleaned().pub();
 }
 
 void co_manager::set_base_schedule_thread_count(size_t base_thread_count)
@@ -186,7 +210,9 @@ void co_manager::set_base_schedule_thread_count(size_t base_thread_count)
         base_thread_count = 1;
     }
     base_thread_count__ = base_thread_count;
+    base_thread_count_set().pub(base_thread_count__);
 }
+
 void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
 {
     if (max_thread_count == 0)
@@ -194,6 +220,7 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
         max_thread_count = 1;
     }
     max_thread_count__ = max_thread_count;
+    max_thread_count_set().pub(max_thread_count__);
 }
 
 void co_manager::redistribute_ctx__()
@@ -228,6 +255,8 @@ void co_manager::redistribute_ctx__()
     {
         get_best_env__()->add_ctx(ctx);
     }
+
+    ctx_redistributed().pub();
 }
 
 void co_manager::destroy_redundant_env__()
@@ -257,6 +286,7 @@ void co_manager::destroy_redundant_env__()
             idle_env_list[i]->stop_schedule();
         }
     }
+    redundant_env_destroyed().pub();
 }
 
 void co_manager::timing_routine__()
@@ -267,6 +297,7 @@ void co_manager::timing_routine__()
         redistribute_ctx__();
         destroy_redundant_env__();
     }
+    timing_routine_finished().pub();
 }
 
 bool co_manager::is_blocked__(co_env* env) const
@@ -287,6 +318,7 @@ void co_manager::set_timing_duration(
     {
         timing_duration__ = duration;
     }
+    timing_duration_set().pub();
 }
 
 const std::chrono::high_resolution_clock::duration& co_manager::timing_duration() const
@@ -308,6 +340,7 @@ void co_manager::destroy_all_factory__()
     co_stack_factory::destroy_instance();
     co_ctx_factory::destroy_instance();
     co_env_factory::destroy_instance();
+    all_factory_destroyed().pub();
 }
 
 void co_manager::wait_background_task__()
@@ -316,6 +349,7 @@ void co_manager::wait_background_task__()
     {
         task.wait();
     }
+    background_task_finished().pub();
 }
 
 co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lock_destroy)
@@ -336,6 +370,7 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lo
         get_best_env__()->add_ctx(ctx);
     }
 
+    ctx_created().pub(ctx);
     return ctx;
 }
 

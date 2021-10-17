@@ -393,6 +393,7 @@ void co_env::start_schedule_routine__()
 
 void co_env::schedule_in_this_thread()
 {
+    this_thread_converted_to_schedule_thread().pub(std::this_thread::get_id());
     start_schedule_routine__();
 }
 
