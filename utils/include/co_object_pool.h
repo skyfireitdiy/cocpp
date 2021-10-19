@@ -3,6 +3,7 @@
 #include "co_define.h"
 #include "co_type.h"
 #include <cassert>
+#include <cstdlib>
 #include <list>
 #include <mutex>
 
@@ -31,7 +32,7 @@ ObjectType* co_object_pool<ObjectType>::create_obj(ConstructParam&&... params)
     void*                       mem = nullptr;
     if (pool__.empty())
     {
-        mem = malloc(sizeof(ObjectType));
+        mem = std::aligned_alloc(alignof(ObjectType), sizeof(ObjectType));
     }
     else
     {
@@ -47,7 +48,7 @@ void co_object_pool<ObjectType>::destroy_obj(ObjectType* obj)
 {
     std::lock_guard<std::mutex> lck(mu__);
     obj->~ObjectType();
-    pool__.push_back(obj);
+    pool__.push_front(obj); // 尽快用到这块内存
 }
 
 template <typename ObjectType>
