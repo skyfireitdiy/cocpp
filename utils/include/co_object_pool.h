@@ -59,6 +59,7 @@ void co_object_pool<ObjectType>::clear_free_object()
     {
         free(obj);
     }
+    pool__.clear();
 }
 
 template <typename ObjectType>

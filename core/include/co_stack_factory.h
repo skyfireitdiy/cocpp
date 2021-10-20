@@ -20,6 +20,8 @@ private:
 public:
     co_stack* create_stack(size_t size);
     void      destroy_stack(co_stack* stack);
+    void      free_stack_mem_pool();
+    void      free_obj_pool();
 };
 
 CO_NAMESPACE_END

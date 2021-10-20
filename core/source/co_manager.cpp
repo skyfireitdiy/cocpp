@@ -126,6 +126,41 @@ void co_manager::sub_manager_event__()
     timing_routine_timout().sub([this] {
         destroy_redundant_env__();
     });
+    timing_routine_timout().sub([this] {
+        free_mem__();
+    });
+}
+
+bool co_manager::need_free_mem__()
+{
+    // todo 判断是否需要释放内存
+    return true;
+}
+
+void co_manager::free_mem__()
+{
+    static size_t pass_tick_count = 0;
+
+    pass_tick_count = (pass_tick_count + 1) % TICKS_COUNT_OF_FREE_MEM;
+    if (pass_tick_count == 0)
+    {
+        if (need_free_mem__())
+        {
+            env_factory__->free_obj_pool();
+        }
+        if (need_free_mem__())
+        {
+            ctx_factory__->free_obj_pool();
+        }
+        if (need_free_mem__())
+        {
+            stack_factory__->free_obj_pool();
+        }
+        if (need_free_mem__())
+        {
+            stack_factory__->free_stack_mem_pool();
+        }
+    }
 }
 
 co_manager::co_manager()
@@ -317,13 +352,13 @@ bool co_manager::is_blocked__(co_env* env) const
     return state != co_env_state::idle && state != co_env_state::created && !env->scheduled();
 }
 
-void co_manager::set_timing_duration(
+void co_manager::set_timing_tick_duration(
     const std::chrono::high_resolution_clock::duration& duration)
 {
     std::lock_guard<std::mutex> lock(mu_timing_duration__);
-    if (duration < std::chrono::milliseconds(10))
+    if (duration < std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
     {
-        timing_duration__ = std::chrono::milliseconds(10);
+        timing_duration__ = std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS);
     }
     else
     {

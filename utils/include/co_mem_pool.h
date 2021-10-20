@@ -3,6 +3,7 @@
 #include "co_define.h"
 #include "co_type.h"
 #include <list>
+#include <mutex>
 #include <vector>
 
 CO_NAMESPACE_BEGIN
@@ -14,6 +15,8 @@ private:
     static unsigned long long align_size__(unsigned long long size);
 
     size_t get_zone_index__(size_t size) const;
+
+    std::mutex mu__;
 
     const size_t                     min_zone__;
     const size_t                     zone_count__;

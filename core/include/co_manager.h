@@ -63,6 +63,7 @@ private:
     co_scheduler_factory* const scheduler_factory__ { nullptr };
     co_env_factory* const       env_factory__ { co_env_factory::instance() };
     co_ctx_factory* const       ctx_factory__ { co_ctx_factory::instance() };
+    co_stack_factory* const     stack_factory__ { co_stack_factory::instance() };
 
     mutable std::mutex                           mu_timing_duration__;
     std::chrono::high_resolution_clock::duration timing_duration__ { std::chrono::milliseconds(10) };
@@ -71,12 +72,13 @@ private:
 
     bool can_schedule_ctx__(co_env* env) const;
 
-    void clean_env_routine__();
-    void timing_routine__();
-    bool is_blocked__(co_env* env) const;
-
+    void    clean_env_routine__();
+    void    timing_routine__();
+    bool    is_blocked__(co_env* env) const;
+    bool    need_free_mem__();
     void    redistribute_ctx__();
     void    destroy_redundant_env__();
+    void    free_mem__();
     void    wait_background_task__();
     void    set_clean_up__();
     void    destroy_all_factory__();
@@ -97,7 +99,7 @@ public:
     co_env* current_env();
     void    set_base_schedule_thread_count(size_t base_thread_count);
     void    set_max_schedule_thread_count(size_t max_thread_count);
-    void    set_timing_duration(
+    void    set_timing_tick_duration(
            const std::chrono::high_resolution_clock::duration& duration);
     const std::chrono::high_resolution_clock::duration& timing_duration() const;
     ~co_manager();

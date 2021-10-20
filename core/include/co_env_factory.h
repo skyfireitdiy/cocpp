@@ -28,6 +28,7 @@ public:
     co_env* create_env_from_this_thread(size_t stack_size);
     void    destroy_env(co_env* env);
     void    set_scheduler_factory(co_scheduler_factory* scheduler_factory);
+    void    free_obj_pool();
 };
 
 CO_NAMESPACE_END

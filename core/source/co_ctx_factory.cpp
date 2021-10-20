@@ -1,5 +1,6 @@
 #include "co_ctx_factory.h"
 #include "co_ctx.h"
+#include "co_entry.h"
 #include "co_manager.h"
 #include "co_stack_factory.h"
 
@@ -30,6 +31,11 @@ void co_ctx_factory::destroy_ctx(co_ctx* ctx)
     auto stack = ctx->stack();
     ctx_pool__.destroy_obj(ctx);
     co_stack_factory::instance()->destroy_stack(stack);
+}
+
+void co_ctx_factory::free_obj_pool()
+{
+    ctx_pool__.clear_free_object();
 }
 
 CO_NAMESPACE_END

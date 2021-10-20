@@ -27,4 +27,14 @@ void co_stack_factory::destroy_stack(co_stack* stack)
     stack_pool__.destroy_obj(stack);
 }
 
+void co_stack_factory::free_stack_mem_pool()
+{
+    mem_pool__.free_pool();
+}
+
+void co_stack_factory::free_obj_pool()
+{
+    stack_pool__.clear_free_object();
+}
+
 CO_NAMESPACE_END

@@ -18,6 +18,11 @@ co_env* co_env_factory::create_env(size_t stack_size)
     return ret;
 }
 
+void co_env_factory::free_obj_pool()
+{
+    env_pool__.clear_free_object();
+}
+
 void co_env_factory::destroy_env(co_env* env)
 {
     assert(env != nullptr);

@@ -14,6 +14,7 @@ private:
 public:
     co_ctx* create_ctx(const co_ctx_config& config);
     void    destroy_ctx(co_ctx* ctx);
+    void    free_obj_pool();
 };
 
 CO_NAMESPACE_END
