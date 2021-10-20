@@ -1,9 +1,9 @@
 #pragma once
 #include "co_define.h"
+#include "co_mem_pool.h"
 #include "co_nocopy.h"
 #include "co_object_pool.h"
 #include "co_singleton.h"
-#include "co_stack_mem_pool.h"
 #include <cstddef>
 
 CO_NAMESPACE_BEGIN
@@ -15,7 +15,7 @@ class co_stack_factory final : public co_singleton<co_stack_factory>
 {
 private:
     co_object_pool<co_stack> stack_pool__;
-    co_stack_mem_pool        mem_pool__;
+    co_mem_pool              mem_pool__ { MIN_STACK_MEM_ZONE, MAX_STACK_ZONE_COUNT };
 
 public:
     co_stack* create_stack(size_t size);

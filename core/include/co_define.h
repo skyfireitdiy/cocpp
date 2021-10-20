@@ -15,7 +15,7 @@ CO_NAMESPACE_BEGIN
 // 默认栈大小
 constexpr size_t        CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
 constexpr static size_t MIN_STACK_MEM_ZONE    = 2;
-constexpr static size_t MAX_STACK_ZONE_COUNT  = 12;
+constexpr static size_t MAX_STACK_ZONE_COUNT  = 24;
 
 // 协程flag
 constexpr int CO_CTX_FLAG_WAITING      = 0; // 等待

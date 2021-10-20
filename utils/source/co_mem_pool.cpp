@@ -1,4 +1,4 @@
-#include "co_stack_mem_pool.h"
+#include "co_mem_pool.h"
 #include "co_define.h"
 #include "co_type.h"
 #include <bitset>
@@ -9,23 +9,23 @@
 
 CO_NAMESPACE_BEGIN
 
-co_stack_mem_pool::co_stack_mem_pool(size_t min_zone, size_t zone_count)
+co_mem_pool::co_mem_pool(size_t min_zone, size_t zone_count)
     : min_zone__(min_zone)
     , zone_count__(zone_count)
     , mem_pool__(zone_count)
 {
 }
 
-unsigned long long co_stack_mem_pool::align_2_zone_size__(unsigned long long size)
+unsigned long long co_mem_pool::align_2_zone_edge__(unsigned long long size)
 {
     std::bitset<sizeof(size) * 8> bits(size);
-    int                           first_one = 0;
+    int                           first_one = -1;
     int                           last_one  = 0;
     for (size_t i = 0; i < sizeof(size) * 8; ++i)
     {
         if (bits.test(i))
         {
-            first_one = first_one == 0 ? i : first_one;
+            first_one = first_one == -1 ? i : first_one;
             last_one  = i;
         }
     }
@@ -36,22 +36,22 @@ unsigned long long co_stack_mem_pool::align_2_zone_size__(unsigned long long siz
     return last_one + 1;
 }
 
-unsigned long long co_stack_mem_pool::align_size__(unsigned long long size)
+unsigned long long co_mem_pool::align_size__(unsigned long long size)
 {
     return (size + sizeof(void*) - 1) / sizeof(void*) * sizeof(void*);
 }
 
-size_t co_stack_mem_pool::get_zone_index__(size_t size) const
+size_t co_mem_pool::get_zone_index__(size_t size) const
 {
-    unsigned long long zone = align_2_zone_size__(size);
-    if (zone < min_zone__)
+    unsigned long long zone_index = align_2_zone_edge__(size);
+    if (zone_index < min_zone__)
     {
-        zone = min_zone__;
+        zone_index = min_zone__;
     }
-    return zone - min_zone__;
+    return zone_index - min_zone__;
 }
 
-co_byte* co_stack_mem_pool::alloc_mem(size_t size)
+co_byte* co_mem_pool::alloc_mem(size_t size)
 {
     size_t zone_index = get_zone_index__(size);
     if (zone_index >= zone_count__)
@@ -68,7 +68,7 @@ co_byte* co_stack_mem_pool::alloc_mem(size_t size)
     return ret;
 }
 
-void co_stack_mem_pool::free_mem(co_byte* ptr, size_t size)
+void co_mem_pool::free_mem(co_byte* ptr, size_t size)
 {
     size_t zone_index = get_zone_index__(size);
     if (zone_index >= zone_count__)
@@ -79,7 +79,7 @@ void co_stack_mem_pool::free_mem(co_byte* ptr, size_t size)
     mem_pool__[zone_index].push_front(ptr);
 }
 
-void co_stack_mem_pool::free_pool()
+void co_mem_pool::free_pool()
 {
     for (auto& zone : mem_pool__)
     {
@@ -91,7 +91,7 @@ void co_stack_mem_pool::free_pool()
     }
 }
 
-co_stack_mem_pool::~co_stack_mem_pool()
+co_mem_pool::~co_mem_pool()
 {
     free_pool();
 }

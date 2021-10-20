@@ -15,6 +15,7 @@
 #include "co_env_factory.h"
 #include "co_error.h"
 #include "co_manager.h"
+#include "co_mem_pool.h"
 #include "co_mutex.h"
 #include "co_o1_scheduler_factory.h"
 #include "co_recursive_mutex.h"
@@ -715,4 +716,12 @@ TEST(co, co_local)
     c1.wait<void>();
     auto& value = CoLocal(name, std::string);
     EXPECT_EQ(value, "");
+}
+
+TEST(co, zone_edge)
+{
+    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(1), 0);
+    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(2), 1);
+    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(3), 2);
+    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(4), 2);
 }
