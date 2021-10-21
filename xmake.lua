@@ -2,6 +2,9 @@ add_rules("mode.debug", "mode.release")
 
 set_languages("c++20")
 
+add_includedirs("3rd/gtest_install/include", "3rd/mockcpp_install/include")
+add_linkdirs("3rd/gtest_install/lib", "3rd/mockcpp_install/lib")
+
 if is_mode("debug") then
     add_links("gcov")
     add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")

@@ -11,3 +11,4 @@ final.info
 compile_commands.json
 vgcore*
 .vscode
+3rd/*_install
