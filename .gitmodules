@@ -1,0 +1,6 @@
+[submodule "3rd/mockcpp"]
+	path = 3rd/mockcpp
+	url = git@github.com:skyfireitdiy/mockcpp.git
+[submodule "3rd/googletest"]
+	path = 3rd/googletest
+	url = git@github.com:skyfireitdiy/googletest.git
