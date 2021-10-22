@@ -62,7 +62,7 @@ on_run(function()
     -- os.exec(exe .. "/test --gtest_filter='*shared_stack*'")
     os.exec("lcov -c -d ./ -o cover.info")
     os.exec(
-        "lcov --remove cover.info '*/usr/include/*' '*/usr/lib/*' '*/usr/lib64/*' '*/usr/local/include/*' '*/usr/local/lib/*' '*/usr/local/lib64/*' -o final.info")
+        "lcov --remove cover.info '*/usr/include/*' '*/usr/lib/*' '*/usr/lib64/*' '*/usr/local/include/' '*/usr/local/lib/*' '*/usr/local/lib64/*' '*/3rd/*'  -o final.info")
     os.exec(
         "genhtml -o cover_report --legend --title 'lcov'  --prefix=./ final.info")
 end)

@@ -152,7 +152,7 @@ TEST(co, co_id_name_after_detach)
     });
     c1.wait<void>();
     c1.detach();
-    EXPECT_EQ(c1.id(), 0);
+    EXPECT_EQ(c1.id(), 0ULL);
     EXPECT_EQ(c1.name(), "");
 }
 
@@ -720,8 +720,8 @@ TEST(co, co_local)
 
 TEST(co, zone_edge)
 {
-    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(1), 0);
-    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(2), 1);
-    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(3), 2);
-    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(4), 2);
+    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(1), 0ULL);
+    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(2), 1ULL);
+    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(3), 2ULL);
+    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(4), 2ULL);
 }
