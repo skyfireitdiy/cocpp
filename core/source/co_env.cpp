@@ -9,6 +9,12 @@
 #include "co_stack.h"
 #include "co_type.h"
 
+#ifdef __GNUC__
+#ifdef __x86_64__
+#include "co_ctx_ctl_gcc_x86_64.h"
+#endif
+#endif
+
 #include <cassert>
 #include <cstring>
 #include <future>
@@ -181,7 +187,8 @@ void co_env::schedule_switch()
 
         if (next->state() == co_state::created) // 第一次运行需要初始化
         {
-            init_ctx(next);
+            init_ctx__(shared_stack__, next);
+            ctx_inited().pub(next);
         }
 
         update_ctx_state__(curr, next);
@@ -227,58 +234,6 @@ void co_env::remove_ctx(co_ctx* ctx)
     scheduler__->remove_obj(ctx);
     ctx_factory__->destroy_ctx(ctx);
     ctx_removed().pub(ctx);
-}
-
-void co_env::switch_to__(co_byte** curr, co_byte** next)
-{
-#ifdef _MSC_VER
-#ifdef _WIN64
-    ::__switch_to_msvc_x64(curr, next);
-#else
-#error only support x86_64 in msvc
-#endif
-#endif
-
-#ifdef __GNUC__
-#ifdef __x86_64__
-    __asm volatile("" ::
-                       : "memory");
-
-    __asm volatile("popq %rbp");
-
-    __asm volatile("movq %rdi, (%rdi)");
-    __asm volatile("popq 8(%rdi)");
-    __asm volatile("movq %rsp, 16(%rdi)");
-    __asm volatile("movq %rbp, 24(%rdi)");
-    __asm volatile("movq %rbx, 32(%rdi)");
-    __asm volatile("movq %r12, 40(%rdi)");
-    __asm volatile("movq %r13, 48(%rdi)");
-    __asm volatile("movq %r14, 56(%rdi)");
-    __asm volatile("movq %r15, 64(%rdi)");
-    __asm volatile("stmxcsr 72(%rdi)");
-    __asm volatile("fnstcw 80(%rdi)");
-
-    __asm volatile("fldcw 80(%rsi)");
-    __asm volatile("ldmxcsr 72(%rsi)");
-    __asm volatile("movq 64(%rsi), %r15");
-    __asm volatile("movq 56(%rsi), %r14");
-
-    __asm volatile("movq 48(%rsi), %r13");
-    __asm volatile("movq 40(%rsi), %r12");
-    __asm volatile("movq 32(%rsi), %rbx");
-    __asm volatile("movq 24(%rsi), %rbp");
-    __asm volatile("movq 16(%rsi), %rsp");
-    __asm volatile("pushq 8(%rsi)");
-    __asm volatile("movq (%rsi), %rdi");
-
-    __asm volatile("pushq %rbp");
-
-    __asm volatile("" ::
-                       : "memory");
-#else
-#error only supported x86_64
-#endif
-#endif
 }
 
 co_ctx* co_env::current_ctx() const
@@ -469,55 +424,6 @@ void co_env::wake_up()
     // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
     wakeup_notified().pub();
-}
-
-#ifdef __GNUC__
-#ifdef __x86_64__
-static void __get_mxcsr_gcc_x64(void*)
-{
-    __asm volatile(
-        "stmxcsr (%%rdi)\n"
-        :
-        :
-        : "memory");
-}
-
-static void __get_fcw_gcc_x64(void*)
-{
-    __asm volatile(
-        "fnstcw (%%rdi)\n"
-        :
-        :
-        : "memory");
-}
-#endif
-#endif
-
-void co_env::init_ctx(co_ctx* ctx)
-{
-    auto      regs  = ctx->regs();
-    co_stack* stack = ctx->stack();
-    if (ctx->test_flag(CO_CTX_FLAG_SHARED_STACK))
-    {
-        stack = shared_stack__;
-    }
-    auto config = ctx->config();
-
-#ifdef __GNUC__
-#ifdef __x86_64__
-    regs[reg_index_RSP__] = stack->stack_top();
-    regs[reg_index_RBP__] = regs[reg_index_RSP__];
-    regs[reg_index_RIP__] = reinterpret_cast<co_byte*>(co_entry);
-    regs[reg_index_RDI__] = reinterpret_cast<co_byte*>(ctx);
-
-    __get_mxcsr_gcc_x64(&regs[reg_index_MXCSR__]);
-    __get_fcw_gcc_x64(&regs[reg_index_FCW__]);
-#else
-#error only supported x86_64
-#endif
-#endif
-
-    ctx_inited().pub(ctx);
 }
 
 size_t co_env::get_valid_stack_size(co_ctx* ctx)

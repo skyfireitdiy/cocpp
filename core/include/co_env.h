@@ -89,20 +89,7 @@ private:
     std::list<co_ctx*> moveable_ctx_list__();
     void               take_ctx__(co_ctx* ctx);
 
-    static void   switch_to__(co_byte** curr_regs, co_byte** next_regs);
     static size_t get_valid_stack_size(co_ctx* ctx);
-
-    static constexpr int reg_index_RDI__   = 0;
-    static constexpr int reg_index_RIP__   = 1;
-    static constexpr int reg_index_RSP__   = 2;
-    static constexpr int reg_index_RBP__   = 3;
-    static constexpr int reg_index_RBX__   = 4;
-    static constexpr int reg_index_R12__   = 5;
-    static constexpr int reg_index_R13__   = 6;
-    static constexpr int reg_index_R14__   = 7;
-    static constexpr int reg_index_R15__   = 8;
-    static constexpr int reg_index_MXCSR__ = 9;
-    static constexpr int reg_index_FCW__   = 10;
 
     struct
     {
@@ -112,7 +99,6 @@ private:
     } shared_stack_switch_context__;
 
 public:
-    void                           init_ctx(co_ctx* ctx);
     void                           add_ctx(co_ctx* ctx);
     std::optional<co_return_value> wait_ctx(co_ctx*                         ctx,
                                             const std::chrono::nanoseconds& timeout);
