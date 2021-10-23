@@ -1,8 +1,10 @@
 
+#include "co_this_co.h"
 #include <atomic>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <mutex>
+#include <unistd.h>
 #define private public
 #include "co.h"
 #include "co_binary_semaphore.h"
@@ -716,6 +718,47 @@ TEST(co, co_local)
     c1.wait<void>();
     auto& value = CoLocal(name, std::string);
     EXPECT_EQ(value, "");
+}
+
+TEST(co, co_chan_push_to_closed)
+{
+    co_chan<int, 1> ch;
+    ch.close();
+    EXPECT_FALSE(ch.push(1));
+}
+
+TEST(co, co_chan_push_to_full_chan_closed)
+{
+    co_chan<int, 1> ch;
+    ch.push(1);
+    co c1([&] {
+        this_co::sleep_for(std::chrono::seconds(1));
+        ch.close();
+    });
+    EXPECT_FALSE(ch.push(1));
+    c1.wait<void>();
+}
+
+TEST(co, co_chan_pop_from_empty_chan_closed)
+{
+    co_chan<int, 1> ch;
+    co              c1([&] {
+        this_co::sleep_for(std::chrono::seconds(1));
+        ch.close();
+    });
+    EXPECT_FALSE(ch.pop());
+    c1.wait<void>();
+}
+
+TEST(co, co_chan_pop_from_zero_chan_closed)
+{
+    co_chan<int, 0> ch;
+    co              c1([&] {
+        this_co::sleep_for(std::chrono::seconds(1));
+        ch.close();
+    });
+    EXPECT_FALSE(ch.pop());
+    c1.wait<void>();
 }
 
 TEST(co, zone_edge)
