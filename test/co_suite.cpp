@@ -30,7 +30,7 @@ using namespace cocpp;
 
 TEST(co, name)
 {
-    co c1({ with_name("test1") }, [this]() {
+    co c1({ with_name("test1") }, []() {
         EXPECT_EQ(this_co::name(), "test1");
     });
     c1.wait<void>();
@@ -149,8 +149,7 @@ TEST(co, co_id)
 
 TEST(co, co_id_name_after_detach)
 {
-    co_id id;
-    co    c1([&id]() {
+    co c1([]() {
     });
     c1.wait<void>();
     c1.detach();
@@ -626,7 +625,7 @@ TEST(co, co_chan_no_buffered_operator_less)
     co c1([&] {
         for (auto p : push)
         {
-            ch < p;
+            [[maybe_unused]] auto ret = ch < p;
         }
         ch.close();
     });

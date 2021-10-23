@@ -38,7 +38,7 @@ public:
         iterator   operator++();
         ValueType& operator*();
         ValueType* operator->();
-        bool       operator==(const iterator& other);
+        bool       operator!=(const iterator& other);
     };
 
     iterator begin();
@@ -252,13 +252,13 @@ ValueType* co_chan<ValueType, MaxSize>::iterator::operator->()
 }
 
 template <typename ValueType, int MaxSize>
-bool co_chan<ValueType, MaxSize>::iterator::operator==(const iterator& other)
+bool co_chan<ValueType, MaxSize>::iterator::operator!=(const iterator& other)
 {
     if (closed__ && other.closed__)
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 template <typename ValueType, int MaxSize>

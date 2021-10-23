@@ -89,7 +89,7 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
     }
     else
     {
-        config.entry = [this, ... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
+        config.entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
             // CO_O_DEBUG("before run");
             ret = std::forward<Func>(func)(std::forward<Args>(args)...);
             // CO_O_DEBUG("after run");
