@@ -1,6 +1,7 @@
 #include "co_env.h"
 #include "co_ctx.h"
 #include "co_ctx_config.h"
+#include "co_ctx_ctl.h"
 #include "co_ctx_factory.h"
 #include "co_defer.h"
 #include "co_define.h"
@@ -8,12 +9,6 @@
 #include "co_scheduler.h"
 #include "co_stack.h"
 #include "co_type.h"
-
-#ifdef __GNUC__
-#ifdef __x86_64__
-#include "co_ctx_ctl_gcc_x86_64.h"
-#endif
-#endif
 
 #include <cassert>
 #include <cstring>
@@ -187,7 +182,7 @@ void co_env::schedule_switch()
 
         if (next->state() == co_state::created) // 第一次运行需要初始化
         {
-            init_ctx__(shared_stack__, next);
+            init_ctx(shared_stack__, next);
             ctx_inited().pub(next);
         }
 
@@ -225,7 +220,7 @@ void co_env::schedule_switch()
             // CO_O_DEBUG("from %p to idle %p", curr, idle_ctx__);
         }
     }
-    switch_to__(curr->regs(), next->regs());
+    switch_to(curr->regs(), next->regs());
     switched_to().pub(curr);
 }
 
@@ -291,7 +286,7 @@ void co_env::switch_shared_stack_ctx__()
 
     // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
     // 切换到to
-    switch_to__(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
+    switch_to(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
     switched_to().pub(idle_ctx__);
 }
 
@@ -428,7 +423,7 @@ void co_env::wake_up()
 
 size_t co_env::get_valid_stack_size(co_ctx* ctx)
 {
-    return ctx->stack()->stack_top() - ctx->regs()[reg_index_RSP__];
+    return ctx->stack()->stack_top() - get_rsp(ctx);
 }
 
 void co_env::save_shared_stack__(co_ctx* ctx)
@@ -436,7 +431,7 @@ void co_env::save_shared_stack__(co_ctx* ctx)
     auto stack_size = get_valid_stack_size(ctx);
     // CO_O_DEBUG("ctx %p valid stack size is %lu", ctx, stack_size);
     auto tmp_stack = stack_factory__->create_stack(stack_size);
-    memcpy(tmp_stack->stack(), ctx->regs()[reg_index_RSP__], stack_size);
+    memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
     ctx->set_stack(tmp_stack);
     shared_stack_saved().pub(ctx);
 }
