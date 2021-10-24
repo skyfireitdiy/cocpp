@@ -55,7 +55,7 @@ TEST(co, my_thread)
 {
     std::thread th([]() {
         printf("new thread: %u\n", gettid());
-        co::convert_to_schedule_thread();
+        co::schedule_in_this_thread();
     });
 
     co c1([]() {
@@ -107,7 +107,7 @@ TEST(co, priority)
 {
     std::vector<int> arr;
 
-    auto env = co::create_env();
+    auto env = co::create_env(true);
     co   c1(
         { with_priority(0), with_bind_env(env) }, [](std::vector<int>& arr) {
             this_co::sleep_for(std::chrono::milliseconds(50));
@@ -673,7 +673,7 @@ TEST(co, co_chan_no_buffered_operator_shift)
 
 TEST(co, co_wait_priority)
 {
-    auto env = co::create_env();
+    auto env = co::create_env(true);
 
     co c1({ with_priority(99), with_bind_env(env) }, [] {
         this_co::sleep_for(std::chrono::seconds(1));
@@ -688,7 +688,7 @@ TEST(co, co_wait_priority)
 
 TEST(co, co_shared_stack)
 {
-    auto env = co::create_env();
+    auto env = co::create_env(true);
 
     auto routine = [](int n) {
         int sum = 0;

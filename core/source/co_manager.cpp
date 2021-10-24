@@ -16,7 +16,7 @@ co_env* co_manager::get_best_env__()
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     if (env_list__.empty())
     {
-        return create_env();
+        return create_env(true);
     }
 
     auto   env                    = env_list__.front();
@@ -44,7 +44,7 @@ co_env* co_manager::get_best_env__()
     // 如果没有可用的env，就创建
     if (env == nullptr)
     {
-        auto ret = create_env();
+        auto ret = create_env(true);
         best_env_got().pub(ret);
         return ret;
     }
@@ -52,7 +52,7 @@ co_env* co_manager::get_best_env__()
     // 如果可用于调度的env数量小于基础线程数量，创建一个来调度新的ctx
     if (can_schedule_env_count < base_thread_count__)
     {
-        auto ret = create_env();
+        auto ret = create_env(true);
         best_env_got().pub(ret);
         return ret;
     }
@@ -131,12 +131,6 @@ void co_manager::sub_manager_event__()
     });
 }
 
-bool co_manager::need_free_mem__()
-{
-    // todo 判断是否需要释放内存
-    return true;
-}
-
 void co_manager::free_mem__()
 {
     static size_t pass_tick_count = 0;
@@ -144,19 +138,19 @@ void co_manager::free_mem__()
     pass_tick_count = (pass_tick_count + 1) % TICKS_COUNT_OF_FREE_MEM;
     if (pass_tick_count == 0)
     {
-        if (need_free_mem__())
+        if (need_free_mem_cb__())
         {
             env_factory__->free_obj_pool();
         }
-        if (need_free_mem__())
+        if (need_free_mem_cb__())
         {
             ctx_factory__->free_obj_pool();
         }
-        if (need_free_mem__())
+        if (need_free_mem_cb__())
         {
             stack_factory__->free_obj_pool();
         }
-        if (need_free_mem__())
+        if (need_free_mem_cb__())
         {
             stack_factory__->free_stack_mem_pool();
         }
@@ -181,7 +175,7 @@ void co_manager::remove_env__(co_env* env)
     env_removed().pub(env);
 }
 
-void co_manager::create_env_from_this_thread()
+void co_manager::create_env_from_this_thread__()
 {
     std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
     current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
@@ -200,7 +194,7 @@ co_env* co_manager::current_env()
 {
     if (current_env__ == nullptr)
     {
-        create_env_from_this_thread();
+        create_env_from_this_thread__();
     }
     return current_env__;
 }
@@ -418,6 +412,11 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lo
 
     ctx_created().pub(ctx);
     return ctx;
+}
+
+void co_manager::set_if_gc_callback(std::function<bool()> cb)
+{
+    need_free_mem_cb__ = cb;
 }
 
 CO_NAMESPACE_END

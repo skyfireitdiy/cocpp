@@ -9,6 +9,7 @@
 #include "co_nocopy.h"
 #include "co_return_value.h"
 #include <chrono>
+#include <functional>
 #include <initializer_list>
 #include <optional>
 #include <thread>
@@ -37,13 +38,88 @@ private:
     void init__(co_ctx_config config, Func&& func, Args&&... args);
 
 public:
-    static void set_custom_scheduler_factory(co_scheduler_factory* scheduler_factory); // 应该在所有协程功能使用前调用
+    // 静态函数
+    CoMemberMethodProxyStatic(*manager__, set_if_gc_callback);
+    CoMemberMethodProxyStatic(*manager__, create_env);
+    CoMemberMethodProxyStatic(*manager__, current_env);
+    CoMemberMethodProxyStatic(*manager__, set_env_shared_stack_size);
+    CoMemberMethodProxyStatic(*manager__, set_base_schedule_thread_count);
+    CoMemberMethodProxyStatic(*manager__, set_max_schedule_thread_count);
+    CoMemberMethodProxyStatic(*manager__, set_timing_tick_duration);
+    CoMemberMethodProxyStatic(*manager__, timing_duration);
 
-    static void convert_to_schedule_thread(); // 将当前线程转换为调度线程（不能在协程上下文调用）
+    CoMemberMethodProxyStatic(*(co_env_factory::instance()), set_scheduler_factory);
 
-    static co_env* current_env(); // 当前协程env
-    static co_ctx* current_ctx(); // 当前协程ctx
-    static co_env* create_env();  // 创建env
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), workload, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), state, current_env_);
+    CoMemberMethodProxyStatic(*(manager__->current_env()), schedule_in_this_thread);
+    CoMemberMethodProxyStatic(*(manager__->current_env()), current_ctx);
+    CoMemberMethodProxyStatic(*(manager__->current_env()), scheduler);
+    CoMemberMethodProxyStatic(*(manager__->current_env()), scheduled);
+    CoMemberMethodProxyStatic(*(manager__->current_env()), can_auto_destroy);
+
+    // 成员函数
+    CoMemberMethodProxyWithPrefix(*ctx__, state, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, config, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, env, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, can_destroy, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, can_move, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, set_priority, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, priority, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, can_schedule, ctx_);
+
+    // ctx事件
+    CoMemberMethodProxyWithPrefix(*ctx__, finished, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, priority_changed, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, state_changed, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, env_set, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, locked_destroy, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, unlocked_destroy, ctx_);
+    CoMemberMethodProxyWithPrefix(*ctx__, stack_set, ctx_);
+
+    // env事件
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), env_task_finished, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), ctx_added, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), wait_ctx_timeout, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), wait_ctx_finished, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), state_changed, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), switched_to, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), ctx_removed, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), schedule_stopped, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), schedule_started, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), idle_waited, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), idle_waked, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), all_ctx_removed, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), scheduled_flag_reset, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), schedule_locked, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), schedule_unlocked, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), ctx_taked, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), wakeup_notified, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), ctx_inited, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), shared_stack_saved, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), shared_stack_restored, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), moveable_ctx_taken, current_env_);
+    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), this_thread_converted_to_schedule_thread, current_env_);
+
+    // manager 事件
+    CoMemberMethodProxyStaticWithPrefix(*manager__, best_env_got, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, env_created, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, env_shared_stack_size_set, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, background_task_created, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, env_removed, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, env_from_this_thread_created, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, clean_up_set, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, env_routine_cleaned, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, base_thread_count_set, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, max_thread_count_set, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, ctx_redistributed, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, redundant_env_destroyed, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, timing_routine_finished, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, timing_duration_set, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, all_factory_destroyed, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, background_task_finished, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, ctx_created, manager_);
+    CoMemberMethodProxyStaticWithPrefix(*manager__, timing_routine_timout, manager_);
 
     co_id       id() const;
     std::string name() const;

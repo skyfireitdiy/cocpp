@@ -27,11 +27,6 @@ std::string co::name() const
     return ctx__->config().name;
 }
 
-void co::convert_to_schedule_thread()
-{
-    manager__->current_env()->schedule_in_this_thread();
-}
-
 co::~co()
 {
     detach();
@@ -40,26 +35,6 @@ co::~co()
 co_id co::id() const
 {
     return reinterpret_cast<co_id>(ctx__);
-}
-
-co_ctx* co::current_ctx()
-{
-    return manager__->current_env()->current_ctx();
-}
-
-void co::set_custom_scheduler_factory(co_scheduler_factory* scheduler_factory)
-{
-    co_env_factory::instance()->set_scheduler_factory(scheduler_factory);
-}
-
-co_env* co::current_env()
-{
-    return manager__->current_env();
-}
-
-co_env* co::create_env()
-{
-    return manager__->create_env(true);
 }
 
 CO_NAMESPACE_END

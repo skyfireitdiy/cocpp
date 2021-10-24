@@ -10,6 +10,7 @@
 #include "co_stack_factory.h"
 
 #include <condition_variable>
+#include <functional>
 #include <future>
 #include <list>
 #include <map>
@@ -70,12 +71,13 @@ private:
 
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
 
+    std::function<bool()> need_free_mem_cb__ { [] { return false; } };
+
     bool can_schedule_ctx__(co_env* env) const;
 
     void    clean_env_routine__();
     void    timing_routine__();
     bool    is_blocked__(co_env* env) const;
-    bool    need_free_mem__();
     void    redistribute_ctx__();
     void    destroy_redundant_env__();
     void    free_mem__();
@@ -88,20 +90,22 @@ private:
     void    sub_ctx_event__(co_ctx* env);
     void    sub_manager_event__();
     void    create_background_task__();
+    void    create_env_from_this_thread__();
 
     co_manager();
 
 public:
-    co_env* create_env(bool dont_auto_destory = false);
+    co_env* create_env(bool dont_auto_destory);
     co_ctx* create_and_schedule_ctx(const co_ctx_config& config, bool lock_destroy = true);
     void    set_env_shared_stack_size(size_t size);
-    void    create_env_from_this_thread();
     co_env* current_env();
     void    set_base_schedule_thread_count(size_t base_thread_count);
     void    set_max_schedule_thread_count(size_t max_thread_count);
+    void    set_if_gc_callback(std::function<bool()> cb);
     void    set_timing_tick_duration(
            const std::chrono::high_resolution_clock::duration& duration);
     const std::chrono::high_resolution_clock::duration& timing_duration() const;
+
     ~co_manager();
 
     friend class co_singleton_static<co_manager>;
