@@ -15,7 +15,7 @@ CO_NAMESPACE_BEGIN
 // 默认栈大小
 constexpr size_t        CO_DEFAULT_STACK_SIZE              = 1024 * 1024 * 8;
 constexpr static size_t MIN_STACK_MEM_ZONE                 = 2;
-constexpr static size_t MAX_STACK_ZONE_COUNT               = 24;
+constexpr static size_t MAX_STACK_ZONE_COUNT               = 30;
 constexpr static size_t DEFAULT_TIMING_TICK_DURATION_IN_MS = 10;
 constexpr static size_t TICKS_COUNT_OF_FREE_MEM            = 1000;
 
