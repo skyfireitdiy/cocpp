@@ -48,6 +48,10 @@ void co_env::add_ctx(co_ctx* ctx)
 
     std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     ctx->set_env(this);
+
+    init_ctx(shared_stack__, ctx); // 初始化ctx
+    ctx_inited().pub(ctx);
+
     scheduler__->add_obj(ctx); // 添加到调度器
     set_state(co_env_state::busy);
 
@@ -179,12 +183,6 @@ void co_env::schedule_switch()
 
         assert(curr != nullptr);
         assert(next != nullptr);
-
-        if (next->state() == co_state::created) // 第一次运行需要初始化
-        {
-            init_ctx(shared_stack__, next);
-            ctx_inited().pub(next);
-        }
 
         update_ctx_state__(curr, next);
         if (curr == next)

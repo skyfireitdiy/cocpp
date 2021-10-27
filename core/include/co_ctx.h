@@ -51,7 +51,7 @@ private:
     };
 
     co_stack*             stack__ { nullptr };                 // 当前栈空间
-    std::atomic<co_state> state__ { co_state::created };       // 协程状态
+    std::atomic<co_state> state__ { co_state::suspended };     // 协程状态
     co_ctx_config         config__ {};                         // 协程配置
     std::any              ret__;                               // 协程返回值，会被传递给 config 中的 entry
     co_env*               env__ { nullptr };                   // 协程当前对应的运行环境

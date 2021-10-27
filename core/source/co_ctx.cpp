@@ -54,7 +54,7 @@ co_env* co_ctx::env() const
 
 co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config)
     : stack__(stack)
-    , state__(co_state::created)
+    , state__(co_state::suspended)
     , config__(config)
 {
     set_priority(config.priority);
