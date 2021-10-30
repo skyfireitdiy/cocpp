@@ -1,23 +1,13 @@
+#include "co_ctx.h"
 #include "co_ctx_ctl.h"
 #include "co_define.h"
+#include "co_env.h"
 #include "co_type.h"
 
 #ifdef __GNUC__
 #ifdef __x86_64__
 
 CO_NAMESPACE_BEGIN
-
-static constexpr int                  reg_index_RDI__   = 0;
-static constexpr int                  reg_index_RIP__   = 1;
-static constexpr int                  reg_index_RSP__   = 2;
-static constexpr int                  reg_index_RBP__   = 3;
-[[maybe_unused]] static constexpr int reg_index_RBX__   = 4;
-[[maybe_unused]] static constexpr int reg_index_R12__   = 5;
-[[maybe_unused]] static constexpr int reg_index_R13__   = 6;
-[[maybe_unused]] static constexpr int reg_index_R14__   = 7;
-[[maybe_unused]] static constexpr int reg_index_R15__   = 8;
-static constexpr int                  reg_index_MXCSR__ = 9;
-static constexpr int                  reg_index_FCW__   = 10;
 
 struct sigcontext_64
 {
@@ -51,9 +41,16 @@ struct sigcontext_64
     unsigned long long reserved1[8]; //24*8
 };
 
+static sigcontext_64* get_sigcontext_64(co_ctx* ctx)
+{
+    return reinterpret_cast<sigcontext_64*>(ctx->regs());
+}
+
+#define CO_SETREG(context, x, y) context->x = reinterpret_cast<decltype(context->x)>(y)
+
 co_byte* get_rsp(co_ctx* ctx)
 {
-    return ctx->regs()[reg_index_RSP__];
+    return reinterpret_cast<co_byte*>(get_sigcontext_64(ctx)->sp);
 }
 
 void switch_to(co_byte** curr, co_byte** next)
@@ -64,30 +61,52 @@ void switch_to(co_byte** curr, co_byte** next)
 
     __asm volatile("popq %rbp");
 
-    __asm volatile("movq %rdi, (%rdi)");
-    __asm volatile("popq 8(%rdi)");
-    __asm volatile("movq %rsp, 16(%rdi)");
-    __asm volatile("movq %rbp, 24(%rdi)");
-    __asm volatile("movq %rbx, 32(%rdi)");
-    __asm volatile("movq %r12, 40(%rdi)");
-    __asm volatile("movq %r13, 48(%rdi)");
-    __asm volatile("movq %r14, 56(%rdi)");
-    __asm volatile("movq %r15, 64(%rdi)");
-    __asm volatile("stmxcsr 72(%rdi)");
-    __asm volatile("fnstcw 80(%rdi)");
+    __asm volatile("movq %r8, 0(%rdi)");
+    __asm volatile("movq %r9, 8(%rdi)");
+    __asm volatile("movq %r10, 16(%rdi)");
+    __asm volatile("movq %r11, 24(%rdi)");
+    __asm volatile("movq %r12, 32(%rdi)");
+    __asm volatile("movq %r13, 40(%rdi)");
+    __asm volatile("movq %r14, 48(%rdi)");
+    __asm volatile("movq %r15, 56(%rdi)");
+    __asm volatile("movq %rdi, 64(%rdi)");
+    __asm volatile("movq %rsi, 72(%rdi)");
+    __asm volatile("movq %rbp, 80(%rdi)");
+    __asm volatile("movq %rbx, 88(%rdi)");
+    __asm volatile("movq %rdx, 96(%rdi)");
+    __asm volatile("movq %rax, 104(%rdi)");
+    __asm volatile("movq %rcx, 112(%rdi)");
+    __asm volatile("popq 128(%rdi)");
+    __asm volatile("pushf");
+    __asm volatile("popq 136(%rdi)");
 
-    __asm volatile("fldcw 80(%rsi)");
-    __asm volatile("ldmxcsr 72(%rsi)");
-    __asm volatile("movq 64(%rsi), %r15");
-    __asm volatile("movq 56(%rsi), %r14");
+    // 保存段寄存器（其实是固定值）
+    __asm volatile("movw %cs, 144(%rdi)");
+    __asm volatile("movw %gs, 152(%rdi)");
+    __asm volatile("movw %fs, 160(%rdi)");
 
-    __asm volatile("movq 48(%rsi), %r13");
-    __asm volatile("movq 40(%rsi), %r12");
-    __asm volatile("movq 32(%rsi), %rbx");
-    __asm volatile("movq 24(%rsi), %rbp");
-    __asm volatile("movq 16(%rsi), %rsp");
-    __asm volatile("pushq 8(%rsi)");
-    __asm volatile("movq (%rsi), %rdi");
+    __asm volatile("movq %rsp, 120(%rdi)"); // rsp必须在rip后保存，先恢复
+    /////////////////////////////////////////////////
+    __asm volatile("movq 120(%rsi), %rsp");
+
+    __asm volatile("pushq 136(%rsi)");
+    __asm volatile("popf");
+    __asm volatile("pushq 128(%rsi)");
+    __asm volatile("movq 112(%rsi), %rcx");
+    __asm volatile("movq 104(%rsi), %rax");
+    __asm volatile("movq 96(%rsi), %rdx");
+    __asm volatile("movq 88(%rsi), %rbx");
+    __asm volatile("movq 80(%rsi), %rbp");
+    __asm volatile("movq 64(%rsi), %rdi");
+    __asm volatile("movq 56(%rsi), %r15");
+    __asm volatile("movq 48(%rsi), %r14");
+    __asm volatile("movq 40(%rsi), %r13");
+    __asm volatile("movq 32(%rsi), %r12");
+    __asm volatile("movq 24(%rsi), %r11");
+    __asm volatile("movq 16(%rsi), %r10");
+    __asm volatile("movq 8(%rsi), %r9");
+    __asm volatile("movq 0(%rsi), %r8");
+    __asm volatile("movq 72(%rsi), %rsi"); // 必须放在最后恢复
 
     __asm volatile("pushq %rbp");
 
@@ -95,41 +114,20 @@ void switch_to(co_byte** curr, co_byte** next)
                        : "memory");
 }
 
-static void __get_mxcsr_gcc_x64(void*)
-{
-    __asm volatile(
-        "stmxcsr (%%rdi)\n"
-        :
-        :
-        : "memory");
-}
-
-static void __get_fcw_gcc_x64(void*)
-{
-    __asm volatile(
-        "fnstcw (%%rdi)\n"
-        :
-        :
-        : "memory");
-}
-
 void init_ctx(co_stack* shared_stack, co_ctx* ctx)
 {
-    auto      regs  = ctx->regs();
-    co_stack* stack = ctx->stack();
+    auto      context = get_sigcontext_64(ctx);
+    co_stack* stack   = ctx->stack();
     if (ctx->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
         stack = shared_stack;
     }
     auto config = ctx->config();
 
-    regs[reg_index_RSP__] = stack->stack_top();
-    regs[reg_index_RBP__] = regs[reg_index_RSP__];
-    regs[reg_index_RIP__] = reinterpret_cast<co_byte*>(co_entry);
-    regs[reg_index_RDI__] = reinterpret_cast<co_byte*>(ctx);
-
-    __get_mxcsr_gcc_x64(&regs[reg_index_MXCSR__]);
-    __get_fcw_gcc_x64(&regs[reg_index_FCW__]);
+    CO_SETREG(context, sp, stack->stack_top());
+    CO_SETREG(context, bp, stack->stack_top());
+    CO_SETREG(context, ip, co_entry);
+    CO_SETREG(context, di, ctx);
 }
 
 CO_NAMESPACE_END

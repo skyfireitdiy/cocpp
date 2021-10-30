@@ -62,7 +62,7 @@ private:
 #ifdef __GNUC__
 #ifdef __x86_64__
 
-    co_byte* regs__[11] {};
+    co_byte* regs__[32] {};
 #else
 #error only supported x86_64
 #endif
