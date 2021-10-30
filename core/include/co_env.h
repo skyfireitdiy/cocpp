@@ -76,11 +76,11 @@ private:
 
     co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
-    void               start_schedule_routine__();
-    void               remove_detached_ctx__();
-    void               remove_all_ctx__();
-    co_ctx*            next_ctx__();
-    void               update_ctx_state__(co_ctx* curr, co_ctx* next);
+    void    start_schedule_routine__();
+    void    remove_detached_ctx__();
+    void    remove_all_ctx__();
+    co_ctx* next_ctx__();
+
     void               save_shared_stack__(co_ctx* ctx);
     void               restore_shared_stack__(co_ctx* ctx);
     void               switch_shared_stack_ctx__();
@@ -90,6 +90,7 @@ private:
     void               take_ctx__(co_ctx* ctx);
 
     static size_t get_valid_stack_size(co_ctx* ctx);
+    static void   update_ctx_state__(co_ctx* curr, co_ctx* next);
 
     struct
     {
@@ -118,6 +119,8 @@ public:
     std::list<co_ctx*>             take_moveable_ctx();
     bool                           can_auto_destroy() const;
     void                           wake_up();
+
+    static bool prepare_to_switch(co_env* env, co_ctx*& from, co_ctx*& to);
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;

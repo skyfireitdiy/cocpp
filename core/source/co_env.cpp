@@ -166,6 +166,56 @@ void co_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
     next->set_state(co_state::running);
 }
 
+bool co_env::prepare_to_switch(co_env* env, co_ctx*& from, co_ctx*& to)
+{
+    co_ctx* curr = env->current_ctx();
+    co_ctx* next = env->next_ctx__();
+
+    assert(curr != nullptr);
+    assert(next != nullptr);
+
+    env->set_flag(CO_ENV_FLAG_SCHEDULED);
+
+    update_ctx_state__(curr, next);
+    if (curr == next)
+    {
+        return false;
+    }
+    if (next != env->idle_ctx__)
+    {
+        env->set_state(co_env_state::busy);
+    }
+
+    if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK) || next->test_flag(CO_CTX_FLAG_SHARED_STACK))
+    {
+        env->shared_stack_switch_context__.from        = curr;
+        env->shared_stack_switch_context__.to          = next;
+        env->shared_stack_switch_context__.need_switch = true;
+
+        // CO_DEBUG("prepare from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
+
+        // 设置正在切换状态，防止被转移到其他env上，因为to已经是running状态了，所以不用担心他
+        if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK))
+        {
+            // CO_DEBUG("set ctx %p CO_CTX_FLAG_SWITCHING flag", curr);
+            curr->set_flag(CO_CTX_FLAG_SWITCHING);
+        }
+
+        if (curr == env->idle_ctx__)
+        {
+            return false;
+        }
+
+        next = env->idle_ctx__;
+        // CO_DEBUG("from %p to idle %p", curr, idle_ctx__);
+    }
+
+    from = curr;
+    to   = next;
+
+    return true;
+}
+
 void co_env::schedule_switch()
 {
     co_ctx* curr = nullptr;
@@ -174,48 +224,11 @@ void co_env::schedule_switch()
         // 切换前加锁
         std::lock_guard<std::mutex> lock(mu_schedule__);
 
-        set_flag(CO_ENV_FLAG_SCHEDULED);
-
         remove_detached_ctx__();
 
-        curr = current_ctx();
-        next = next_ctx__();
-
-        assert(curr != nullptr);
-        assert(next != nullptr);
-
-        update_ctx_state__(curr, next);
-        if (curr == next)
+        if (!prepare_to_switch(this, curr, next))
         {
             return;
-        }
-        if (next != idle_ctx__)
-        {
-            set_state(co_env_state::busy);
-        }
-
-        if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK) || next->test_flag(CO_CTX_FLAG_SHARED_STACK))
-        {
-            shared_stack_switch_context__.from        = curr;
-            shared_stack_switch_context__.to          = next;
-            shared_stack_switch_context__.need_switch = true;
-
-            // CO_O_DEBUG("prepare from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
-
-            // 设置正在切换状态，防止被转移到其他env上，因为to已经是running状态了，所以不用担心他
-            if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK))
-            {
-                // CO_O_DEBUG("set ctx %p CO_CTX_FLAG_SWITCHING flag", curr);
-                curr->set_flag(CO_CTX_FLAG_SWITCHING);
-            }
-
-            if (curr == idle_ctx__)
-            {
-                return;
-            }
-
-            next = idle_ctx__;
-            // CO_O_DEBUG("from %p to idle %p", curr, idle_ctx__);
         }
     }
     switch_to(curr->regs(), next->regs());
