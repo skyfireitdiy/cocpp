@@ -121,4 +121,14 @@ bool co_ctx::can_move() const
     return !(state() == co_state::running || test_flag(CO_CTX_FLAG_BIND) || test_flag(CO_CTX_FLAG_SHARED_STACK) || test_flag(CO_CTX_FLAG_SWITCHING));
 }
 
+std::string co_ctx::name() const
+{
+    return config().name;
+}
+
+co_id co_ctx::id() const
+{
+    reinterpret_cast<co_id>(this);
+}
+
 CO_NAMESPACE_END

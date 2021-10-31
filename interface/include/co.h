@@ -66,6 +66,8 @@ public:
     CoMemberMethodProxyWithPrefix(*ctx__, set_priority, ctx_);
     CoMemberMethodProxyWithPrefix(*ctx__, priority, ctx_);
     CoMemberMethodProxyWithPrefix(*ctx__, can_schedule, ctx_);
+    std::string name() const;
+    co_id       id() const;
 
     // ctx事件
     CoMemberMethodProxyWithPrefix(*ctx__, finished, ctx_);
@@ -119,9 +121,6 @@ public:
     CoMemberMethodProxyStaticWithPrefix(*manager__, background_task_finished, manager_);
     CoMemberMethodProxyStaticWithPrefix(*manager__, ctx_created, manager_);
     CoMemberMethodProxyStaticWithPrefix(*manager__, timing_routine_timout, manager_);
-
-    co_id       id() const;
-    std::string name() const;
 
     // 构造一个协程，自动开始调度，参数为可调用对象与参数列表，如：co c(add, 1, 2);
     template <typename Func, typename... Args>

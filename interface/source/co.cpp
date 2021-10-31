@@ -24,7 +24,7 @@ std::string co::name() const
     {
         return "";
     }
-    return ctx__->config().name;
+    return ctx__->name();
 }
 
 co::~co()
@@ -36,5 +36,4 @@ co_id co::id() const
 {
     return reinterpret_cast<co_id>(ctx__);
 }
-
 CO_NAMESPACE_END

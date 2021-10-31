@@ -76,6 +76,7 @@ private:
     void    clean_env_routine__();
     void    timing_routine__();
     void    redistribute_ctx__();
+    void    force_schedule__();
     void    destroy_redundant_env__();
     void    free_mem__();
     void    wait_background_task__();

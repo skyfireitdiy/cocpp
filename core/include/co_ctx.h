@@ -88,6 +88,8 @@ public:
     void                 unlock_destroy();
     void                 set_stack(co_stack* stack);
     bool                 can_move() const;
+    std::string          name() const;
+    co_id                id() const;
 
     template <typename T>
     T& local(const std::string& name);

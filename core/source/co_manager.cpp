@@ -116,6 +116,9 @@ void co_manager::create_background_task__()
 void co_manager::sub_manager_event__()
 {
     timing_routine_timout().sub([this] {
+        force_schedule__();
+    });
+    timing_routine_timout().sub([this] {
         // 每两次超时重新分配一次
         static bool need_redistribute_ctx = false;
         if (need_redistribute_ctx)
@@ -266,10 +269,27 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
     max_thread_count_set().pub(max_thread_count__);
 }
 
+void co_manager::force_schedule__()
+{
+    std::scoped_lock lock(mu_clean_up__, mu_env_list__);
+    if (clean_up__)
+    {
+        return;
+    }
+    for (auto& env : env_list__)
+    {
+        // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
+        if (env->is_blocked())
+        {
+            // 强行外部调度
+            send_switch_from_outside_signal(env);
+        }
+    }
+}
+
 void co_manager::redistribute_ctx__()
 {
-    // 此处也需要锁定mu_env_list__，上层锁定
-    std::lock_guard<std::recursive_mutex> lock(mu_clean_up__);
+    std::scoped_lock lock(mu_clean_up__, mu_env_list__);
     if (clean_up__)
     {
         return;
@@ -287,9 +307,7 @@ void co_manager::redistribute_ctx__()
         if (env->is_blocked())
         {
             // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
-
-            // fixme: 设置阻塞状态
-            // env->set_state(co_env_state::blocked);
+            env->set_state(co_env_state::blocked);
 
             // CO_O_DEBUG("env %p is blocked, redistribute ctx", env);
             merge_list(moved_ctx_list, env->take_moveable_ctx()); // 将阻塞的env中可移动的ctx收集起来

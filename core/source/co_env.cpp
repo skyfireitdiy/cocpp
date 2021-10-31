@@ -166,31 +166,31 @@ void co_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
     next->set_state(co_state::running);
 }
 
-bool co_env::prepare_to_switch(co_env* env, co_ctx*& from, co_ctx*& to)
+bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 {
-    co_ctx* curr = env->current_ctx();
-    co_ctx* next = env->next_ctx__();
+    co_ctx* curr = current_ctx();
+    co_ctx* next = next_ctx__();
 
     assert(curr != nullptr);
     assert(next != nullptr);
 
-    env->set_flag(CO_ENV_FLAG_SCHEDULED);
+    set_flag(CO_ENV_FLAG_SCHEDULED);
 
     update_ctx_state__(curr, next);
     if (curr == next)
     {
         return false;
     }
-    if (next != env->idle_ctx__)
+    if (next != idle_ctx__)
     {
-        env->set_state(co_env_state::busy);
+        set_state(co_env_state::busy);
     }
 
     if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK) || next->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
-        env->shared_stack_switch_context__.from        = curr;
-        env->shared_stack_switch_context__.to          = next;
-        env->shared_stack_switch_context__.need_switch = true;
+        shared_stack_switch_context__.from        = curr;
+        shared_stack_switch_context__.to          = next;
+        shared_stack_switch_context__.need_switch = true;
 
         // CO_DEBUG("prepare from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
 
@@ -201,12 +201,12 @@ bool co_env::prepare_to_switch(co_env* env, co_ctx*& from, co_ctx*& to)
             curr->set_flag(CO_CTX_FLAG_SWITCHING);
         }
 
-        if (curr == env->idle_ctx__)
+        if (curr == idle_ctx__)
         {
             return false;
         }
 
-        next = env->idle_ctx__;
+        next = idle_ctx__;
         // CO_DEBUG("from %p to idle %p", curr, idle_ctx__);
     }
 
@@ -226,7 +226,7 @@ void co_env::schedule_switch()
 
         remove_detached_ctx__();
 
-        if (!prepare_to_switch(this, curr, next))
+        if (!prepare_to_switch(curr, next))
         {
             return;
         }
@@ -379,13 +379,13 @@ void co_env::reset_scheduled_flag()
     scheduled_flag_reset().pub();
 }
 
-void co_env::lock_schedule__()
+void co_env::lock_schedule()
 {
     mu_schedule__.lock();
     schedule_locked().pub();
 }
 
-void co_env::unlock_schedule__()
+void co_env::unlock_schedule()
 {
     mu_schedule__.unlock();
     schedule_unlocked().pub();
@@ -463,9 +463,9 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
 
 std::list<co_ctx*> co_env::take_moveable_ctx()
 {
-    lock_schedule__();
+    lock_schedule();
     CoDefer([this] {
-        unlock_schedule__();
+        unlock_schedule();
     });
     auto ret = moveable_ctx_list__();
     for (auto& ctx : ret)
@@ -496,6 +496,12 @@ bool co_env::is_blocked() const
 {
     auto s = state();
     return s != co_env_state::idle && s != co_env_state::created && !test_flag(CO_ENV_FLAG_SCHEDULED);
+}
+
+bool co_env::can_be_schedule_outside() const
+{
+    auto s = state();
+    return s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD); // 有调度线程，并且不是被销毁状态，才可以被外部调度
 }
 
 CO_NAMESPACE_END

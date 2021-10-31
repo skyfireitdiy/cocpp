@@ -233,8 +233,10 @@ TEST(co, co_mutex_lock)
     co c2([&]() {
         for (int i = 0; i < 1000; ++i)
         {
-            std::lock_guard<co_mutex> lock(mu);
-            ret += i;
+            {
+                std::lock_guard<co_mutex> lock(mu);
+                ret += i;
+            }
             this_co::yield();
         }
     });

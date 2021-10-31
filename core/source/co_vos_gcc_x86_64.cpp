@@ -1,5 +1,6 @@
 #include "co.h"
 #include "co_ctx.h"
+#include "co_defer.h"
 #include "co_define.h"
 #include "co_env.h"
 #include "co_type.h"
@@ -18,34 +19,37 @@ static constexpr int CO_SWITCH_SIGNAL = 10;
 
 struct sigcontext_64
 {
-    unsigned long long r8;           //0*8
-    unsigned long long r9;           //1*8
-    unsigned long long r10;          //2*8
-    unsigned long long r11;          //3*8
-    unsigned long long r12;          //4*8
-    unsigned long long r13;          //5*8
-    unsigned long long r14;          //6*8
-    unsigned long long r15;          //7*8
-    unsigned long long di;           //8*8
-    unsigned long long si;           //9*8
-    unsigned long long bp;           //10*8
-    unsigned long long bx;           //11*8
-    unsigned long long dx;           //12*8
-    unsigned long long ax;           //13*8
-    unsigned long long cx;           //14*8
-    unsigned long long sp;           //15*8
-    unsigned long long ip;           //16*8
-    unsigned long long flags;        //17*8
-    unsigned short     cs;           //18*8
-    unsigned short     gs;           //18*8+2
-    unsigned short     fs;           //18*8+4
-    unsigned short     __pad0;       //18*8+6
-    unsigned long long err;          //19*8
-    unsigned long long trapno;       //20*8
-    unsigned long long oldmask;      //21*8
-    unsigned long long cr2;          //22*8
-    unsigned long long fpstate;      //23*8
-    unsigned long long reserved1[8]; //24*8
+    unsigned long long r8;    //0*8
+    unsigned long long r9;    //1*8
+    unsigned long long r10;   //2*8
+    unsigned long long r11;   //3*8
+    unsigned long long r12;   //4*8
+    unsigned long long r13;   //5*8
+    unsigned long long r14;   //6*8
+    unsigned long long r15;   //7*8
+    unsigned long long di;    //8*8
+    unsigned long long si;    //9*8
+    unsigned long long bp;    //10*8
+    unsigned long long bx;    //11*8
+    unsigned long long dx;    //12*8
+    unsigned long long ax;    //13*8
+    unsigned long long cx;    //14*8
+    unsigned long long sp;    //15*8
+    unsigned long long ip;    //16*8
+    unsigned long long flags; //17*8
+
+    // 后面这部分获取不到，暂时不用
+
+    // unsigned short     cs;           //18*8
+    // unsigned short     gs;           //18*8+2
+    // unsigned short     fs;           //18*8+4
+    // unsigned short     __pad0;       //18*8+6
+    // unsigned long long err;          //19*8
+    // unsigned long long trapno;       //20*8
+    // unsigned long long oldmask;      //21*8
+    // unsigned long long cr2;          //22*8
+    // unsigned long long fpstate;      //23*8
+    // unsigned long long reserved1[8]; //24*8
 };
 
 static sigcontext_64* get_sigcontext_64(co_ctx* ctx)
@@ -86,11 +90,6 @@ void switch_to(co_byte** curr, co_byte** next)
     __asm volatile("popq 128(%rdi)");
     __asm volatile("pushf");
     __asm volatile("popq 136(%rdi)");
-
-    // 保存段寄存器（其实是固定值）
-    __asm volatile("movw %cs, 144(%rdi)");
-    __asm volatile("movw %gs, 152(%rdi)");
-    __asm volatile("movw %fs, 160(%rdi)");
 
     __asm volatile("movq %rsp, 120(%rdi)"); // rsp必须在rip后保存，先恢复
     /////////////////////////////////////////////////
@@ -152,9 +151,48 @@ void send_switch_from_outside_signal(co_env* env)
     ::tgkill(::getpid(), static_cast<pid_t>(env->schedule_thread_tid()), CO_SWITCH_SIGNAL);
 }
 
+static void save_context_to_ctx(sigcontext_64* context, co_ctx* ctx)
+{
+    *reinterpret_cast<sigcontext_64*>(ctx->regs()) = *context;
+}
+
+static void restore_context_from_ctx(sigcontext_64* context, co_ctx* ctx)
+{
+    *context = *reinterpret_cast<sigcontext_64*>(ctx->regs());
+}
+
 void switch_from_outside(sigcontext_64* context)
 {
-    [[maybe_unused]] auto env = co::current_env();
+    // fixme: 会发生死锁，需要设置安全调度点
+    auto env = co::current_env();
+
+    // 尝试获取调度锁失败
+    if (!env->try_lock_schedule())
+    {
+        return;
+    }
+
+    // 函数返回时释放调度锁
+    CoDefer([env] {
+        env->unlock_schedule();
+    });
+
+    // env当前不能从外部调度
+    if (!env->can_be_schedule_outside())
+    {
+        return;
+    }
+
+    co_ctx* curr = nullptr;
+    co_ctx* next = nullptr;
+
+    if (!env->prepare_to_switch(curr, next))
+    {
+        return;
+    }
+
+    save_context_to_ctx(context, curr);
+    restore_context_from_ctx(context, next);
 }
 
 static void switch_signal_handler(int signo)

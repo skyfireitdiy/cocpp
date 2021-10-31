@@ -86,8 +86,6 @@ private:
     void               save_shared_stack__(co_ctx* ctx);
     void               restore_shared_stack__(co_ctx* ctx);
     void               switch_shared_stack_ctx__();
-    void               lock_schedule__();
-    void               unlock_schedule__();
     std::list<co_ctx*> moveable_ctx_list__();
     void               take_ctx__(co_ctx* ctx);
 
@@ -124,8 +122,10 @@ public:
     bool                           try_lock_schedule();
     bool                           can_schedule_ctx() const;
     bool                           is_blocked() const;
-
-    static bool prepare_to_switch(co_env* env, co_ctx*& from, co_ctx*& to);
+    bool                           can_be_schedule_outside() const;
+    bool                           prepare_to_switch(co_ctx*& from, co_ctx*& to);
+    void                           lock_schedule();
+    void                           unlock_schedule();
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;
