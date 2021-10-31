@@ -4,6 +4,8 @@
 #include "co_env.h"
 #include "co_type.h"
 
+#include <unistd.h>
+
 #ifdef __GNUC__
 #ifdef __x86_64__
 
@@ -128,6 +130,11 @@ void init_ctx(co_stack* shared_stack, co_ctx* ctx)
     CO_SETREG(context, bp, stack->stack_top());
     CO_SETREG(context, ip, co_entry);
     CO_SETREG(context, di, ctx);
+}
+
+co_tid gettid()
+{
+    return static_cast<co_tid>(::gettid());
 }
 
 CO_NAMESPACE_END

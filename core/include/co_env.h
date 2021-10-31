@@ -74,6 +74,8 @@ private:
 
     std::mutex mu_schedule__;
 
+    co_tid schedule_thread_tid__ {};
+
     co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
     void    start_schedule_routine__();
@@ -89,7 +91,7 @@ private:
     std::list<co_ctx*> moveable_ctx_list__();
     void               take_ctx__(co_ctx* ctx);
 
-    static size_t get_valid_stack_size(co_ctx* ctx);
+    static size_t get_valid_stack_size__(co_ctx* ctx);
     static void   update_ctx_state__(co_ctx* curr, co_ctx* next);
 
     struct
@@ -119,6 +121,7 @@ public:
     std::list<co_ctx*>             take_moveable_ctx();
     bool                           can_auto_destroy() const;
     void                           wake_up();
+    co_tid                         schedule_thread_tid() const;
 
     static bool prepare_to_switch(co_env* env, co_ctx*& from, co_ctx*& to);
 

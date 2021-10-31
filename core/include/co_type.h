@@ -9,6 +9,7 @@ class co_ctx;
 using co_byte          = unsigned char;
 using co_id            = unsigned long long;
 using co_event_handler = unsigned long long;
+using co_tid           = unsigned long long;
 
 enum class co_state : unsigned char
 {

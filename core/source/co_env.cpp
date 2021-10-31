@@ -303,6 +303,7 @@ void co_env::switch_shared_stack_ctx__()
 
 void co_env::start_schedule_routine__()
 {
+    schedule_thread_tid__ = gettid();
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
@@ -432,14 +433,14 @@ void co_env::wake_up()
     wakeup_notified().pub();
 }
 
-size_t co_env::get_valid_stack_size(co_ctx* ctx)
+size_t co_env::get_valid_stack_size__(co_ctx* ctx)
 {
     return ctx->stack()->stack_top() - get_rsp(ctx);
 }
 
 void co_env::save_shared_stack__(co_ctx* ctx)
 {
-    auto stack_size = get_valid_stack_size(ctx);
+    auto stack_size = get_valid_stack_size__(ctx);
     // CO_O_DEBUG("ctx %p valid stack size is %lu", ctx, stack_size);
     auto tmp_stack = stack_factory__->create_stack(stack_size);
     memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
@@ -478,6 +479,11 @@ std::list<co_ctx*> co_env::take_moveable_ctx()
     }
     moveable_ctx_taken().pub(ret);
     return ret;
+}
+
+co_tid co_env::schedule_thread_tid() const
+{
+    return schedule_thread_tid__;
 }
 
 CO_NAMESPACE_END
