@@ -1,7 +1,6 @@
 #include "co_env.h"
 #include "co_ctx.h"
 #include "co_ctx_config.h"
-#include "co_ctx_ctl.h"
 #include "co_ctx_factory.h"
 #include "co_defer.h"
 #include "co_define.h"
@@ -9,6 +8,7 @@
 #include "co_scheduler.h"
 #include "co_stack.h"
 #include "co_type.h"
+#include "co_vos.h"
 
 #include <cassert>
 #include <cstring>
