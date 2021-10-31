@@ -163,7 +163,6 @@ static void restore_context_from_ctx(sigcontext_64* context, co_ctx* ctx)
 
 void switch_from_outside(sigcontext_64* context)
 {
-    // fixme: 会发生死锁，需要设置安全调度点
     auto env = co::current_env();
 
     if (!env->safe_point())
