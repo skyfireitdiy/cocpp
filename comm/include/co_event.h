@@ -6,8 +6,8 @@
 #include "co_type.h"
 #include <functional>
 #include <list>
+#include <map>
 #include <mutex>
-#include <unordered_map>
 #include <utility>
 
 CO_NAMESPACE_BEGIN
@@ -16,9 +16,9 @@ template <typename... Args>
 class co_event final : public co_nocopy
 {
 private:
-    std::unordered_map<int, std::function<void(Args... args)>> cb_list__;
-    mutable co_spinlock                                        spinlock__;
-    co_event_handler                                           current_handler__ { 0 };
+    std::map<int, std::function<void(Args... args)>> cb_list__;
+    mutable co_spinlock                              spinlock__;
+    co_event_handler                                 current_handler__ { 0 };
 
 public:
     co_event_handler sub(std::function<void(Args... args)> cb);

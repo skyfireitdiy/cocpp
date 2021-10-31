@@ -128,7 +128,7 @@ std::string co_ctx::name() const
 
 co_id co_ctx::id() const
 {
-    reinterpret_cast<co_id>(this);
+    return reinterpret_cast<co_id>(this);
 }
 
 CO_NAMESPACE_END

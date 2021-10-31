@@ -166,16 +166,10 @@ void switch_from_outside(sigcontext_64* context)
     // fixme: 会发生死锁，需要设置安全调度点
     auto env = co::current_env();
 
-    // 尝试获取调度锁失败
-    if (!env->try_lock_schedule())
+    if (!env->safe_point())
     {
         return;
     }
-
-    // 函数返回时释放调度锁
-    CoDefer([env] {
-        env->unlock_schedule();
-    });
 
     // env当前不能从外部调度
     if (!env->can_be_schedule_outside())
@@ -193,6 +187,7 @@ void switch_from_outside(sigcontext_64* context)
 
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);
+    env->enter_safepoint();
 }
 
 static void switch_signal_handler(int signo)

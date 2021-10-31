@@ -62,6 +62,7 @@ void co_env::add_ctx(co_ctx* ctx)
 
 std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
 {
+
     // 反转优先级，防止高优先级ctx永久等待低优先级ctx
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());
@@ -87,6 +88,7 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
 
 co_return_value co_env::wait_ctx(co_ctx* ctx)
 {
+
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());
 
@@ -105,17 +107,20 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
 int co_env::workload() const
 {
+
     return scheduler__->count();
 }
 
 co_env_state co_env::state() const
 {
+
     std::shared_lock<std::shared_mutex> lock(mu_state__);
     return state__;
 }
 
 void co_env::set_state(co_env_state state)
 {
+
     std::unique_lock<std::shared_mutex> lock(mu_state__);
     if (state__ != co_env_state::destorying) // destorying 状态不允许迁移到其他状态
     {
@@ -127,6 +132,7 @@ void co_env::set_state(co_env_state state)
 
 void co_env::remove_detached_ctx__()
 {
+
     auto curr    = scheduler__->current_obj();
     auto all_ctx = scheduler__->all_obj();
     for (auto o : all_ctx)
@@ -143,6 +149,7 @@ void co_env::remove_detached_ctx__()
 
 co_ctx* co_env::next_ctx__()
 {
+
     // 如果要销毁、并且可以销毁，切换到idle销毁
     if (state() == co_env_state::destorying)
     {
@@ -168,6 +175,7 @@ void co_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
 
 bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 {
+
     co_ctx* curr = current_ctx();
     co_ctx* next = next_ctx__();
 
@@ -218,6 +226,7 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 
 void co_env::schedule_switch()
 {
+
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
     {
@@ -231,12 +240,14 @@ void co_env::schedule_switch()
             return;
         }
     }
+    enter_safepoint(); // 唯一安全点
     switch_to(curr->regs(), next->regs());
     switched_to().pub(curr);
 }
 
 void co_env::remove_ctx(co_ctx* ctx)
 {
+
     scheduler__->remove_obj(ctx);
     ctx_factory__->destroy_ctx(ctx);
     ctx_removed().pub(ctx);
@@ -244,6 +255,7 @@ void co_env::remove_ctx(co_ctx* ctx)
 
 co_ctx* co_env::current_ctx() const
 {
+
     auto ret = scheduler__->current_obj();
     if (ret == nullptr)
     {
@@ -254,6 +266,7 @@ co_ctx* co_env::current_ctx() const
 
 void co_env::stop_schedule()
 {
+
     // CO_O_DEBUG("set env to destorying, %p", this);
     // created 状态说明没有调度线程，不能转为destroying状态
 
@@ -278,6 +291,7 @@ void co_env::start_schedule()
 
 void co_env::switch_shared_stack_ctx__()
 {
+
     shared_stack_switch_context__.need_switch = false;
 
     // CO_O_DEBUG("switch from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
@@ -297,12 +311,15 @@ void co_env::switch_shared_stack_ctx__()
 
     // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
     // 切换到to
+    enter_safepoint();
     switch_to(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
+
     switched_to().pub(idle_ctx__);
 }
 
 void co_env::start_schedule_routine__()
 {
+    leave_safepoint();
     schedule_thread_tid__ = gettid();
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
@@ -314,11 +331,13 @@ void co_env::start_schedule_routine__()
         {
             // CO_O_DEBUG("need switch shared stack");
             switch_shared_stack_ctx__();
+            leave_safepoint();
         }
         else
         {
             // CO_O_DEBUG("dont need switch shared stack");
             schedule_switch();
+            leave_safepoint();
         }
 
         // 切换回来检测是否需要执行共享栈切换
@@ -370,6 +389,7 @@ void co_env::remove_all_ctx__()
 
 co_scheduler* co_env::scheduler() const
 {
+
     return scheduler__;
 }
 
@@ -393,6 +413,7 @@ void co_env::unlock_schedule()
 
 std::list<co_ctx*> co_env::moveable_ctx_list__()
 {
+
     auto               all_obj = scheduler__->all_obj();
     std::list<co_ctx*> ret;
     for (auto& o : all_obj)
@@ -410,18 +431,21 @@ std::list<co_ctx*> co_env::moveable_ctx_list__()
 
 void co_env::take_ctx__(co_ctx* ctx)
 {
+
     scheduler__->remove_obj(ctx);
     ctx_taked().pub(ctx);
 }
 
 bool co_env::can_auto_destroy() const
 {
+
     // 如果是用户自己转换的env，不能被选中销毁
     return !test_flag(CO_ENV_FLAG_COVERTED) && !test_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
 }
 
 void co_env::wake_up()
 {
+
     std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
@@ -435,6 +459,7 @@ size_t co_env::get_valid_stack_size__(co_ctx* ctx)
 
 void co_env::save_shared_stack__(co_ctx* ctx)
 {
+
     auto stack_size = get_valid_stack_size__(ctx);
     // CO_O_DEBUG("ctx %p valid stack size is %lu", ctx, stack_size);
     auto tmp_stack = stack_factory__->create_stack(stack_size);
@@ -445,6 +470,7 @@ void co_env::save_shared_stack__(co_ctx* ctx)
 
 void co_env::restore_shared_stack__(co_ctx* ctx)
 {
+
     // 第一次调度的时候stack为nullptr
     if (ctx->stack() != nullptr)
     {
@@ -483,25 +509,46 @@ co_tid co_env::schedule_thread_tid() const
 
 bool co_env::try_lock_schedule()
 {
+
     return mu_schedule__.try_lock();
 }
 
 bool co_env::can_schedule_ctx() const
 {
+
     auto s = state();
     return s != co_env_state::blocked && s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
 }
 
 bool co_env::is_blocked() const
 {
+
     auto s = state();
     return s != co_env_state::idle && s != co_env_state::created && !test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
 bool co_env::can_be_schedule_outside() const
 {
+
     auto s = state();
     return s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD); // 有调度线程，并且不是被销毁状态，才可以被外部调度
+}
+
+bool co_env::safe_point() const
+{
+    return safe_point__;
+}
+
+void co_env::enter_safepoint() const
+{
+    // CO_O_DEBUG("enter safe point");
+    safe_point__ = true;
+}
+
+void co_env::leave_safepoint() const
+{
+    // CO_O_DEBUG("leave safe point");
+    safe_point__ = false;
 }
 
 CO_NAMESPACE_END
