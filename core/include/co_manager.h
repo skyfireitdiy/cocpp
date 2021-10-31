@@ -73,11 +73,8 @@ private:
 
     std::function<bool()> need_free_mem_cb__ { [] { return false; } };
 
-    bool can_schedule_ctx__(co_env* env) const;
-
     void    clean_env_routine__();
     void    timing_routine__();
-    bool    is_blocked__(co_env* env) const;
     void    redistribute_ctx__();
     void    destroy_redundant_env__();
     void    free_mem__();

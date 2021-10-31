@@ -373,11 +373,6 @@ co_scheduler* co_env::scheduler() const
     return scheduler__;
 }
 
-bool co_env::scheduled() const
-{
-    return test_flag(CO_ENV_FLAG_SCHEDULED);
-}
-
 void co_env::reset_scheduled_flag()
 {
     reset_flag(CO_ENV_FLAG_SCHEDULED);
@@ -484,6 +479,23 @@ std::list<co_ctx*> co_env::take_moveable_ctx()
 co_tid co_env::schedule_thread_tid() const
 {
     return schedule_thread_tid__;
+}
+
+bool co_env::try_lock_schedule()
+{
+    return mu_schedule__.try_lock();
+}
+
+bool co_env::can_schedule_ctx() const
+{
+    auto s = state();
+    return s != co_env_state::blocked && s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
+}
+
+bool co_env::is_blocked() const
+{
+    auto s = state();
+    return s != co_env_state::idle && s != co_env_state::created && !test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
 CO_NAMESPACE_END

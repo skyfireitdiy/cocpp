@@ -116,12 +116,14 @@ public:
     void                           start_schedule();
     void                           schedule_in_this_thread();
     co_scheduler*                  scheduler() const;
-    bool                           scheduled() const;
     void                           reset_scheduled_flag();
     std::list<co_ctx*>             take_moveable_ctx();
     bool                           can_auto_destroy() const;
     void                           wake_up();
     co_tid                         schedule_thread_tid() const;
+    bool                           try_lock_schedule();
+    bool                           can_schedule_ctx() const;
+    bool                           is_blocked() const;
 
     static bool prepare_to_switch(co_env* env, co_ctx*& from, co_ctx*& to);
 

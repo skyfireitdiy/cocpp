@@ -13,6 +13,6 @@ void     init_ctx(co_stack* shared_stack, co_ctx* ctx);
 co_byte* get_rsp(co_ctx* ctx);
 co_tid   gettid();
 void     setup_switch_handler();
-void     switch_from_outside(co_env* env);
+void     send_switch_from_outside_signal(co_env* env);
 
 CO_NAMESPACE_END

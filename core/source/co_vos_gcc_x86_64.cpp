@@ -1,3 +1,4 @@
+#include "co.h"
 #include "co_ctx.h"
 #include "co_define.h"
 #include "co_env.h"
@@ -12,12 +13,8 @@
 
 CO_NAMESPACE_BEGIN
 
+static void          switch_signal_handler(int signo);
 static constexpr int CO_SWITCH_SIGNAL = 10;
-
-static void switch_signal_handler(int)
-{
-    printf("switch\n");
-}
 
 struct sigcontext_64
 {
@@ -150,9 +147,25 @@ void setup_switch_handler()
     ::signal(CO_SWITCH_SIGNAL, switch_signal_handler);
 }
 
-void switch_from_outside(co_env* env)
+void send_switch_from_outside_signal(co_env* env)
 {
     ::tgkill(::getpid(), static_cast<pid_t>(env->schedule_thread_tid()), CO_SWITCH_SIGNAL);
+}
+
+void switch_from_outside(sigcontext_64* context)
+{
+    [[maybe_unused]] auto env = co::current_env();
+}
+
+static void switch_signal_handler(int signo)
+{
+    sigcontext_64* context = nullptr;
+    __asm volatile("leaq 88(%%rsp), %%rax\t\n"
+                   "movq %%rax, %0\t\n"
+                   : "=m"(context)
+                   :
+                   : "memory", "rax");
+    switch_from_outside(context);
 }
 
 CO_NAMESPACE_END

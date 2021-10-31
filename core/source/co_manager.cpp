@@ -20,30 +20,30 @@ co_env* co_manager::get_best_env__()
         return create_env(true);
     }
 
-    auto   env                    = env_list__.front();
-    auto   min_workload           = env->workload();
+    auto   best_env               = env_list__.front();
+    auto   min_workload           = best_env->workload();
     size_t can_schedule_env_count = 0;
-    for (auto& p : env_list__)
+    for (auto& env : env_list__)
     {
-        if (p->state() == co_env_state::idle)
+        if (env->state() == co_env_state::idle)
         {
-            best_env_got().pub(p);
-            return p;
+            best_env_got().pub(env);
+            return env;
         }
-        if (!can_schedule_ctx__(p))
+        if (!env->can_schedule_ctx())
         {
             continue;
         }
         // 统计可用于调度的env数量
         ++can_schedule_env_count;
-        if (p->workload() < min_workload)
+        if (env->workload() < min_workload)
         {
-            min_workload = p->workload();
-            env          = p;
+            min_workload = env->workload();
+            best_env     = env;
         }
     }
     // 如果没有可用的env，就创建
-    if (env == nullptr)
+    if (best_env == nullptr)
     {
         auto ret = create_env(true);
         best_env_got().pub(ret);
@@ -57,14 +57,8 @@ co_env* co_manager::get_best_env__()
         best_env_got().pub(ret);
         return ret;
     }
-    best_env_got().pub(env);
-    return env;
-}
-
-bool co_manager::can_schedule_ctx__(co_env* env) const
-{
-    auto state = env->state();
-    return !(state == co_env_state::blocked || state == co_env_state::destorying || !env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD));
+    best_env_got().pub(best_env);
+    return best_env;
 }
 
 void co_manager::sub_env_event__(co_env* env)
@@ -122,7 +116,13 @@ void co_manager::create_background_task__()
 void co_manager::sub_manager_event__()
 {
     timing_routine_timout().sub([this] {
-        redistribute_ctx__();
+        // 每两次超时重新分配一次
+        static bool need_redistribute_ctx = false;
+        if (need_redistribute_ctx)
+        {
+            redistribute_ctx__();
+        }
+        need_redistribute_ctx = !need_redistribute_ctx;
     });
     timing_routine_timout().sub([this] {
         destroy_redundant_env__();
@@ -284,10 +284,13 @@ void co_manager::redistribute_ctx__()
     for (auto& env : env_list__)
     {
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
-        if (is_blocked__(env))
+        if (env->is_blocked())
         {
             // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
-            env->set_state(co_env_state::blocked);
+
+            // fixme: 设置阻塞状态
+            // env->set_state(co_env_state::blocked);
+
             // CO_O_DEBUG("env %p is blocked, redistribute ctx", env);
             merge_list(moved_ctx_list, env->take_moveable_ctx()); // 将阻塞的env中可移动的ctx收集起来
         }
@@ -311,7 +314,7 @@ void co_manager::destroy_redundant_env__()
     idle_env_list.reserve(env_list__.size());
     for (auto& env : env_list__)
     {
-        if (can_schedule_ctx__(env))
+        if (env->can_schedule_ctx())
         {
             ++can_schedule_env_count;
         }
@@ -341,12 +344,6 @@ void co_manager::timing_routine__()
         timing_routine_timout().pub();
     }
     timing_routine_finished().pub();
-}
-
-bool co_manager::is_blocked__(co_env* env) const
-{
-    auto state = env->state();
-    return state != co_env_state::idle && state != co_env_state::created && !env->scheduled();
 }
 
 void co_manager::set_timing_tick_duration(
