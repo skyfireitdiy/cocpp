@@ -4,12 +4,20 @@
 #include "co_type.h"
 #include "co_vos.h"
 
+#include <signal.h>
 #include <unistd.h>
 
 #ifdef __GNUC__
 #ifdef __x86_64__
 
 CO_NAMESPACE_BEGIN
+
+static constexpr int CO_SWITCH_SIGNAL = 10;
+
+static void switch_signal_handler(int)
+{
+    printf("switch\n");
+}
 
 struct sigcontext_64
 {
@@ -135,6 +143,16 @@ void init_ctx(co_stack* shared_stack, co_ctx* ctx)
 co_tid gettid()
 {
     return static_cast<co_tid>(::gettid());
+}
+
+void setup_switch_handler()
+{
+    ::signal(CO_SWITCH_SIGNAL, switch_signal_handler);
+}
+
+void switch_from_outside(co_env* env)
+{
+    ::tgkill(::getpid(), static_cast<pid_t>(env->schedule_thread_tid()), CO_SWITCH_SIGNAL);
 }
 
 CO_NAMESPACE_END

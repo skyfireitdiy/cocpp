@@ -4,6 +4,7 @@
 #include "co_env.h"
 #include "co_env_factory.h"
 #include "co_stack_factory.h"
+#include "co_vos.h"
 #include <cassert>
 #include <cstddef>
 #include <future>
@@ -161,6 +162,8 @@ co_manager::co_manager()
 {
     sub_manager_event__();
     create_background_task__();
+
+    setup_switch_handler();
 }
 
 void co_manager::remove_env__(co_env* env)
