@@ -124,7 +124,6 @@ public:
     bool                           try_lock_schedule();
     bool                           can_schedule_ctx() const;
     bool                           is_blocked() const;
-    bool                           can_be_schedule_outside() const;
     bool                           prepare_to_switch(co_ctx*& from, co_ctx*& to);
     void                           lock_schedule();
     void                           unlock_schedule();

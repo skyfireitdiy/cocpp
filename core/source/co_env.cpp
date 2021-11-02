@@ -527,12 +527,6 @@ bool co_env::is_blocked() const
     return s != co_env_state::idle && s != co_env_state::created && !test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
-bool co_env::can_be_schedule_outside() const
-{
-
-    auto s = state();
-    return s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD); // 有调度线程，并且不是被销毁状态，才可以被外部调度
-}
 
 bool co_env::safe_point() const
 {

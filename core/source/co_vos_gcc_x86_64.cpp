@@ -170,12 +170,6 @@ void switch_from_outside(sigcontext_64* context)
         return;
     }
 
-    // env当前不能从外部调度
-    if (!env->can_be_schedule_outside())
-    {
-        return;
-    }
-
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
 
