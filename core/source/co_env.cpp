@@ -240,7 +240,7 @@ void co_env::schedule_switch()
             return;
         }
     }
-    enter_safepoint(); // 唯一安全点
+    enter_safepoint();
     switch_to(curr->regs(), next->regs());
     switched_to().pub(curr);
 }
@@ -525,23 +525,6 @@ bool co_env::is_blocked() const
 
     auto s = state();
     return s != co_env_state::idle && s != co_env_state::created && !test_flag(CO_ENV_FLAG_SCHEDULED);
-}
-
-bool co_env::safepoint() const
-{
-    return safepoint__;
-}
-
-void co_env::enter_safepoint() const
-{
-    // CO_O_DEBUG("enter safe point");
-    safepoint__ = true;
-}
-
-void co_env::leave_safepoint() const
-{
-    // CO_O_DEBUG("leave safe point");
-    safepoint__ = false;
 }
 
 CO_NAMESPACE_END

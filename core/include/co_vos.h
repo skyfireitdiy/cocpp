@@ -14,5 +14,7 @@ co_byte* get_rsp(co_ctx* ctx);
 co_tid   gettid();
 void     setup_switch_handler();
 void     send_switch_from_outside_signal(co_env* env);
+void     enter_safepoint();
+void     leave_safepoint();
 
 CO_NAMESPACE_END

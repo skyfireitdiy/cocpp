@@ -165,11 +165,6 @@ void switch_from_outside(sigcontext_64* context)
 {
     auto env = co::current_env();
 
-    if (!env->safepoint())
-    {
-        return;
-    }
-
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
 
@@ -180,7 +175,7 @@ void switch_from_outside(sigcontext_64* context)
 
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);
-    env->enter_safepoint();
+    // 能调用到此处，说明当前一定是在安全点内
 }
 
 static void switch_signal_handler(int signo)
@@ -192,6 +187,23 @@ static void switch_signal_handler(int signo)
                    :
                    : "memory", "rax");
     switch_from_outside(context);
+}
+
+// fixme：安全点的实现应该有问题，不过目前由于event中回调函数的调用时顺序的，所以规避了问题
+void enter_safepoint()
+{
+    sigset_t set {};
+    sigset_t old {};
+    sigaddset(&set, CO_SWITCH_SIGNAL);
+    sigprocmask(SIG_UNBLOCK, &set, &old);
+}
+
+void leave_safepoint()
+{
+    sigset_t set {};
+    sigset_t old {};
+    sigaddset(&set, CO_SWITCH_SIGNAL);
+    sigprocmask(SIG_BLOCK, &set, &old);
 }
 
 CO_NAMESPACE_END
