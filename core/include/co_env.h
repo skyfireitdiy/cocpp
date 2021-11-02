@@ -76,7 +76,7 @@ private:
 
     co_tid schedule_thread_tid__ {};
 
-    mutable std::atomic<bool> safe_point__ { false };
+    mutable std::atomic<bool> safepoint__ { false };
 
     co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
@@ -127,7 +127,7 @@ public:
     bool                           prepare_to_switch(co_ctx*& from, co_ctx*& to);
     void                           lock_schedule();
     void                           unlock_schedule();
-    bool                           safe_point() const;
+    bool                           safepoint() const;
     void                           enter_safepoint() const;
     void                           leave_safepoint() const;
     friend class co_object_pool<co_env>;

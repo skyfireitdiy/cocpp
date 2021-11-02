@@ -527,22 +527,21 @@ bool co_env::is_blocked() const
     return s != co_env_state::idle && s != co_env_state::created && !test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
-
-bool co_env::safe_point() const
+bool co_env::safepoint() const
 {
-    return safe_point__;
+    return safepoint__;
 }
 
 void co_env::enter_safepoint() const
 {
     // CO_O_DEBUG("enter safe point");
-    safe_point__ = true;
+    safepoint__ = true;
 }
 
 void co_env::leave_safepoint() const
 {
     // CO_O_DEBUG("leave safe point");
-    safe_point__ = false;
+    safepoint__ = false;
 }
 
 CO_NAMESPACE_END
