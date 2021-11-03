@@ -26,6 +26,7 @@ constexpr int CO_CTX_FLAG_BIND         = 2; // 绑定env，不可移动
 constexpr int CO_CTX_FLAG_IDLE         = 3; // idle ctx
 constexpr int CO_CTX_FLAG_SHARED_STACK = 4; // 共享栈
 constexpr int CO_CTX_FLAG_SWITCHING    = 5; // 正在切换
+constexpr int CO_CTX_FLAG_UNSAFE       = 6; // 不安全
 constexpr int CO_CTX_FLAG_MAX          = 8;
 
 constexpr int CO_ENV_FLAG_NO_SCHE_THREAD    = 0; // 没有调度线程

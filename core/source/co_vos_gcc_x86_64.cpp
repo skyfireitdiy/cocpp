@@ -165,6 +165,11 @@ void switch_from_outside(sigcontext_64* context)
 {
     auto env = co::current_env();
 
+    if (env->current_ctx()->test_flag(CO_CTX_FLAG_UNSAFE))
+    {
+        return;
+    }
+
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
 

@@ -27,6 +27,7 @@ co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx
     , state__(co_env_state::created)
 {
     idle_ctx__->set_env(this);
+    idle_ctx__->set_flag(CO_CTX_FLAG_UNSAFE); // 只要上下文在idle中的，就认为不安全
     if (create_new_thread)
     {
         // 此处设置状态是防止 add_ctx 前调度线程还未准备好，状态断言失败
@@ -62,7 +63,6 @@ void co_env::add_ctx(co_ctx* ctx)
 
 std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
 {
-
     // 反转优先级，防止高优先级ctx永久等待低优先级ctx
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());
@@ -107,20 +107,17 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
 int co_env::workload() const
 {
-
     return scheduler__->count();
 }
 
 co_env_state co_env::state() const
 {
-
     std::shared_lock<std::shared_mutex> lock(mu_state__);
     return state__;
 }
 
 void co_env::set_state(co_env_state state)
 {
-
     std::unique_lock<std::shared_mutex> lock(mu_state__);
     if (state__ != co_env_state::destorying) // destorying 状态不允许迁移到其他状态
     {
@@ -132,7 +129,6 @@ void co_env::set_state(co_env_state state)
 
 void co_env::remove_detached_ctx__()
 {
-
     auto curr    = scheduler__->current_obj();
     auto all_ctx = scheduler__->all_obj();
     for (auto o : all_ctx)
@@ -149,7 +145,6 @@ void co_env::remove_detached_ctx__()
 
 co_ctx* co_env::next_ctx__()
 {
-
     // 如果要销毁、并且可以销毁，切换到idle销毁
     if (state() == co_env_state::destorying)
     {
@@ -226,7 +221,7 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 
 void co_env::schedule_switch()
 {
-
+    current_ctx()->set_flag(CO_CTX_FLAG_UNSAFE);
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
     {
@@ -243,6 +238,7 @@ void co_env::schedule_switch()
     enter_safepoint();
     switch_to(curr->regs(), next->regs());
     switched_to().pub(curr);
+    current_ctx()->reset_flag(CO_CTX_FLAG_UNSAFE);
 }
 
 void co_env::remove_ctx(co_ctx* ctx)
