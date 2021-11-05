@@ -94,7 +94,6 @@ public:
     template <typename T>
     T& local(const std::string& name);
 
-    friend void co_entry(co_ctx* ctx);
     friend class co_object_pool<co_ctx>;
 };
 
