@@ -30,8 +30,17 @@ add_files("scheduler/source/*.cpp")
 add_files("sync/source/*.cpp")
 add_files("utils/source/*.cpp")
 add_files("mem/source/*.cpp")
-
 add_links("pthread")
+
+add_headerfiles("comm/include/*.h", {prefixdir = "cocpp"})
+add_headerfiles("core/include/*.h", {prefixdir = "cocpp"})
+add_headerfiles("exception/include/*.h", {prefixdir = "cocpp"})
+add_headerfiles("interface/include/*.h", {prefixdir = "cocpp"})
+add_headerfiles("scheduler/include/*.h", {prefixdir = "cocpp"})
+add_headerfiles("sync/include/*.h", {prefixdir = "cocpp"})
+add_headerfiles("utils/include/*.h", {prefixdir = "cocpp"})
+add_headerfiles("mem/include/*.h", {prefixdir = "cocpp"})
+
 target_end()
 
 target("test")
@@ -53,6 +62,7 @@ if is_mode("debug") and is_plat("linux") then
         task.run("test_cov")
     end)
 end
+on_install(function(target) print("ignore install test") end)
 target_end()
 
 task("test_cov")
