@@ -103,10 +103,10 @@ void co_manager::set_env_shared_stack_size(size_t size)
 
 void co_manager::create_background_task__()
 {
-    background_task__.emplace_back(std::async([this]() {
+    background_task__.emplace_back(std::async(std::launch::async, [this]() {
         clean_env_routine__();
     }));
-    background_task__.emplace_back(std::async([this]() {
+    background_task__.emplace_back(std::async(std::launch::async, [this]() {
         timing_routine__();
     }));
 

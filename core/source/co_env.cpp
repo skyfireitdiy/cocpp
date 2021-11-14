@@ -279,7 +279,7 @@ void co_env::stop_schedule()
 
 void co_env::start_schedule()
 {
-    worker__ = std::async([this]() {
+    worker__ = std::async(std::launch::async, [this]() {
         current_env__ = this;
         start_schedule_routine__();
     });
