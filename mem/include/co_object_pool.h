@@ -15,14 +15,22 @@ class co_object_pool final
 private:
     std::list<void*> pool__;
     std::mutex       mu__;
+    size_t           max_cap__;
 
 public:
+    co_object_pool(size_t max_cap);
     template <typename... ConstructParam>
     ObjectType* create_obj(ConstructParam&&... params);
     void        destroy_obj(ObjectType* obj);
     void        clear_free_object();
     ~co_object_pool();
 };
+
+template <typename ObjectType>
+co_object_pool<ObjectType>::co_object_pool(size_t max_cap)
+    : max_cap__(max_cap)
+{
+}
 
 template <typename ObjectType>
 template <typename... ConstructParam>

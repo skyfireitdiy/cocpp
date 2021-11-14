@@ -16,7 +16,7 @@ class co_env;
 class co_env_factory final : public co_singleton<co_env_factory>
 {
 private:
-    co_object_pool<co_env> env_pool__;
+    co_object_pool<co_env> env_pool__ { MAX_ENV_CACHE_COUNT };
 
     co_scheduler_factory* scheduler_factory__ { co_o1_scheduler_factory::instance() };
     co_stack_factory*     stack_factory__ { co_stack_factory::instance() };

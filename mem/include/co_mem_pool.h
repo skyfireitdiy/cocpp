@@ -20,10 +20,11 @@ private:
 
     const size_t                     min_zone__;
     const size_t                     zone_count__;
+    const size_t                     max_cap__;
     std::vector<std::list<co_byte*>> mem_pool__;
 
 public:
-    co_mem_pool(size_t min_zone, size_t zone_count);
+    co_mem_pool(size_t min_zone, size_t zone_count, size_t max_cap);
     co_byte* alloc_mem(size_t size);
     void     free_mem(co_byte* ptr, size_t size);
     void     free_pool();

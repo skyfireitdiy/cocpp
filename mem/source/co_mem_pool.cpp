@@ -10,9 +10,10 @@
 
 CO_NAMESPACE_BEGIN
 
-co_mem_pool::co_mem_pool(size_t min_zone, size_t zone_count)
+co_mem_pool::co_mem_pool(size_t min_zone, size_t zone_count, size_t max_cap)
     : min_zone__(min_zone)
     , zone_count__(zone_count)
+    , max_cap__(max_cap)
     , mem_pool__(zone_count)
 {
 }
@@ -79,7 +80,14 @@ void co_mem_pool::free_mem(co_byte* ptr, size_t size)
         return;
     }
     std::lock_guard<std::mutex> lock(mu__);
-    mem_pool__[zone_index].push_front(ptr);
+    if (mem_pool__[zone_index].size() > max_cap__)
+    {
+        std::free(ptr);
+    }
+    else
+    {
+        mem_pool__[zone_index].push_front(ptr);
+    }
 }
 
 void co_mem_pool::free_pool()

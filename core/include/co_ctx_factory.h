@@ -9,7 +9,7 @@ class co_ctx_factory final : public co_singleton<co_ctx_factory>
 {
 
 private:
-    co_object_pool<co_ctx> ctx_pool__;
+    co_object_pool<co_ctx> ctx_pool__ { MAX_CTX_CACHE_COUNT };
 
 public:
     co_ctx* create_ctx(const co_ctx_config& config);
