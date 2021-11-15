@@ -14,13 +14,21 @@ class co_error : public std::exception
 public:
     template <typename... Args>
     co_error(Args&&... args);
+    const char* what() const noexcept override;
 };
+
+template <typename T>
+std::string make_error_str__(const T& data)
+{
+    std::ostringstream so;
+    so << data << " ";
+    return so.str();
+}
 
 template <typename... Args>
 co_error::co_error(Args&&... args)
 {
-    std::ostringstream so;
-    (so << ... << args);
+    what__ = (std::string {} + ... + make_error_str__(args));
 }
 
 CO_NAMESPACE_END
