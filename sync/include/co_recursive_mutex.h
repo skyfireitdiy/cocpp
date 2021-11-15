@@ -8,7 +8,7 @@ CO_NAMESPACE_BEGIN
 
 class co_ctx;
 
-class co_recursive_mutex final : public co_nocopy
+class co_recursive_mutex final : private co_nocopy
 {
 private:
     co_spinlock          spinlock__;

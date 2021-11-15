@@ -29,7 +29,7 @@ class co_manager;
 class co_scheduler;
 class co_ctx;
 
-class co_env final : public co_nocopy,
+class co_env final : private co_nocopy,
                      public co_flag_manager<CO_ENV_FLAG_MAX>
 {
     RegCoEvent(env_task_finished);

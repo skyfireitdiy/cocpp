@@ -7,7 +7,7 @@
 #include "co_nocopy.h"
 
 CO_NAMESPACE_BEGIN
-class co_spinlock : public co_nocopy
+class co_spinlock : private co_nocopy
 {
     std::atomic<bool> locked__ { false };
 

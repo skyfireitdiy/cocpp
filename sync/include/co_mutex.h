@@ -11,7 +11,7 @@ CO_NAMESPACE_BEGIN
 
 class co_ctx;
 
-class co_mutex : public co_nocopy
+class co_mutex : private co_nocopy
 {
 private:
     co_spinlock          spinlock__;

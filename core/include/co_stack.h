@@ -6,7 +6,7 @@
 
 CO_NAMESPACE_BEGIN
 
-class co_stack final : public co_nocopy
+class co_stack final : private co_nocopy
 {
     co_byte* stack__;
     size_t   size__;

@@ -12,7 +12,7 @@
 CO_NAMESPACE_BEGIN
 
 template <std::ptrdiff_t LeastMaxValue>
-class co_counting_semaphore final : public co_nocopy
+class co_counting_semaphore final : private co_nocopy
 {
 private:
     co_mutex              mu__;

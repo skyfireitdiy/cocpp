@@ -17,7 +17,7 @@ public:
     virtual ~schedulable() = default;
 };
 
-class co_scheduler : public co_nocopy
+class co_scheduler : private co_nocopy
 {
 public:
     virtual void                    add_obj(schedulable* obj)                  = 0;

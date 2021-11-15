@@ -1,6 +1,7 @@
 #pragma once
 
 #include "co_define.h"
+#include "co_nocopy.h"
 #include "co_type.h"
 #include <list>
 #include <mutex>
@@ -8,7 +9,7 @@
 
 CO_NAMESPACE_BEGIN
 
-class co_mem_pool final
+class co_mem_pool final : private co_nocopy
 {
 private:
     static unsigned long long align_2_zone_edge__(unsigned long long size);

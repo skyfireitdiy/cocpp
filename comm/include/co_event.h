@@ -13,7 +13,7 @@
 CO_NAMESPACE_BEGIN
 
 template <typename... Args>
-class co_event final : public co_nocopy
+class co_event final : private co_nocopy
 {
 private:
     std::map<int, std::function<void(Args... args)>> cb_list__;

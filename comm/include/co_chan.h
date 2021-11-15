@@ -12,7 +12,7 @@
 CO_NAMESPACE_BEGIN
 
 template <typename ValueType, int MaxSize>
-class co_chan : public co_nocopy
+class co_chan : private co_nocopy
 {
 private:
     std::deque<ValueType> data__;

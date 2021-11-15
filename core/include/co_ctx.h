@@ -18,7 +18,7 @@ CO_NAMESPACE_BEGIN
 
 class co_env;
 
-class co_ctx final : public co_nocopy,
+class co_ctx final : private co_nocopy,
                      public co_flag_manager<CO_CTX_FLAG_MAX>,
                      public schedulable
 {

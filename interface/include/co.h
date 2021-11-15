@@ -28,7 +28,7 @@ concept co_is_void = std::is_same_v<T, void>;
 template <typename T>
 concept co_not_void = !std::is_same_v<T, void>;
 
-class co final : public co_nocopy
+class co final : private co_nocopy
 {
 private:
     co_ctx*            ctx__;

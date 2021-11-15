@@ -6,7 +6,7 @@
 
 CO_NAMESPACE_BEGIN
 
-class co_once_flag : public co_nocopy
+class co_once_flag : private co_nocopy
 {
 public:
     std::atomic<bool> flag__ { false };

@@ -11,7 +11,7 @@ CO_NAMESPACE_BEGIN
 
 class co_ctx* ctx;
 
-class co_shared_mutex : public co_nocopy
+class co_shared_mutex : private co_nocopy
 {
 private:
     enum class lock_type
