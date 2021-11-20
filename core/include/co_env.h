@@ -4,11 +4,9 @@
 #include "co_define.h"
 #include "co_event.h"
 #include "co_flag_manager.h"
-#include "co_manager.h"
 #include "co_nocopy.h"
 #include "co_object_pool.h"
 #include "co_return_value.h"
-#include "co_stack.h"
 #include "co_stack_factory.h"
 #include "co_type.h"
 
