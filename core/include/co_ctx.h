@@ -20,7 +20,7 @@ class co_env;
 
 class co_ctx final : private co_nocopy,
                      public co_flag_manager<CO_CTX_FLAG_MAX>,
-                     public schedulable_obj
+                     public co_schedulable_obj
 {
     RegCoEvent(finished);
     RegCoEvent(priority_changed, int, int);        // 原优先级

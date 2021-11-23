@@ -132,7 +132,7 @@ void co_env::remove_detached_ctx__()
     auto all_ctx = scheduler__->all_obj();
     for (auto o : all_ctx)
     {
-        auto ctx = dynamic_cast<co_ctx*>(o);
+        auto ctx = o->scheduler_ctx();
         // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
         if (ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr)
         {
@@ -152,7 +152,7 @@ co_ctx* co_env::next_ctx__()
     else
     {
         auto next = scheduler__->choose_obj();
-        return dynamic_cast<co_ctx*>(next == nullptr ? idle_ctx__ : next);
+        return next == nullptr ? idle_ctx__ : next->scheduler_ctx();
     }
 }
 
@@ -255,7 +255,7 @@ co_ctx* co_env::current_ctx() const
     {
         return idle_ctx__;
     }
-    return dynamic_cast<co_ctx*>(ret);
+    return ret->scheduler_ctx();
 }
 
 void co_env::stop_schedule()
@@ -374,7 +374,7 @@ void co_env::remove_all_ctx__()
     auto all_obj = scheduler__->all_obj();
     for (auto& obj : all_obj)
     {
-        remove_ctx(dynamic_cast<co_ctx*>(obj));
+        remove_ctx(obj->scheduler_ctx());
     }
     all_ctx_removed().pub();
 }
@@ -410,7 +410,7 @@ std::list<co_ctx*> co_env::moveable_ctx_list__()
     std::list<co_ctx*> ret;
     for (auto& o : all_obj)
     {
-        auto ctx = dynamic_cast<co_ctx*>(o);
+        auto ctx = o->scheduler_ctx();
         // 绑定env的协程和当前协程不能移动
         if (!ctx->can_move())
         {

@@ -59,6 +59,7 @@ co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config)
     , state__(co_state::suspended)
     , config__(config)
 {
+    set_scheduler_ctx(this);
     set_priority(config.priority);
 }
 
