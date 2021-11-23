@@ -63,15 +63,17 @@ private:
     co_stack*           shared_stack__ { nullptr };
     co_ctx* const       idle_ctx__ { nullptr };
 
-    mutable co_spinlock lock_state__;
-    co_env_state        state__ { co_env_state::idle };
+    mutable std::mutex lock_state__;
+    co_env_state       state__ { co_env_state::idle };
 
     mutable std::mutex          mu_wake_up_idle__;
     std::condition_variable_any cond_wake_schedule__;
 
-    co_spinlock mu_schedule__;
+    std::mutex mu_schedule__;
 
     co_tid schedule_thread_tid__ {};
+
+    std::atomic<bool> safepoint__ { false };
 
     co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
@@ -122,6 +124,9 @@ public:
     bool                           prepare_to_switch(co_ctx*& from, co_ctx*& to);
     void                           lock_schedule();
     void                           unlock_schedule();
+    void                           set_safepoint();
+    void                           reset_safepoint();
+    bool                           safepoint() const;
     friend class co_object_pool<co_env>;
     friend class co_env_factory;
 };

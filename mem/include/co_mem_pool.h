@@ -18,7 +18,7 @@ private:
 
     size_t get_zone_index__(size_t size) const;
 
-    co_spinlock mu__;
+    std::mutex mu__;
 
     const size_t                     min_zone__;
     const size_t                     zone_count__;

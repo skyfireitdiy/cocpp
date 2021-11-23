@@ -19,24 +19,24 @@ static constexpr int CO_SWITCH_SIGNAL = 10;
 
 struct sigcontext_64
 {
-    unsigned long long r8;    //0*8
-    unsigned long long r9;    //1*8
-    unsigned long long r10;   //2*8
-    unsigned long long r11;   //3*8
-    unsigned long long r12;   //4*8
-    unsigned long long r13;   //5*8
-    unsigned long long r14;   //6*8
-    unsigned long long r15;   //7*8
-    unsigned long long di;    //8*8
-    unsigned long long si;    //9*8
-    unsigned long long bp;    //10*8
-    unsigned long long bx;    //11*8
-    unsigned long long dx;    //12*8
-    unsigned long long ax;    //13*8
-    unsigned long long cx;    //14*8
-    unsigned long long sp;    //15*8
-    unsigned long long ip;    //16*8
-    unsigned long long flags; //17*8
+    unsigned long long r8;    // 0*8
+    unsigned long long r9;    // 1*8
+    unsigned long long r10;   // 2*8
+    unsigned long long r11;   // 3*8
+    unsigned long long r12;   // 4*8
+    unsigned long long r13;   // 5*8
+    unsigned long long r14;   // 6*8
+    unsigned long long r15;   // 7*8
+    unsigned long long di;    // 8*8
+    unsigned long long si;    // 9*8
+    unsigned long long bp;    // 10*8
+    unsigned long long bx;    // 11*8
+    unsigned long long dx;    // 12*8
+    unsigned long long ax;    // 13*8
+    unsigned long long cx;    // 14*8
+    unsigned long long sp;    // 15*8
+    unsigned long long ip;    // 16*8
+    unsigned long long flags; // 17*8
 
     // 后面这部分获取不到，暂时不用
 
@@ -165,7 +165,7 @@ void switch_from_outside(sigcontext_64* context)
 {
     auto env = co::current_env();
 
-    if (env->current_ctx()->test_flag(CO_CTX_FLAG_UNSAFE))
+    if (!env->safepoint())
     {
         return;
     }
@@ -194,22 +194,6 @@ static void switch_signal_handler(int signo)
     switch_from_outside(context);
 }
 
-// fixme：安全点的实现应该有问题，不过目前由于event中回调函数的调用时顺序的，所以规避了问题
-void enter_safepoint()
-{
-    sigset_t set {};
-    sigset_t old {};
-    sigaddset(&set, CO_SWITCH_SIGNAL);
-    sigprocmask(SIG_UNBLOCK, &set, &old);
-}
-
-void leave_safepoint()
-{
-    sigset_t set {};
-    sigset_t old {};
-    sigaddset(&set, CO_SWITCH_SIGNAL);
-    sigprocmask(SIG_BLOCK, &set, &old);
-}
 
 CO_NAMESPACE_END
 

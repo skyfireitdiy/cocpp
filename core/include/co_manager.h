@@ -66,7 +66,7 @@ private:
     co_ctx_factory* const       ctx_factory__ { co_ctx_factory::instance() };
     co_stack_factory* const     stack_factory__ { co_stack_factory::instance() };
 
-    mutable co_spinlock                          mu_timing_duration__;
+    mutable std::mutex                           mu_timing_duration__;
     std::chrono::high_resolution_clock::duration timing_duration__ { std::chrono::milliseconds(10) };
 
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;

@@ -12,22 +12,22 @@ class co_flag_manager
 {
 private:
     std::bitset<MAX_FLAG_COUNT> flags__;
-    mutable co_spinlock         mu__;
+    mutable std::mutex          mu__;
 
 public:
     void set_flag(size_t flag)
     {
-        std::lock_guard<co_spinlock> lock(mu__);
+        std::lock_guard<std::mutex> lock(mu__);
         flags__.set(flag);
     }
     void reset_flag(size_t flag)
     {
-        std::lock_guard<co_spinlock> lock(mu__);
+        std::lock_guard<std::mutex> lock(mu__);
         flags__.reset(flag);
     }
     bool test_flag(size_t flag) const
     {
-        std::lock_guard<co_spinlock> lock(mu__);
+        std::lock_guard<std::mutex> lock(mu__);
         return flags__.test(flag);
     }
 };

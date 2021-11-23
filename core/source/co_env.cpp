@@ -27,7 +27,7 @@ co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx
     , state__(co_env_state::created)
 {
     idle_ctx__->set_env(this);
-    idle_ctx__->set_flag(CO_CTX_FLAG_UNSAFE); // 只要上下文在idle中的，就认为不安全
+    reset_safepoint();
     if (create_new_thread)
     {
         // 此处设置状态是防止 add_ctx 前调度线程还未准备好，状态断言失败
@@ -111,13 +111,13 @@ int co_env::workload() const
 
 co_env_state co_env::state() const
 {
-    std::lock_guard<co_spinlock> lock(lock_state__);
+    std::lock_guard<std::mutex> lock(lock_state__);
     return state__;
 }
 
 void co_env::set_state(co_env_state state)
 {
-    std::lock_guard<co_spinlock> lock(lock_state__);
+    std::lock_guard<std::mutex> lock(lock_state__);
     if (state__ != co_env_state::destorying) // destorying 状态不允许迁移到其他状态
     {
         co_env_state old_state = state__;
@@ -220,12 +220,12 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 
 void co_env::schedule_switch()
 {
-    current_ctx()->set_flag(CO_CTX_FLAG_UNSAFE);
+    reset_safepoint();
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
     {
         // 切换前加锁
-        std::lock_guard<co_spinlock> lock(mu_schedule__);
+        std::lock_guard<std::mutex> lock(mu_schedule__);
 
         remove_detached_ctx__();
 
@@ -234,10 +234,9 @@ void co_env::schedule_switch()
             return;
         }
     }
-    enter_safepoint();
     switch_to(curr->regs(), next->regs());
     switched_to().pub(curr);
-    current_ctx()->reset_flag(CO_CTX_FLAG_UNSAFE);
+    set_safepoint();
 }
 
 void co_env::remove_ctx(co_ctx* ctx)
@@ -263,7 +262,6 @@ void co_env::stop_schedule()
 {
 
     // CO_O_DEBUG("set env to destorying, %p", this);
-    // created 状态说明没有调度线程，不能转为destroying状态
 
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
@@ -305,7 +303,7 @@ void co_env::switch_shared_stack_ctx__()
 
     // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
     // 切换到to
-    enter_safepoint();
+    set_safepoint();
     switch_to(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
 
     switched_to().pub(idle_ctx__);
@@ -313,7 +311,7 @@ void co_env::switch_shared_stack_ctx__()
 
 void co_env::start_schedule_routine__()
 {
-    leave_safepoint();
+    reset_safepoint();
     schedule_thread_tid__ = gettid();
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
@@ -325,13 +323,13 @@ void co_env::start_schedule_routine__()
         {
             // CO_O_DEBUG("need switch shared stack");
             switch_shared_stack_ctx__();
-            leave_safepoint();
+            reset_safepoint();
         }
         else
         {
             // CO_O_DEBUG("dont need switch shared stack");
             schedule_switch();
-            leave_safepoint();
+            reset_safepoint();
         }
 
         // 切换回来检测是否需要执行共享栈切换
@@ -517,6 +515,21 @@ bool co_env::is_blocked() const
 
     auto s = state();
     return s != co_env_state::idle && s != co_env_state::created && !test_flag(CO_ENV_FLAG_SCHEDULED);
+}
+
+bool co_env::safepoint() const
+{
+    return safepoint__;
+}
+
+void co_env::set_safepoint()
+{
+    safepoint__ = true;
+}
+
+void co_env::reset_safepoint()
+{
+    safepoint__ = false;
 }
 
 CO_NAMESPACE_END

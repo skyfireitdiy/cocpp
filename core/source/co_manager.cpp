@@ -366,7 +366,7 @@ void co_manager::timing_routine__()
 void co_manager::set_timing_tick_duration(
     const std::chrono::high_resolution_clock::duration& duration)
 {
-    std::lock_guard<co_spinlock> lock(mu_timing_duration__);
+    std::lock_guard<std::mutex> lock(mu_timing_duration__);
     if (duration < std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
     {
         timing_duration__ = std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS);
@@ -380,7 +380,7 @@ void co_manager::set_timing_tick_duration(
 
 const std::chrono::high_resolution_clock::duration& co_manager::timing_duration() const
 {
-    std::lock_guard<co_spinlock> lock(mu_timing_duration__);
+    std::lock_guard<std::mutex> lock(mu_timing_duration__);
     return timing_duration__;
 }
 
