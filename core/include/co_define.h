@@ -46,18 +46,18 @@ constexpr int CO_MAX_PRIORITY      = 100;
 CO_NAMESPACE_END
 
 // 调试宏
-#define CO_OUTPUT(level, fmt, ...)                                        \
-    {                                                                     \
-        printf("[%s] %s(%u) %s :[0x%llx] -> " fmt "\n",                   \
-               level, __FILE__, __LINE__, __FUNCTION__,                   \
-               static_cast<unsigned long long>(gettid()), ##__VA_ARGS__); \
+#define CO_OUTPUT(level, fmt, ...)                                         \
+    {                                                                      \
+        fprintf(stderr, "[%s] %s(%u) %s :[0x%llx] -> " fmt "\n",           \
+                level, __FILE__, __LINE__, __FUNCTION__,                   \
+                static_cast<unsigned long long>(gettid()), ##__VA_ARGS__); \
     }
 
-#define CO_O_OUTPUT(level, fmt, ...)                                            \
-    {                                                                           \
-        printf("[%s] %s(%u) %s :[0x%llx] %p -> " fmt "\n",                      \
-               level, __FILE__, __LINE__, __FUNCTION__,                         \
-               static_cast<unsigned long long>(gettid()), this, ##__VA_ARGS__); \
+#define CO_O_OUTPUT(level, fmt, ...)                                             \
+    {                                                                            \
+        fprintf(stderr, "[%s] %s(%u) %s :[0x%llx] %p -> " fmt "\n",              \
+                level, __FILE__, __LINE__, __FUNCTION__,                         \
+                static_cast<unsigned long long>(gettid()), this, ##__VA_ARGS__); \
     }
 
 #ifdef NDEBUG
