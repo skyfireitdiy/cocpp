@@ -50,12 +50,13 @@ private:
         }
     };
 
-    co_stack*             stack__ { nullptr };                 // 当前栈空间
-    std::atomic<co_state> state__ { co_state::suspended };     // 协程状态
-    co_ctx_config         config__ {};                         // 协程配置
-    std::any              ret__;                               // 协程返回值，会被传递给 config 中的 entry
-    co_env*               env__ { nullptr };                   // 协程当前对应的运行环境
-    std::atomic<int>      priority__ { CO_IDLE_CTX_PRIORITY }; // 优先级
+    co_stack*           stack__ { nullptr }; // 当前栈空间
+    mutable co_spinlock lock_state__;
+    co_state            state__ { co_state::suspended };     // 协程状态
+    co_ctx_config       config__ {};                         // 协程配置
+    std::any            ret__;                               // 协程返回值，会被传递给 config 中的 entry
+    co_env*             env__ { nullptr };                   // 协程当前对应的运行环境
+    std::atomic<int>    priority__ { CO_IDLE_CTX_PRIORITY }; // 优先级
 
     std::unordered_map<std::string, std::shared_ptr<inner_local_base>> locals__; // 协程局部存储
 

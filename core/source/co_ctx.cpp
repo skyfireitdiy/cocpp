@@ -12,11 +12,13 @@ co_stack* co_ctx::stack() const
 
 co_state co_ctx::state() const
 {
+    std::lock_guard<co_spinlock> lock(lock_state__);
     return state__;
 }
 
 void co_ctx::set_state(co_state state)
 {
+    std::lock_guard<co_spinlock> lock(lock_state__);
     // finished 状态的ctx不再更新
     if (state__ != co_state::finished)
     {

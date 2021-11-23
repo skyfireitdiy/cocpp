@@ -56,8 +56,6 @@ class co_env final : private co_nocopy,
 private:
     std::future<void> worker__;
 
-    mutable std::shared_mutex mu_state__;
-
     co_ctx_factory* const   ctx_factory__ { co_ctx_factory::instance() };
     co_stack_factory* const stack_factory__ { co_stack_factory::instance() };
 
@@ -65,12 +63,13 @@ private:
     co_stack*           shared_stack__ { nullptr };
     co_ctx* const       idle_ctx__ { nullptr };
 
-    co_env_state state__ { co_env_state::idle };
+    mutable co_spinlock lock_state__;
+    co_env_state        state__ { co_env_state::idle };
 
-    mutable std::recursive_mutex mu_wake_up_idle__;
-    std::condition_variable_any  cond_wake_schedule__;
+    mutable std::mutex          mu_wake_up_idle__;
+    std::condition_variable_any cond_wake_schedule__;
 
-    std::mutex mu_schedule__;
+    co_spinlock mu_schedule__;
 
     co_tid schedule_thread_tid__ {};
 

@@ -47,7 +47,6 @@ void co_env::add_ctx(co_ctx* ctx)
     assert(ctx != nullptr);
     assert(state__ != co_env_state::created && state__ != co_env_state::destorying);
 
-    std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     ctx->set_env(this);
 
     init_ctx(shared_stack__, ctx); // 初始化ctx
@@ -112,13 +111,13 @@ int co_env::workload() const
 
 co_env_state co_env::state() const
 {
-    std::shared_lock<std::shared_mutex> lock(mu_state__);
+    std::lock_guard<co_spinlock> lock(lock_state__);
     return state__;
 }
 
 void co_env::set_state(co_env_state state)
 {
-    std::unique_lock<std::shared_mutex> lock(mu_state__);
+    std::lock_guard<co_spinlock> lock(lock_state__);
     if (state__ != co_env_state::destorying) // destorying 状态不允许迁移到其他状态
     {
         co_env_state old_state = state__;
@@ -226,7 +225,7 @@ void co_env::schedule_switch()
     co_ctx* next = nullptr;
     {
         // 切换前加锁
-        std::lock_guard<std::mutex> lock(mu_schedule__);
+        std::lock_guard<co_spinlock> lock(mu_schedule__);
 
         remove_detached_ctx__();
 
@@ -266,7 +265,6 @@ void co_env::stop_schedule()
     // CO_O_DEBUG("set env to destorying, %p", this);
     // created 状态说明没有调度线程，不能转为destroying状态
 
-    std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
         set_state(co_env_state::destorying);
@@ -346,7 +344,7 @@ void co_env::start_schedule_routine__()
         remove_detached_ctx__();       // 切换回来之后，将完成的ctx删除
 
         // 切回idle之后，睡眠等待
-        std::unique_lock<std::recursive_mutex> lock(mu_wake_up_idle__);
+        std::unique_lock<std::mutex> lock(mu_wake_up_idle__);
         // CO_O_DEBUG("idle co start wait add ctx or destroying ... %p", this);
         if (state() == co_env_state::destorying)
         {
@@ -441,8 +439,7 @@ bool co_env::can_auto_destroy() const
 
 void co_env::wake_up()
 {
-
-    std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
+    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
     // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
     wakeup_notified().pub();
@@ -505,7 +502,6 @@ co_tid co_env::schedule_thread_tid() const
 
 bool co_env::try_lock_schedule()
 {
-
     return mu_schedule__.try_lock();
 }
 

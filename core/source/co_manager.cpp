@@ -188,7 +188,6 @@ void co_manager::create_env_from_this_thread__()
 
     sub_env_event__(current_env__);
 
-    std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
     env_list__.push_back(current_env__);
     ++exist_env_count__;
     // CO_O_DEBUG("create env from this thread : %p", current_env__);
@@ -367,7 +366,7 @@ void co_manager::timing_routine__()
 void co_manager::set_timing_tick_duration(
     const std::chrono::high_resolution_clock::duration& duration)
 {
-    std::lock_guard<std::mutex> lock(mu_timing_duration__);
+    std::lock_guard<co_spinlock> lock(mu_timing_duration__);
     if (duration < std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
     {
         timing_duration__ = std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS);
@@ -381,7 +380,7 @@ void co_manager::set_timing_tick_duration(
 
 const std::chrono::high_resolution_clock::duration& co_manager::timing_duration() const
 {
-    std::lock_guard<std::mutex> lock(mu_timing_duration__);
+    std::lock_guard<co_spinlock> lock(mu_timing_duration__);
     return timing_duration__;
 }
 

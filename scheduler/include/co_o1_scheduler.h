@@ -2,6 +2,7 @@
 
 #include "co_define.h"
 #include "co_scheduler.h"
+#include "co_spinlock.h"
 
 #include <list>
 #include <mutex>
@@ -13,7 +14,7 @@ class co_o1_scheduler : public co_scheduler
 {
 private:
     std::vector<std::list<schedulable*>> all_obj__;
-    mutable std::mutex                   mu_all_obj__;
+    mutable co_spinlock                  mu_all_obj__;
     schedulable*                         curr_obj__ { nullptr };
 
     co_o1_scheduler();
