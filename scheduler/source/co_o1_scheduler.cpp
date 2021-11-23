@@ -1,4 +1,5 @@
 #include "co_o1_scheduler.h"
+#include "co_ctx.h"
 #include "co_define.h"
 #include "co_entry.h"
 #include <cassert>
@@ -11,14 +12,14 @@ co_o1_scheduler::co_o1_scheduler()
 {
 }
 
-void co_o1_scheduler::add_obj(co_schedulable_obj* obj)
+void co_o1_scheduler::add_obj(co_ctx* obj)
 {
     std::lock_guard<std::mutex> lock(mu_all_obj__);
     all_obj__[obj->priority()].push_back(obj);
     // CO_O_DEBUG("add obj %s %p , state: %d\n", obj->config().name.c_str(), obj, (int)obj->state());
 }
 
-void co_o1_scheduler::remove_obj(co_schedulable_obj* obj)
+void co_o1_scheduler::remove_obj(co_ctx* obj)
 {
     std::lock_guard<std::mutex> lock(mu_all_obj__);
     // CO_O_DEBUG("remove obj %s %p , state: %d", obj->config().name.c_str(), obj, (int)obj->state());
@@ -26,7 +27,7 @@ void co_o1_scheduler::remove_obj(co_schedulable_obj* obj)
     all_obj__[obj->priority()].remove(obj);
 }
 
-co_schedulable_obj* co_o1_scheduler::choose_obj()
+co_ctx* co_o1_scheduler::choose_obj()
 {
     std::lock_guard<std::mutex> lock(mu_all_obj__);
     for (unsigned int i = 0; i < all_obj__.size(); ++i)
@@ -52,10 +53,10 @@ co_schedulable_obj* co_o1_scheduler::choose_obj()
     return nullptr;
 }
 
-std::list<co_schedulable_obj*> co_o1_scheduler::all_obj() const
+std::list<co_ctx*> co_o1_scheduler::all_obj() const
 {
-    std::lock_guard<std::mutex>    lock(mu_all_obj__);
-    std::list<co_schedulable_obj*> ret;
+    std::lock_guard<std::mutex> lock(mu_all_obj__);
+    std::list<co_ctx*>          ret;
     for (auto& lst : all_obj__)
     {
         ret.insert(ret.end(), lst.begin(), lst.end());
@@ -75,7 +76,7 @@ size_t co_o1_scheduler::count() const
     return ret;
 }
 
-co_schedulable_obj* co_o1_scheduler::current_obj() const
+co_ctx* co_o1_scheduler::current_obj() const
 {
     std::lock_guard<std::mutex> lock(mu_all_obj__);
 
@@ -98,7 +99,7 @@ bool co_o1_scheduler::can_schedule() const
     return false;
 }
 
-void co_o1_scheduler::change_priority(int old, co_schedulable_obj* obj)
+void co_o1_scheduler::change_priority(int old, co_ctx* obj)
 {
     std::lock_guard<std::mutex> lock(mu_all_obj__);
     for (auto iter = all_obj__[old].begin(); iter != all_obj__[old].end(); ++iter)

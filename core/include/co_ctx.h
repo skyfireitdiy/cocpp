@@ -19,8 +19,7 @@ CO_NAMESPACE_BEGIN
 class co_env;
 
 class co_ctx final : private co_nocopy,
-                     public co_flag_manager<CO_CTX_FLAG_MAX>,
-                     public co_schedulable_obj
+                     public co_flag_manager<CO_CTX_FLAG_MAX>
 {
     RegCoEvent(finished);
     RegCoEvent(priority_changed, int, int);        // 原优先级
@@ -72,9 +71,9 @@ private:
     co_ctx(co_stack* stack, const co_ctx_config& config);
 
 public:
-    void set_priority(int priority) override;
-    int  priority() const override;
-    bool can_schedule() const override;
+    void set_priority(int priority);
+    int  priority() const;
+    bool can_schedule() const;
 
     co_stack*            stack() const;
     co_state             state() const;
