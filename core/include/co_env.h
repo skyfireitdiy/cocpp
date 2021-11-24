@@ -107,7 +107,7 @@ public:
     int                            workload() const;
     co_env_state                   state() const;
     void                           set_state(co_env_state state);
-    void                           schedule_switch();
+    void                           schedule_switch(bool safe_return);
     void                           remove_ctx(co_ctx* ctx);
     co_ctx*                        current_ctx() const;
     void                           stop_schedule();

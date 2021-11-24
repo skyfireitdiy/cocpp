@@ -30,8 +30,7 @@ void co_shared_mutex::lock()
     while (owners__.empty() || owners__.front().ctx != ctx || owners__.front().type != lock_type::unique)
     {
         lck.unlock();
-        this_co::yield();
-        co::current_env()->reset_safepoint();
+        co::current_env()->schedule_switch(false);
         lck.lock();
     }
 }
@@ -103,8 +102,7 @@ void co_shared_mutex::reader_wait__(co_ctx* ctx, std::unique_lock<co_spinlock>& 
         }
 
         lck.unlock();
-        this_co::yield();
-        co::current_env()->reset_safepoint();
+        co::current_env()->schedule_switch(false);
         lck.lock();
     }
 }

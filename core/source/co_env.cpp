@@ -79,8 +79,7 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
             wait_ctx_timeout().pub(ctx);
             return ret;
         }
-        schedule_switch();
-        reset_safepoint();
+        schedule_switch(false);
     }
     wait_ctx_finished().pub(ctx);
     return ctx->ret_ref();
@@ -98,8 +97,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
     while (ctx->state() != co_state::finished)
     {
-        schedule_switch();
-        reset_safepoint();
+        schedule_switch(false);
         // CO_O_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
     }
     wait_ctx_finished().pub(ctx);
@@ -240,7 +238,7 @@ void co_env::switch_normal_ctx__()
     switched_to().pub(curr);
 }
 
-void co_env::schedule_switch()
+void co_env::schedule_switch(bool safe_return)
 {
     reset_safepoint();
     if (shared_stack_switch_context__.need_switch)
@@ -250,6 +248,10 @@ void co_env::schedule_switch()
     else
     {
         switch_normal_ctx__();
+    }
+    if (!safe_return)
+    {
+        reset_safepoint();
     }
 }
 
@@ -334,8 +336,7 @@ void co_env::start_schedule_routine__()
     while (state() != co_env_state::destorying)
     {
         // CO_O_DEBUG("dont need switch shared stack");
-        schedule_switch();
-        reset_safepoint();
+        schedule_switch(false);
 
         // 切换回来检测是否需要执行共享栈切换
         if (shared_stack_switch_context__.need_switch)

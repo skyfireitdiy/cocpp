@@ -9,7 +9,7 @@ namespace this_co
 
 void yield()
 {
-    co::current_env()->schedule_switch();
+    co::current_env()->schedule_switch(true);
 }
 
 co_id id()
