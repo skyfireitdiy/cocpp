@@ -80,6 +80,7 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
             return ret;
         }
         schedule_switch();
+        reset_safepoint();
     }
     wait_ctx_finished().pub(ctx);
     return ctx->ret_ref();
@@ -98,6 +99,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
     while (ctx->state() != co_state::finished)
     {
         schedule_switch();
+        reset_safepoint();
         // CO_O_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
     }
     wait_ctx_finished().pub(ctx);
@@ -217,9 +219,8 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
     return true;
 }
 
-void co_env::schedule_switch()
+void co_env::switch_normal_ctx__()
 {
-    reset_safepoint();
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
     {
@@ -233,8 +234,23 @@ void co_env::schedule_switch()
             return;
         }
     }
+
+    set_safepoint();
     switch_to(curr->regs(), next->regs());
     switched_to().pub(curr);
+}
+
+void co_env::schedule_switch()
+{
+    reset_safepoint();
+    if (shared_stack_switch_context__.need_switch)
+    {
+        switch_shared_stack_ctx__();
+    }
+    else
+    {
+        switch_normal_ctx__();
+    }
 }
 
 void co_env::remove_ctx(co_ctx* ctx)
@@ -301,6 +317,8 @@ void co_env::switch_shared_stack_ctx__()
 
     // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
     // 切换到to
+
+    set_safepoint();
     switch_to(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
 
     switched_to().pub(idle_ctx__);
@@ -315,19 +333,9 @@ void co_env::start_schedule_routine__()
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
     {
-        // 检测是否需要切换共享栈
-        if (shared_stack_switch_context__.need_switch)
-        {
-            // CO_O_DEBUG("need switch shared stack");
-            switch_shared_stack_ctx__();
-            reset_safepoint();
-        }
-        else
-        {
-            // CO_O_DEBUG("dont need switch shared stack");
-            schedule_switch();
-            reset_safepoint();
-        }
+        // CO_O_DEBUG("dont need switch shared stack");
+        schedule_switch();
+        reset_safepoint();
 
         // 切换回来检测是否需要执行共享栈切换
         if (shared_stack_switch_context__.need_switch)

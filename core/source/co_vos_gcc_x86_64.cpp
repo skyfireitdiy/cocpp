@@ -177,7 +177,6 @@ void switch_from_outside(sigcontext_64* context)
     {
         return;
     }
-
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);
     // 能调用到此处，说明当前一定是在安全点内
@@ -193,7 +192,6 @@ static void switch_signal_handler(int signo)
                    : "memory", "rax");
     switch_from_outside(context);
 }
-
 
 CO_NAMESPACE_END
 

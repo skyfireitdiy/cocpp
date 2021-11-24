@@ -85,6 +85,7 @@ private:
     void               save_shared_stack__(co_ctx* ctx);
     void               restore_shared_stack__(co_ctx* ctx);
     void               switch_shared_stack_ctx__();
+    void               switch_normal_ctx__();
     std::list<co_ctx*> moveable_ctx_list__();
     void               take_ctx__(co_ctx* ctx);
 

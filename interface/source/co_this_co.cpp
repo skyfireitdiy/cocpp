@@ -9,8 +9,7 @@ namespace this_co
 
 void yield()
 {
-    co::yield_current_co();
-    co::current_env()->set_safepoint();
+    co::current_env()->schedule_switch();
 }
 
 co_id id()

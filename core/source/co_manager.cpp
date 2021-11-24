@@ -436,9 +436,4 @@ void co_manager::set_if_gc_callback(std::function<bool()> cb)
     need_free_mem_cb__ = cb;
 }
 
-void co_manager::yield_current_co()
-{
-    current_env()->schedule_switch();
-}
-
 CO_NAMESPACE_END

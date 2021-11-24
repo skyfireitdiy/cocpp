@@ -26,7 +26,8 @@ void co_recursive_mutex::lock()
     while (owner__ != ctx)
     {
         lck.unlock();
-        co::yield_current_co();
+        this_co::yield();
+        co::current_env()->reset_safepoint();
         lck.lock();
     }
 }

@@ -31,7 +31,7 @@ void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_ti
 {
     do
     {
-        co::yield_current_co();
+        this_co::yield();
     } while (std::chrono::high_resolution_clock::now() < abs_time);
 }
 
