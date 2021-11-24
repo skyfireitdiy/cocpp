@@ -47,6 +47,7 @@ public:
     CoMemberMethodProxyStatic(*manager__, set_max_schedule_thread_count);
     CoMemberMethodProxyStatic(*manager__, set_timing_tick_duration);
     CoMemberMethodProxyStatic(*manager__, timing_duration);
+    CoMemberMethodProxyStatic(*manager__, yield_current_co);
 
     CoMemberMethodProxyStatic(*(co_env_factory::instance()), set_scheduler_factory);
 

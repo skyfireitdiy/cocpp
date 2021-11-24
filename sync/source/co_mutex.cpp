@@ -27,7 +27,7 @@ void co_mutex::lock()
     while (owner__ != ctx) // 被唤醒的有可能是idle ctx
     {
         lck.unlock();
-        this_co::yield(); // 再次切换回来的时候说明已经获得了锁
+        co::yield_current_co(); // 再次切换回来的时候说明已经获得了锁
         lck.lock();
     }
 }

@@ -11,7 +11,7 @@ void co_spinlock::lock()
     bool lock = false;
     while (!locked__.compare_exchange_strong(lock, true))
     {
-        this_co::yield();
+        co::yield_current_co();
         lock = false;
     }
     // CO_O_DEBUG("spinlock locked: %d", (bool)locked__);
@@ -23,7 +23,6 @@ void co_spinlock::unlock()
     bool lock = true;
     while (!locked__.compare_exchange_strong(lock, false))
     {
-        this_co::yield();
         lock = true;
     }
     // CO_O_DEBUG("spinlock unlocked: %d", (bool)locked__);

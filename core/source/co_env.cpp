@@ -235,7 +235,6 @@ void co_env::schedule_switch()
     }
     switch_to(curr->regs(), next->regs());
     switched_to().pub(curr);
-    set_safepoint();
 }
 
 void co_env::remove_ctx(co_ctx* ctx)
@@ -302,7 +301,6 @@ void co_env::switch_shared_stack_ctx__()
 
     // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
     // 切换到to
-    set_safepoint();
     switch_to(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
 
     switched_to().pub(idle_ctx__);

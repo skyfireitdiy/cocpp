@@ -1,5 +1,6 @@
 #pragma once
 
+#include "co.h"
 #include "co_defer.h"
 #include "co_define.h"
 #include "co_type.h"
@@ -30,7 +31,7 @@ void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_ti
 {
     do
     {
-        this_co::yield();
+        co::yield_current_co();
     } while (std::chrono::high_resolution_clock::now() < abs_time);
 }
 

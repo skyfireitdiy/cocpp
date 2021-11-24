@@ -103,7 +103,7 @@ bool co_counting_semaphore<LeastMaxValue>::try_acquire_until(const std::chrono::
         {
             return true;
         }
-        this_co::yield();
+        co::yield_current_co();
     } while (std::chrono::high_resolution_clock::now() < abs_time);
     return false;
 }
