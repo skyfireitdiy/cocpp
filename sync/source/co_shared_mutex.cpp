@@ -80,6 +80,7 @@ void co_shared_mutex::wake_up_owners__()
 {
     for (auto& c : owners__)
     {
+        std::lock_guard<std::recursive_mutex> wake_up_idle_lock(c.ctx->env()->mu_wake_up_idle_ref());
         c.ctx->reset_flag(CO_CTX_FLAG_WAITING);
         c.ctx->env()->wake_up();
     }

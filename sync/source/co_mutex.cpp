@@ -72,6 +72,9 @@ void co_mutex::unlock()
     owner__ = waked_ctx;
 
     assert(waked_ctx != nullptr);
+
+    std::lock_guard<std::recursive_mutex> wake_up_idle_lock(waked_ctx->env()->mu_wake_up_idle_ref());
+
     // 状态设置为suspend，此状态可调度
     waked_ctx->reset_flag(CO_CTX_FLAG_WAITING);
     // 唤醒对应的env

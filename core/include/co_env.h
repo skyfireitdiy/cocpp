@@ -66,8 +66,8 @@ private:
     mutable std::mutex lock_state__;
     co_env_state       state__ { co_env_state::idle };
 
-    mutable std::mutex          mu_wake_up_idle__;
-    std::condition_variable_any cond_wake_schedule__;
+    mutable std::recursive_mutex mu_wake_up_idle__;
+    std::condition_variable_any  cond_wake_schedule__;
 
     std::mutex mu_schedule__;
 
@@ -128,6 +128,10 @@ public:
     void                           set_safepoint();
     void                           reset_safepoint();
     bool                           safepoint() const;
+
+    // fixme: 应该有更好的实现
+    std::recursive_mutex& mu_wake_up_idle_ref();
+
     friend class co_object_pool<co_env>;
     friend class co_env_factory;
 };
