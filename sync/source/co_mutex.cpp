@@ -27,7 +27,7 @@ void co_mutex::lock()
     while (owner__ != ctx) // 被唤醒的有可能是idle ctx
     {
         lck.unlock();
-        co::current_env()->schedule_switch(false);
+        co::current_env()->schedule_switch(true);
         lck.lock();
     }
 }

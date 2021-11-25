@@ -34,7 +34,7 @@ bool co_timed_addition<Lock>::try_lock_until(const std::chrono::time_point<Clock
         {
             return true;
         }
-        co::current_env()->schedule_switch(false);
+        co::current_env()->schedule_switch(true);
     } while (std::chrono::high_resolution_clock::now() < timeout_time);
     return false;
 }

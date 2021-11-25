@@ -32,7 +32,7 @@ bool co_shared_timed_mutex::try_lock_shared_until(const std::chrono::time_point<
         {
             return true;
         }
-        co::current_env()->schedule_switch(false);
+        co::current_env()->schedule_switch(true);
     } while (std::chrono::high_resolution_clock::now() < timeout_time);
     return false;
 }

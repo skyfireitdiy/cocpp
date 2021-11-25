@@ -11,7 +11,7 @@ void co_spinlock::lock()
     bool lock = false;
     while (!locked__.compare_exchange_strong(lock, true))
     {
-        co::current_env()->schedule_switch(false);
+        co::current_env()->schedule_switch(true);
         lock = false;
     }
     // CO_O_DEBUG("spinlock locked: %d", (bool)locked__);
@@ -23,7 +23,7 @@ void co_spinlock::unlock()
     bool lock = true;
     while (!locked__.compare_exchange_strong(lock, false))
     {
-        co::current_env()->schedule_switch(false);
+        co::current_env()->schedule_switch(true);
         lock = true;
     }
     // CO_O_DEBUG("spinlock unlocked: %d", (bool)locked__);
