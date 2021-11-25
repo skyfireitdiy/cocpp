@@ -70,14 +70,13 @@ void co_recursive_mutex::unlock()
 
     auto waked_ctx = waited_ctx_list__.front();
     waited_ctx_list__.pop_front();
-    owner__ = waked_ctx;
-    ++lock_count__;
 
     assert(waked_ctx != nullptr);
     // 状态设置为suspend，此状态可调度
 
     std::lock_guard<std::recursive_mutex> wake_up_idle_lock(waked_ctx->env()->mu_wake_up_idle_ref());
-
+    owner__ = waked_ctx;
+    ++lock_count__;
     waked_ctx->reset_flag(CO_CTX_FLAG_WAITING);
     // 唤醒对应的env
     waked_ctx->env()->wake_up();

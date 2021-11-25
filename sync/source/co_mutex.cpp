@@ -68,13 +68,12 @@ void co_mutex::unlock()
     // 锁拥有者设置为等待队列中第一个
     auto waked_ctx = waited_ctx_list__.front();
     waited_ctx_list__.pop_front();
-    // CO_O_DEBUG("set owner %p", waked_ctx);
-    owner__ = waked_ctx;
 
     assert(waked_ctx != nullptr);
 
     std::lock_guard<std::recursive_mutex> wake_up_idle_lock(waked_ctx->env()->mu_wake_up_idle_ref());
-
+    // CO_O_DEBUG("set owner %p", waked_ctx);
+    owner__ = waked_ctx;
     // 状态设置为suspend，此状态可调度
     waked_ctx->reset_flag(CO_CTX_FLAG_WAITING);
     // 唤醒对应的env
