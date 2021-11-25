@@ -6,7 +6,7 @@
 #include "co_define.h"
 #include "co_env.h"
 #include "co_manager.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_return_value.h"
 #include <chrono>
 #include <functional>
@@ -28,7 +28,7 @@ concept co_is_void = std::is_same_v<T, void>;
 template <typename T>
 concept co_not_void = !std::is_same_v<T, void>;
 
-class co final : private co_nocopy
+class co final : private co_noncopyable
 {
 private:
     co_ctx*            ctx__;

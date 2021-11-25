@@ -3,13 +3,13 @@
 #include <list>
 
 #include "co_define.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 
 CO_NAMESPACE_BEGIN
 
 class co_ctx;
 
-class co_scheduler : private co_nocopy
+class co_scheduler : private co_noncopyable
 {
 public:
     virtual void               add_obj(co_ctx* obj)                  = 0;

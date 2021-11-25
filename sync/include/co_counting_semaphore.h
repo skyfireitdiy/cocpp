@@ -3,7 +3,7 @@
 #include "co_condition_variable.h"
 #include "co_define.h"
 #include "co_mutex.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_this_co.h"
 #include <cassert>
 #include <chrono>
@@ -12,7 +12,7 @@
 CO_NAMESPACE_BEGIN
 
 template <std::ptrdiff_t LeastMaxValue>
-class co_counting_semaphore final : private co_nocopy
+class co_counting_semaphore final : private co_noncopyable
 {
 private:
     co_mutex              mu__;

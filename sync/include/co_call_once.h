@@ -1,12 +1,12 @@
 #pragma once
 #include "co_define.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include <atomic>
 #include <utility>
 
 CO_NAMESPACE_BEGIN
 
-class co_once_flag : private co_nocopy
+class co_once_flag : private co_noncopyable
 {
 public:
     std::atomic<bool> flag__ { false };

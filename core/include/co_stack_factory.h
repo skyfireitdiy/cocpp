@@ -1,7 +1,7 @@
 #pragma once
 #include "co_define.h"
 #include "co_mem_pool.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_object_pool.h"
 #include "co_singleton.h"
 #include <cstddef>

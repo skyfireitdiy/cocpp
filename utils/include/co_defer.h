@@ -1,12 +1,12 @@
 #pragma once
 
 #include "co_defer.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include <functional>
 
 CO_NAMESPACE_BEGIN
 
-class co_defer final : public cocpp::co_nocopy
+class co_defer final : public cocpp::co_noncopyable
 {
 private:
     std::function<void()> defer_func__;

@@ -2,13 +2,13 @@
 #include <utility>
 
 #include "co_define.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 
 CO_NAMESPACE_BEGIN
 
 // 单例模式
 template <typename T>
-class co_singleton : private co_nocopy
+class co_singleton : private co_noncopyable
 {
 private:
     co_singleton() = default;
@@ -22,7 +22,7 @@ public:
 
 // 单例模式（可回收）
 template <typename T>
-class co_singleton_static : private co_nocopy
+class co_singleton_static : private co_noncopyable
 {
 private:
     co_singleton_static() = default;

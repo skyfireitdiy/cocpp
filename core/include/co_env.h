@@ -4,7 +4,7 @@
 #include "co_define.h"
 #include "co_event.h"
 #include "co_flag_manager.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_object_pool.h"
 #include "co_return_value.h"
 #include "co_stack_factory.h"
@@ -27,7 +27,7 @@ class co_manager;
 class co_scheduler;
 class co_ctx;
 
-class co_env final : private co_nocopy,
+class co_env final : private co_noncopyable,
                      public co_flag_manager<CO_ENV_FLAG_MAX>
 {
     RegCoEvent(env_task_finished);

@@ -4,10 +4,10 @@
 #include <list>
 
 #include "co_define.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 
 CO_NAMESPACE_BEGIN
-class co_spinlock : private co_nocopy
+class co_spinlock : private co_noncopyable
 {
     std::atomic<bool> locked__ { false };
 

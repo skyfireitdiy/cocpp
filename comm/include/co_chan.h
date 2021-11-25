@@ -4,7 +4,7 @@
 #include "co_condition_variable.h"
 #include "co_define.h"
 #include "co_mutex.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include <deque>
 #include <mutex>
 #include <optional>
@@ -12,7 +12,7 @@
 CO_NAMESPACE_BEGIN
 
 template <typename ValueType, int MaxSize>
-class co_chan : private co_nocopy
+class co_chan : private co_noncopyable
 {
 private:
     std::deque<ValueType> data__;

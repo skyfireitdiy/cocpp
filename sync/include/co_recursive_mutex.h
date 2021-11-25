@@ -1,14 +1,14 @@
 #pragma once
 
 #include "co_define.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_spinlock.h"
 
 CO_NAMESPACE_BEGIN
 
 class co_ctx;
 
-class co_recursive_mutex final : private co_nocopy
+class co_recursive_mutex final : private co_noncopyable
 {
 private:
     co_spinlock          spinlock__;

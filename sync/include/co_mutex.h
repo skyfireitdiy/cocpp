@@ -2,7 +2,7 @@
 
 #include "co_ctx.h"
 #include "co_define.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_spinlock.h"
 #include <atomic>
 #include <list>
@@ -11,7 +11,7 @@ CO_NAMESPACE_BEGIN
 
 class co_ctx;
 
-class co_mutex : private co_nocopy
+class co_mutex : private co_noncopyable
 {
 private:
     co_spinlock          spinlock__;

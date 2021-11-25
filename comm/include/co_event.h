@@ -1,7 +1,7 @@
 #pragma once
 
 #include "co_define.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_spinlock.h"
 #include "co_type.h"
 #include <functional>
@@ -13,7 +13,7 @@
 CO_NAMESPACE_BEGIN
 
 template <typename... Args>
-class co_event final : private co_nocopy
+class co_event final : private co_noncopyable
 {
 private:
     std::map<int, std::function<void(Args... args)>> cb_list__;

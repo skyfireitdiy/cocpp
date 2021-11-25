@@ -11,7 +11,7 @@
 CO_NAMESPACE_BEGIN
 
 template <typename ObjectType>
-class co_object_pool final : private co_nocopy
+class co_object_pool final : private co_noncopyable
 {
 private:
     std::list<void*> pool__;

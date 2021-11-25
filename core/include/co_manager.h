@@ -5,7 +5,7 @@
 #include "co_define.h"
 #include "co_env_factory.h"
 #include "co_event.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_singleton.h"
 #include "co_stack_factory.h"
 

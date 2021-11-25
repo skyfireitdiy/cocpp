@@ -4,14 +4,14 @@
 #include <mutex>
 
 #include "co_define.h"
-#include "co_nocopy.h"
+#include "co_noncopyable.h"
 #include "co_spinlock.h"
 
 CO_NAMESPACE_BEGIN
 
 class co_ctx* ctx;
 
-class co_shared_mutex : private co_nocopy
+class co_shared_mutex : private co_noncopyable
 {
 private:
     enum class lock_type
