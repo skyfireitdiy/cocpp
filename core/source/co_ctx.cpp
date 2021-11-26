@@ -133,4 +133,17 @@ co_id co_ctx::id() const
     return reinterpret_cast<co_id>(this);
 }
 
+void co_ctx::set_wait_flag(int type, void* rc)
+{
+    std::lock_guard<std::mutex> lock(wait_data__.mu);
+    wait_data__.type = type;
+    wait_data__.rc   = rc;
+    set_flag(CO_CTX_FLAG_WAITING);
+}
+
+void co_ctx::remove_wait_flag()
+{
+    reset_flag(CO_CTX_FLAG_WAITING);
+}
+
 CO_NAMESPACE_END

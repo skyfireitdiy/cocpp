@@ -20,7 +20,7 @@ void co_mutex::lock()
         return;
     }
 
-    ctx->set_flag(CO_CTX_FLAG_WAITING); // 设置等待标记
+    ctx->set_wait_flag(CO_RC_TYPE_MUTEX, this);
     // CO_O_DEBUG("add to wait list %p", ctx);
     waited_ctx_list__.push_back(ctx); // 添加到等待队列
 
@@ -75,7 +75,7 @@ void co_mutex::unlock()
     // CO_O_DEBUG("set owner %p", waked_ctx);
     owner__ = waked_ctx;
     // 状态设置为suspend，此状态可调度
-    waked_ctx->reset_flag(CO_CTX_FLAG_WAITING);
+    waked_ctx->remove_wait_flag();
     // 唤醒对应的env
     waked_ctx->env()->wake_up();
 }

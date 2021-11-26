@@ -42,6 +42,11 @@ constexpr int CO_ENV_FLAG_MAX               = 8;
 constexpr int CO_IDLE_CTX_PRIORITY = 99;
 constexpr int CO_MAX_PRIORITY      = 100;
 
+// 资源类型
+constexpr int CO_RC_TYPE_MUTEX           = 0;
+constexpr int CO_RC_TYPE_RECURSIVE_MUTEX = 1;
+constexpr int CO_RC_TYPE_SHARED_MUTEX    = 2;
+
 CO_NAMESPACE_END
 
 // 调试宏

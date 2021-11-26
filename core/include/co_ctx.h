@@ -49,6 +49,13 @@ private:
         }
     };
 
+    struct
+    {
+        std::mutex mu;
+        int        type;
+        void*      rc;
+    } wait_data__;
+
     co_stack*          stack__ { nullptr }; // 当前栈空间
     mutable std::mutex lock_state__;
     co_state           state__ { co_state::suspended };     // 协程状态
@@ -90,6 +97,8 @@ public:
     bool                 can_move() const;
     std::string          name() const;
     co_id                id() const;
+    void                 set_wait_flag(int type, void* rc);
+    void                 remove_wait_flag();
 
     template <typename T>
     T& local(const std::string& name);

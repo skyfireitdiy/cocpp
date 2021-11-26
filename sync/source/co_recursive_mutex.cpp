@@ -20,7 +20,8 @@ void co_recursive_mutex::lock()
     }
 
     // 加入等待队列
-    ctx->set_flag(CO_CTX_FLAG_WAITING);
+    ctx->set_wait_flag(CO_RC_TYPE_RECURSIVE_MUTEX, this);
+
     waited_ctx_list__.push_back(ctx);
 
     while (owner__ != ctx)
@@ -77,7 +78,7 @@ void co_recursive_mutex::unlock()
     std::lock_guard<std::recursive_mutex> wake_up_idle_lock(waked_ctx->env()->mu_wake_up_idle_ref());
     owner__ = waked_ctx;
     ++lock_count__;
-    waked_ctx->reset_flag(CO_CTX_FLAG_WAITING);
+    waked_ctx->remove_wait_flag();
     // 唤醒对应的env
     waked_ctx->env()->wake_up();
 }

@@ -24,7 +24,7 @@ void co_shared_mutex::lock()
         return;
     }
 
-    ctx->set_flag(CO_CTX_FLAG_WAITING);
+    ctx->set_wait_flag(CO_RC_TYPE_SHARED_MUTEX, this);
     wait_list__.push_back(context);
 
     while (owners__.empty() || owners__.front().ctx != ctx || owners__.front().type != lock_type::unique)
@@ -81,7 +81,7 @@ void co_shared_mutex::wake_up_owners__()
     for (auto& c : owners__)
     {
         std::lock_guard<std::recursive_mutex> wake_up_idle_lock(c.ctx->env()->mu_wake_up_idle_ref());
-        c.ctx->reset_flag(CO_CTX_FLAG_WAITING);
+        c.ctx->remove_wait_flag();
         c.ctx->env()->wake_up();
     }
 }
@@ -131,7 +131,7 @@ void co_shared_mutex::lock_shared()
         return;
     }
 
-    ctx->set_flag(CO_CTX_FLAG_WAITING);
+    ctx->set_wait_flag(CO_RC_TYPE_SHARED_MUTEX, this);
     wait_list__.push_back(context);
 
     reader_wait__(ctx, lck);
