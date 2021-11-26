@@ -276,10 +276,7 @@ co_ctx* co_env::current_ctx() const
 
 void co_env::stop_schedule()
 {
-
     // CO_O_DEBUG("set env to destorying, %p", this);
-    std::lock_guard<std::recursive_mutex> wake_up_idle_lock(mu_wake_up_idle__);
-
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
         set_state(co_env_state::destorying);
@@ -349,7 +346,7 @@ void co_env::start_schedule_routine__()
         remove_detached_ctx__();       // 切换回来之后，将完成的ctx删除
 
         // 切回idle之后，睡眠等待
-        std::unique_lock<std::recursive_mutex> lock(mu_wake_up_idle__);
+        std::unique_lock<std::mutex> lock(mu_wake_up_idle__);
         // CO_O_DEBUG("idle co start wait add ctx or destroying ... %p", this);
         if (state() == co_env_state::destorying)
         {
@@ -443,7 +440,7 @@ bool co_env::can_auto_destroy() const
 
 void co_env::wake_up()
 {
-    std::lock_guard<std::recursive_mutex> lock(mu_wake_up_idle__);
+    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
     // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
     wakeup_notified().pub();

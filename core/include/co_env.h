@@ -66,8 +66,8 @@ private:
     mutable std::mutex lock_state__;
     co_env_state       state__ { co_env_state::idle };
 
-    mutable std::recursive_mutex mu_wake_up_idle__;
-    std::condition_variable_any  cond_wake_schedule__;
+    mutable std::mutex          mu_wake_up_idle__;
+    std::condition_variable_any cond_wake_schedule__;
 
     std::mutex mu_schedule__;
 
