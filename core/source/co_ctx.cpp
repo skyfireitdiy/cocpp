@@ -1,5 +1,6 @@
 #include "co_ctx.h"
 #include "co_define.h"
+#include "co_env.h"
 #include "co_scheduler.h"
 #include <cassert>
 
@@ -143,7 +144,9 @@ void co_ctx::set_wait_flag(int type, void* rc)
 
 void co_ctx::remove_wait_flag()
 {
+    std::lock_guard<std::mutex> lock(env__->mu_wake_up_idle_ref());
     reset_flag(CO_CTX_FLAG_WAITING);
+    env__->wake_up();
 }
 
 CO_NAMESPACE_END

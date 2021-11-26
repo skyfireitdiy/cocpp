@@ -52,6 +52,7 @@ void co_env::add_ctx(co_ctx* ctx)
     init_ctx(shared_stack__, ctx); // 初始化ctx
     ctx_inited().pub(ctx);
 
+    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
     scheduler__->add_obj(ctx); // 添加到调度器
     set_state(co_env_state::busy);
 
@@ -276,6 +277,7 @@ co_ctx* co_env::current_ctx() const
 
 void co_env::stop_schedule()
 {
+    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
     // CO_O_DEBUG("set env to destorying, %p", this);
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
@@ -440,8 +442,6 @@ bool co_env::can_auto_destroy() const
 
 void co_env::wake_up()
 {
-    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
-    // CO_O_DEBUG("wake up env: %p", this);
     cond_wake_schedule__.notify_one();
     wakeup_notified().pub();
 }
@@ -533,6 +533,11 @@ void co_env::set_safepoint()
 void co_env::reset_safepoint()
 {
     safepoint__ = false;
+}
+
+std::mutex& co_env::mu_wake_up_idle_ref()
+{
+    return mu_wake_up_idle__;
 }
 
 CO_NAMESPACE_END

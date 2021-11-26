@@ -25,8 +25,9 @@ void wakeup_all_ctx(const std::list<T> ctx_list, std::function<co_ctx*(const T&)
     for (auto& t : ctx_list)
     {
         auto ctx = convert(t);
-        ctx->remove_wait_flag();
-        ctx->env()->wake_up();
+        {
+            ctx->remove_wait_flag();
+        }
     }
 }
 
@@ -39,8 +40,9 @@ void wakeup_one_ctx(const std::list<T> ctx_list, std::function<co_ctx*(const T&)
     }
 
     auto ctx = convert(ctx_list.front());
-    ctx->remove_wait_flag();
-    ctx->env()->wake_up();
+    {
+        ctx->remove_wait_flag();
+    }
 }
 
 template <typename T>

@@ -128,6 +128,7 @@ public:
     void                           set_safepoint();
     void                           reset_safepoint();
     bool                           safepoint() const;
+    std::mutex&                    mu_wake_up_idle_ref();
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;
