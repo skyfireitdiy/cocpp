@@ -1,13 +1,23 @@
 _Pragma("once");
 
+#include "co_ctx.h"
 #include "co_define.h"
+#include "co_spinlock.h"
 #include <functional>
 #include <list>
 
 CO_NAMESPACE_BEGIN
 
-class co_ctx;
-class co_spinlock;
+template <typename T>
+void wakeup_all_ctx(const std::list<T> ctx_list, std::function<co_ctx*(const T&)> convert);
+
+template <typename T>
+void wakeup_one_ctx(const std::list<T> ctx_list, std::function<co_ctx*(const T&)> convert);
+
+template <typename T>
+void add_to_wait_list(std::list<T>& wait_list, T ctx, co_spinlock& mu);
+
+////////////////////////////////////// 模板实现 ////////////////////////////////////////
 
 template <typename T>
 void wakeup_all_ctx(const std::list<T> ctx_list, std::function<co_ctx*(const T&)> convert)
