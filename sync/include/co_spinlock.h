@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 
 #include <atomic>
 #include <list>

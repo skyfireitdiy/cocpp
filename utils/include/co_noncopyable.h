@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 #include "co_define.h"
 
 CO_NAMESPACE_BEGIN

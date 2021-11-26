@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 #include "co_define.h"
 #include "co_noncopyable.h"
 #include "co_object_pool.h"

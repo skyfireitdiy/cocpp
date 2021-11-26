@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 #include "co_ctx_config.h"
 #include "co_object_pool.h"
 #include "co_singleton.h"

@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 
 #include "co_scheduler_factory.h"
 #include "co_singleton.h"

@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 
 #include "co_ctx.h"
 #include "co_ctx_config.h"

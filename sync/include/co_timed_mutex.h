@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 
 #include "co_define.h"
 #include "co_mutex.h"

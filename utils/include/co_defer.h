@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 
 #include "co_defer.h"
 #include "co_noncopyable.h"

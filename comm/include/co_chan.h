@@ -1,4 +1,4 @@
-#pragma once
+_Pragma("once");
 
 #include "co_binary_semaphore.h"
 #include "co_condition_variable.h"
