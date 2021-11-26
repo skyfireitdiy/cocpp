@@ -24,6 +24,8 @@ private:
     {
         lock_type type;
         co_ctx*   ctx;
+
+        bool operator==(const lock_context& other) const;
     };
 
     co_spinlock             spinlock__;

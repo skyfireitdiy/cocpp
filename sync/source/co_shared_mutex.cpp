@@ -1,6 +1,7 @@
 #include "co_shared_mutex.h"
 #include "co.h"
 #include "co_error.h"
+#include "co_sync_utils.h"
 #include "co_this_co.h"
 
 #include <cassert>
@@ -17,21 +18,11 @@ void co_shared_mutex::lock()
         ctx
     };
 
-    std::unique_lock<co_spinlock> lck(spinlock__);
-    if (owners__.empty())
+    while (!try_lock())
     {
-        owners__.push_back(context);
-        return;
-    }
-
-    ctx->set_wait_flag(CO_RC_TYPE_SHARED_MUTEX, this);
-    wait_list__.push_back(context);
-
-    while (owners__.empty() || owners__.front().ctx != ctx || owners__.front().type != lock_type::unique)
-    {
-        lck.unlock();
+        add_to_wait_list<lock_context>(wait_list__, context, spinlock__);
+        ctx->set_wait_flag(CO_RC_TYPE_SHARED_MUTEX, this);
         co::current_env()->schedule_switch(true);
-        lck.lock();
     }
 }
 
@@ -48,63 +39,27 @@ bool co_shared_mutex::try_lock()
     if (owners__.empty())
     {
         owners__.push_back(context);
+        wait_list__.remove(context);
         return true;
     }
     return false;
 }
 
-void co_shared_mutex::unlock_writer__(co_ctx* ctx)
-{
-    if (owners__.empty() || owners__.front().ctx != ctx || owners__.front().type != lock_type::unique)
-    {
-        CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-        throw co_error("ctx is not owner[", ctx, "]");
-    }
-
-    assert(owners__.size() == 1);
-
-    owners__.clear();
-}
-
 void co_shared_mutex::unlock()
 {
-    auto ctx = co::current_ctx();
+    auto         ctx = co::current_ctx();
+    lock_context context {
+        lock_type::unique,
+        ctx
+    };
 
-    unlock_writer__(ctx);
-
-    select_competitors_to_wake_up__();
-    wake_up_owners__();
-}
-
-void co_shared_mutex::wake_up_owners__()
-{
-    for (auto& c : owners__)
+    std::unique_lock<co_spinlock> lck(spinlock__);
+    owners__.remove(context);
+    if (owners__.empty())
     {
-        std::lock_guard<std::recursive_mutex> wake_up_idle_lock(c.ctx->env()->mu_wake_up_idle_ref());
-        c.ctx->remove_wait_flag();
-        c.ctx->env()->wake_up();
-    }
-}
-
-void co_shared_mutex::reader_wait__(co_ctx* ctx, std::unique_lock<co_spinlock>& lck)
-{
-    while (true)
-    {
-        for (auto& c : owners__)
-        {
-            if (c.type != lock_type::shared)
-            {
-                break;
-            }
-            if (c.ctx == ctx)
-            {
-                return;
-            }
-        }
-
-        lck.unlock();
-        co::current_env()->schedule_switch(true);
-        lck.lock();
+        wakeup_all_ctx<lock_context>(wait_list__, [](const lock_context& c) -> co_ctx* {
+            return c.ctx;
+        });
     }
 }
 
@@ -116,25 +71,12 @@ void co_shared_mutex::lock_shared()
         lock_type::shared,
         ctx
     };
-
-    std::unique_lock<co_spinlock> lck(spinlock__);
-    if (owners__.empty())
+    while (!try_lock_shared())
     {
-        owners__.push_back(context);
-        return;
+        add_to_wait_list(wait_list__, context, spinlock__);
+        ctx->set_wait_flag(CO_RC_TYPE_SHARED_MUTEX, this);
+        co::current_env()->schedule_switch(true);
     }
-
-    auto curr_type = owners__.front().type;
-    if (curr_type == lock_type::shared)
-    {
-        owners__.push_back(context);
-        return;
-    }
-
-    ctx->set_wait_flag(CO_RC_TYPE_SHARED_MUTEX, this);
-    wait_list__.push_back(context);
-
-    reader_wait__(ctx, lck);
 }
 
 bool co_shared_mutex::try_lock_shared()
@@ -150,6 +92,7 @@ bool co_shared_mutex::try_lock_shared()
     if (owners__.empty())
     {
         owners__.push_back(context);
+        wait_list__.remove(context);
         return true;
     }
 
@@ -157,88 +100,34 @@ bool co_shared_mutex::try_lock_shared()
     if (curr_type == lock_type::shared)
     {
         owners__.push_back(context);
+        wait_list__.remove(context);
         return true;
     }
 
     return false;
 }
 
-void co_shared_mutex::unlock_reader__(co_ctx* ctx)
-{
-    if (owners__.empty())
-    {
-        CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-        throw co_error("ctx is not owner[", ctx, "]");
-    }
-
-    // 判断是否拥有锁
-    bool is_owner = false;
-    for (auto iter = owners__.begin(); iter != owners__.end(); ++iter)
-    {
-        if (iter->type != lock_type::shared)
-        {
-            CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-            throw co_error("ctx is not owner[", ctx, "]");
-        }
-        if (iter->ctx == ctx)
-        {
-            is_owner = true;
-            owners__.erase(iter); // 拥有锁，解锁
-            break;
-        }
-    }
-
-    if (!is_owner)
-    {
-        CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-        throw co_error("ctx is not owner[", ctx, "]");
-    }
-}
-
-void co_shared_mutex::select_all_reader_to_wake_up__()
-{
-    auto iter = std::remove_if(wait_list__.begin(), wait_list__.end(), [](const lock_context& c) {
-        return c.type == lock_type::shared;
-    });
-    owners__.insert(owners__.begin(), iter, wait_list__.end());
-    wait_list__.erase(iter, wait_list__.end());
-}
-
 void co_shared_mutex::unlock_shared()
 {
-    auto ctx = co::current_ctx();
+    auto         ctx = co::current_ctx();
+    lock_context context {
+        lock_type::shared,
+        ctx
+    };
 
-    unlock_reader__(ctx);
-
-    //  此处已经解锁了
-    if (!owners__.empty()) // 如果共享不为空，将后续等待的共享者全部唤醒
+    std::unique_lock<co_spinlock> lck(spinlock__);
+    owners__.remove(context);
+    if (owners__.empty())
     {
-        select_all_reader_to_wake_up__();
+        wakeup_all_ctx<lock_context>(wait_list__, [](const lock_context& c) -> co_ctx* {
+            return c.ctx;
+        });
     }
-    else
-    {
-        select_competitors_to_wake_up__();
-    }
-
-    wake_up_owners__();
 }
 
-void co_shared_mutex::select_competitors_to_wake_up__()
+bool co_shared_mutex::lock_context::operator==(const co_shared_mutex::lock_context& other) const
 {
-    if (wait_list__.empty())
-    {
-        return;
-    }
-    auto next_type = wait_list__.front().type;
-    if (next_type == lock_type::unique)
-    {
-        owners__.push_back(wait_list__.front());
-        wait_list__.pop_front();
-    }
-    else
-    {
-        select_all_reader_to_wake_up__();
-    }
+    return ctx == other.ctx && type == other.type;
 }
 
 CO_NAMESPACE_END

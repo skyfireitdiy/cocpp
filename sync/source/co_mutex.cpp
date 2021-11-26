@@ -2,6 +2,7 @@
 #include "co.h"
 #include "co_define.h"
 #include "co_error.h"
+#include "co_sync_utils.h"
 #include "co_this_co.h"
 #include <cassert>
 #include <mutex>
@@ -11,24 +12,11 @@ CO_NAMESPACE_BEGIN
 void co_mutex::lock()
 {
     auto ctx = co::current_ctx();
-
-    std::unique_lock<co_spinlock> lck(spinlock__);
-    if (owner__ == nullptr) // 锁处于空闲状态
+    while (!try_lock())
     {
-        // CO_O_DEBUG("set owner %p", ctx);
-        owner__ = ctx;
-        return;
-    }
-
-    ctx->set_wait_flag(CO_RC_TYPE_MUTEX, this);
-    // CO_O_DEBUG("add to wait list %p", ctx);
-    waited_ctx_list__.push_back(ctx); // 添加到等待队列
-
-    while (owner__ != ctx) // 被唤醒的有可能是idle ctx
-    {
-        lck.unlock();
+        add_to_wait_list<co_ctx*>(waited_ctx_list__, ctx, spinlock__);
+        ctx->set_wait_flag(CO_RC_TYPE_MUTEX, this);
         co::current_env()->schedule_switch(true);
-        lck.lock();
     }
 }
 
@@ -41,6 +29,7 @@ bool co_mutex::try_lock()
     {
         // CO_O_DEBUG("set owner %p", ctx);
         owner__ = ctx;
+        waited_ctx_list__.remove(ctx);
         return true;
     }
     return false;
@@ -57,27 +46,8 @@ void co_mutex::unlock()
         throw co_error("ctx is not owner[", ctx, "]");
     }
 
-    // 没有等待ctx，设置拥有者为nullptr
-    if (waited_ctx_list__.empty())
-    {
-        // CO_O_DEBUG("set owner nullptr");
-        owner__ = nullptr;
-        return;
-    }
-
-    // 锁拥有者设置为等待队列中第一个
-    auto waked_ctx = waited_ctx_list__.front();
-    waited_ctx_list__.pop_front();
-
-    assert(waked_ctx != nullptr);
-
-    std::lock_guard<std::recursive_mutex> wake_up_idle_lock(waked_ctx->env()->mu_wake_up_idle_ref());
-    // CO_O_DEBUG("set owner %p", waked_ctx);
-    owner__ = waked_ctx;
-    // 状态设置为suspend，此状态可调度
-    waked_ctx->remove_wait_flag();
-    // 唤醒对应的env
-    waked_ctx->env()->wake_up();
+    owner__ = nullptr;
+    wakeup_one_ctx<co_ctx*>(waited_ctx_list__, [](co_ctx* const c) -> co_ctx* { return c; });
 }
 
 CO_NAMESPACE_END

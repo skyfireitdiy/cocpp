@@ -538,9 +538,4 @@ void co_env::reset_safepoint()
     safepoint__ = false;
 }
 
-std::recursive_mutex& co_env::mu_wake_up_idle_ref()
-{
-    return mu_wake_up_idle__;
-}
-
 CO_NAMESPACE_END
