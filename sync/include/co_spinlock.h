@@ -11,7 +11,7 @@ CO_NAMESPACE_BEGIN
 class co_ctx;
 class co_spinlock : private co_noncopyable
 {
-    std::atomic<co_ctx*> locked__ { nullptr };
+    std::atomic<co_ctx*> owner__ { nullptr };
 
 public:
     void lock();

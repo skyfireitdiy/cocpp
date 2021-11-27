@@ -9,7 +9,7 @@ void co_spinlock::lock()
 {
     auto    ctx  = co::current_ctx();
     co_ctx* null = nullptr;
-    while (!locked__.compare_exchange_strong(null, ctx))
+    while (!owner__.compare_exchange_strong(null, ctx))
     {
         co::current_env()->schedule_switch(true);
         null = nullptr;
@@ -20,7 +20,7 @@ void co_spinlock::unlock()
 {
     auto    ctx  = co::current_ctx();
     co_ctx* curr = ctx;
-    while (!locked__.compare_exchange_strong(curr, nullptr))
+    while (!owner__.compare_exchange_strong(curr, nullptr))
     {
         co::current_env()->schedule_switch(true);
         curr = ctx;
@@ -31,7 +31,7 @@ bool co_spinlock::try_lock()
 {
     auto    ctx  = co::current_ctx();
     co_ctx* null = nullptr;
-    if (locked__.compare_exchange_strong(null, ctx))
+    if (owner__.compare_exchange_strong(null, ctx))
     {
         return true;
     }
