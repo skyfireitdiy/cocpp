@@ -6,8 +6,6 @@
 
 CO_NAMESPACE_BEGIN
 
-co_manager* co::manager__ = co_manager::instance();
-
 void co::detach()
 {
     if (ctx__ == nullptr)

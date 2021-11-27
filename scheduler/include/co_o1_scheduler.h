@@ -2,7 +2,6 @@ _Pragma("once");
 
 #include "co_define.h"
 #include "co_scheduler.h"
-#include "co_spinlock.h"
 
 #include <list>
 #include <mutex>

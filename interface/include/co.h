@@ -31,8 +31,8 @@ concept co_not_void = !std::is_same_v<T, void>;
 class co final : private co_noncopyable
 {
 private:
-    co_ctx*            ctx__;
-    static co_manager* manager__;
+    co_ctx*                   ctx__;
+    inline static co_manager* manager__ = co_manager::instance();
 
     template <typename Func, typename... Args>
     void init__(co_ctx_config config, Func&& func, Args&&... args);

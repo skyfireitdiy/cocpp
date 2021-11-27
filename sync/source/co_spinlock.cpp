@@ -7,40 +7,36 @@ CO_NAMESPACE_BEGIN
 
 void co_spinlock::lock()
 {
-    // CO_O_DEBUG("spinlock start lock: %d", (bool)locked__);
-    bool lock = false;
-    while (!locked__.compare_exchange_strong(lock, true))
+    auto    ctx  = co::current_ctx();
+    co_ctx* null = nullptr;
+    while (!locked__.compare_exchange_strong(null, ctx))
     {
         co::current_env()->schedule_switch(true);
-        lock = false;
+        null = nullptr;
     }
-    // CO_O_DEBUG("spinlock locked: %d", (bool)locked__);
 }
 
 void co_spinlock::unlock()
 {
-    // CO_O_DEBUG("spinlock start unlock: %d", (bool)locked__);
-    bool lock = true;
-    while (!locked__.compare_exchange_strong(lock, false))
+    auto    ctx  = co::current_ctx();
+    co_ctx* curr = ctx;
+    while (!locked__.compare_exchange_strong(curr, nullptr))
     {
         co::current_env()->schedule_switch(true);
-        lock = true;
+        curr = ctx;
     }
-    // CO_O_DEBUG("spinlock unlocked: %d", (bool)locked__);
 }
 
 bool co_spinlock::try_lock()
 {
-    // CO_O_DEBUG("spinlock try lock: %d", (bool)locked__);
-    bool lock = false;
-    if (locked__.compare_exchange_strong(lock, true))
+    auto    ctx  = co::current_ctx();
+    co_ctx* null = nullptr;
+    if (locked__.compare_exchange_strong(null, ctx))
     {
-        // CO_O_DEBUG("spinlock try lock succeed: %d", (bool)locked__);
         return true;
     }
     else
     {
-        // CO_O_DEBUG("spinlock try lock failed: %d", (bool)locked__);
         return false;
     }
 }

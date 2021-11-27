@@ -7,9 +7,11 @@ _Pragma("once");
 #include "co_noncopyable.h"
 
 CO_NAMESPACE_BEGIN
+
+class co_ctx;
 class co_spinlock : private co_noncopyable
 {
-    std::atomic<bool> locked__ { false };
+    std::atomic<co_ctx*> locked__ { nullptr };
 
 public:
     void lock();

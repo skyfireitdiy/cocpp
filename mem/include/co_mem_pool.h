@@ -2,7 +2,6 @@ _Pragma("once");
 
 #include "co_define.h"
 #include "co_noncopyable.h"
-#include "co_spinlock.h"
 #include "co_type.h"
 #include <list>
 #include <mutex>
