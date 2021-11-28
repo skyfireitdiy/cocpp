@@ -480,9 +480,7 @@ bool co_env::can_schedule_ctx() const
 
 bool co_env::is_blocked() const
 {
-
-    auto s = state();
-    return s != co_env_state::idle && s != co_env_state::created && !test_flag(CO_ENV_FLAG_SCHEDULED);
+    return state() == co_env_state::busy && !test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
 bool co_env::safepoint() const
