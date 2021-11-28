@@ -35,6 +35,7 @@ private:
     void unlock_reader__(co_ctx* ctx);
     void unlock_writer__(co_ctx* ctx);
     void reader_wait__(co_ctx* ctx, std::unique_lock<co_spinlock>& lck);
+    void unlock__(const lock_context& context);
 
 public:
     void lock();
