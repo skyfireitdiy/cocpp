@@ -24,7 +24,6 @@ co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx
     : scheduler__(scheduler)
     , shared_stack__(shared_stack)
     , idle_ctx__(idle_ctx)
-    , state__(co_env_state::created)
 {
     idle_ctx__->set_env(this);
     reset_safepoint();
@@ -45,7 +44,7 @@ co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx
 void co_env::add_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
-    assert(state__ != co_env_state::created && state__ != co_env_state::destorying);
+    assert(state() != co_env_state::created && state() != co_env_state::destorying);
 
     ctx->set_env(this);
 
@@ -106,23 +105,6 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 int co_env::workload() const
 {
     return scheduler__->count();
-}
-
-co_env_state co_env::state() const
-{
-    std::lock_guard<std::mutex> lock(lock_state__);
-    return state__;
-}
-
-void co_env::set_state(co_env_state state)
-{
-    std::lock_guard<std::mutex> lock(lock_state__);
-    if (state__ != co_env_state::destorying) // destorying 状态不允许迁移到其他状态
-    {
-        co_env_state old_state = state__;
-        state__                = state;
-        state_changed().pub(old_state, state__);
-    }
 }
 
 void co_env::remove_detached_ctx__()

@@ -8,6 +8,7 @@ _Pragma("once");
 #include "co_object_pool.h"
 #include "co_return_value.h"
 #include "co_stack_factory.h"
+#include "co_state_manager.h"
 #include "co_type.h"
 
 #include <atomic>
@@ -28,7 +29,8 @@ class co_scheduler;
 class co_ctx;
 
 class co_env final : private co_noncopyable,
-                     public co_flag_manager<CO_ENV_FLAG_MAX>
+                     public co_flag_manager<CO_ENV_FLAG_MAX>,
+                     public co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying>
 {
     RegCoEvent(env_task_finished);
     RegCoEvent(ctx_added, co_ctx*);                        // 被加入的ctx
@@ -61,9 +63,6 @@ private:
     co_scheduler* const scheduler__ = nullptr;
     co_stack*           shared_stack__ { nullptr };
     co_ctx* const       idle_ctx__ { nullptr };
-
-    mutable std::mutex lock_state__;
-    co_env_state       state__ { co_env_state::idle };
 
     std::mutex mu_schedule__;
 
@@ -101,8 +100,6 @@ public:
                                             const std::chrono::nanoseconds& timeout);
     co_return_value                wait_ctx(co_ctx* ctx);
     int                            workload() const;
-    co_env_state                   state() const;
-    void                           set_state(co_env_state state);
     void                           schedule_switch(bool safe_return);
     void                           remove_ctx(co_ctx* ctx);
     co_ctx*                        current_ctx() const;
