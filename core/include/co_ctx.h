@@ -97,8 +97,6 @@ public:
     bool                 can_move() const;
     std::string          name() const;
     co_id                id() const;
-    void                 set_wait_flag(int type, void* rc);
-    void                 remove_wait_flag();
 
     template <typename T>
     T& local(const std::string& name);

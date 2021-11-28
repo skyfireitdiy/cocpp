@@ -95,7 +95,6 @@ public:
     CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), schedule_locked, current_env_);
     CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), schedule_unlocked, current_env_);
     CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), ctx_taked, current_env_);
-    CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), wakeup_notified, current_env_);
     CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), ctx_inited, current_env_);
     CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), shared_stack_saved, current_env_);
     CoMemberMethodProxyStaticWithPrefix(*(manager__->current_env()), shared_stack_restored, current_env_);

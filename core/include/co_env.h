@@ -46,7 +46,6 @@ class co_env final : private co_noncopyable,
     RegCoEvent(schedule_locked);
     RegCoEvent(schedule_unlocked);
     RegCoEvent(ctx_taked, co_ctx*);
-    RegCoEvent(wakeup_notified);
     RegCoEvent(ctx_inited, co_ctx*);
     RegCoEvent(shared_stack_saved, co_ctx*);
     RegCoEvent(shared_stack_restored, co_ctx*);
@@ -65,9 +64,6 @@ private:
 
     mutable std::mutex lock_state__;
     co_env_state       state__ { co_env_state::idle };
-
-    mutable std::mutex          mu_wake_up_idle__;
-    std::condition_variable_any cond_wake_schedule__;
 
     std::mutex mu_schedule__;
 
@@ -117,7 +113,6 @@ public:
     void                           reset_scheduled_flag();
     std::list<co_ctx*>             take_moveable_ctx();
     bool                           can_auto_destroy() const;
-    void                           wake_up();
     co_tid                         schedule_thread_tid() const;
     bool                           try_lock_schedule();
     bool                           can_schedule_ctx() const;
@@ -128,7 +123,6 @@ public:
     void                           set_safepoint();
     void                           reset_safepoint();
     bool                           safepoint() const;
-    std::mutex&                    mu_wake_up_idle_ref();
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;

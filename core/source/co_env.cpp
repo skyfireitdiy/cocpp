@@ -52,12 +52,10 @@ void co_env::add_ctx(co_ctx* ctx)
     init_ctx(shared_stack__, ctx); // 初始化ctx
     ctx_inited().pub(ctx);
 
-    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
     scheduler__->add_obj(ctx); // 添加到调度器
     set_state(co_env_state::busy);
 
     // CO_O_DEBUG("add ctx wake up env: %p", this);
-    wake_up();
     ctx_added().pub(ctx);
 }
 
@@ -277,7 +275,6 @@ co_ctx* co_env::current_ctx() const
 
 void co_env::stop_schedule()
 {
-    std::lock_guard<std::mutex> lock(mu_wake_up_idle__);
     // CO_O_DEBUG("set env to destorying, %p", this);
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
@@ -285,7 +282,6 @@ void co_env::stop_schedule()
     }
 
     // CO_O_DEBUG("%p : stop schedule wake up idle co", this);
-    wake_up(); // 唤醒idle的ctx
     schedule_stopped().pub();
 }
 
@@ -348,17 +344,10 @@ void co_env::start_schedule_routine__()
         remove_detached_ctx__();       // 切换回来之后，将完成的ctx删除
 
         // 切回idle之后，睡眠等待
-        std::unique_lock<std::mutex> lock(mu_wake_up_idle__);
         // CO_O_DEBUG("idle co start wait add ctx or destroying ... %p", this);
         if (state() == co_env_state::destorying)
         {
             break;
-        }
-        if (!scheduler__->can_schedule())
-        {
-            idle_waited().pub();
-            cond_wake_schedule__.wait(lock);
-            idle_waked().pub();
         }
     }
 
@@ -438,12 +427,6 @@ bool co_env::can_auto_destroy() const
 
     // 如果是用户自己转换的env，不能被选中销毁
     return !test_flag(CO_ENV_FLAG_COVERTED) && !test_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
-}
-
-void co_env::wake_up()
-{
-    cond_wake_schedule__.notify_one();
-    wakeup_notified().pub();
 }
 
 size_t co_env::get_valid_stack_size__(co_ctx* ctx)
@@ -533,11 +516,6 @@ void co_env::set_safepoint()
 void co_env::reset_safepoint()
 {
     safepoint__ = false;
-}
-
-std::mutex& co_env::mu_wake_up_idle_ref()
-{
-    return mu_wake_up_idle__;
 }
 
 CO_NAMESPACE_END

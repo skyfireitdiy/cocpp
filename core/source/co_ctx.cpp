@@ -92,7 +92,7 @@ void co_ctx::set_priority(int priority)
 
 bool co_ctx::can_schedule() const
 {
-    return state() != co_state::finished && !test_flag(CO_CTX_FLAG_WAITING);
+    return state() != co_state::finished;
 }
 
 bool co_ctx::can_destroy() const
@@ -132,21 +132,6 @@ std::string co_ctx::name() const
 co_id co_ctx::id() const
 {
     return reinterpret_cast<co_id>(this);
-}
-
-void co_ctx::set_wait_flag(int type, void* rc)
-{
-    std::lock_guard<std::mutex> lock(wait_data__.mu);
-    wait_data__.type = type;
-    wait_data__.rc   = rc;
-    set_flag(CO_CTX_FLAG_WAITING);
-}
-
-void co_ctx::remove_wait_flag()
-{
-    std::lock_guard<std::mutex> lock(env__->mu_wake_up_idle_ref());
-    reset_flag(CO_CTX_FLAG_WAITING);
-    env__->wake_up();
 }
 
 CO_NAMESPACE_END

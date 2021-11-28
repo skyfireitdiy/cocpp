@@ -309,10 +309,12 @@ TEST(co, co_shared_mutex_shared_lock)
     co_shared_mutex mu;
 
     co c1([&] {
+        CO_O_DEBUG("c1: %p", co::current_ctx());
         mu.lock_shared();
         this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock_shared();
     });
+    CO_O_DEBUG("main: %p", co::current_ctx());
     this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_TRUE(mu.try_lock_shared());
     mu.unlock_shared();
