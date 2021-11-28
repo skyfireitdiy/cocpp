@@ -19,7 +19,7 @@ bool co_recursive_mutex::try_lock()
 {
     auto ctx = co::current_ctx();
 
-    std::lock_guard<co_mutex> lck(spinlock__);
+    std::lock_guard<co_mutex> lck(mu_lock__);
     if (owner__ == nullptr || owner__ == ctx)
     {
         owner__ = ctx;
@@ -33,7 +33,7 @@ void co_recursive_mutex::unlock()
 {
     auto ctx = co::current_ctx();
 
-    std::lock_guard<co_mutex> lck(spinlock__);
+    std::lock_guard<co_mutex> lck(mu_lock__);
     if (owner__ != ctx) // 当前ctx不是加锁ctx，异常
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__.load());

@@ -28,7 +28,7 @@ private:
         bool operator==(const lock_context& other) const;
     };
 
-    co_mutex                spinlock__;
+    co_mutex                mu_lock__;
     std::list<lock_context> wait_list__;
     std::list<lock_context> owners__;
 
