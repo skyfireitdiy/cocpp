@@ -11,24 +11,6 @@ co_stack* co_ctx::stack() const
     return stack__;
 }
 
-co_state co_ctx::state() const
-{
-    std::lock_guard<std::mutex> lock(state__.lock);
-    return state__.state;
-}
-
-void co_ctx::set_state(co_state state)
-{
-    std::lock_guard<std::mutex> lock(state__.lock);
-    // finished 状态的ctx不再更新
-    if (state__.state != co_state::finished)
-    {
-        co_state old_state = state__.state;
-        state__.state      = state;
-        state_changed().pub(old_state, state);
-    }
-}
-
 co_byte** co_ctx::regs()
 {
     return reinterpret_cast<co_byte**>(&regs__);

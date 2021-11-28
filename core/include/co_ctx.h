@@ -6,6 +6,7 @@ _Pragma("once");
 #include "co_object_pool.h"
 #include "co_scheduler.h"
 #include "co_stack.h"
+#include "co_state_manager.h"
 #include "co_type.h"
 
 #include <any>
@@ -19,7 +20,8 @@ CO_NAMESPACE_BEGIN
 class co_env;
 
 class co_ctx final : private co_noncopyable,
-                     public co_flag_manager<CO_CTX_FLAG_MAX>
+                     public co_flag_manager<CO_CTX_FLAG_MAX>,
+                     public co_state_manager<co_state, co_state::suspended, co_state::finished>
 {
     RegCoEvent(finished);
     RegCoEvent(priority_changed, int, int);        // 原优先级
@@ -58,12 +60,6 @@ private:
 
     co_stack* stack__ { nullptr }; // 当前栈空间
 
-    struct
-    {
-        mutable std::mutex lock;
-        co_state           state { co_state::suspended }; // 协程状态
-    } state__;
-
     co_ctx_config    config__ {};                         // 协程配置
     std::any         ret__;                               // 协程返回值，会被传递给 config 中的 entry
     co_env*          env__ { nullptr };                   // 协程当前对应的运行环境
@@ -88,9 +84,7 @@ public:
     bool can_schedule() const;
 
     co_stack*            stack() const;
-    co_state             state() const;
     co_byte**            regs();
-    void                 set_state(co_state state);
     const co_ctx_config& config() const;
     std::any&            ret_ref();
     void                 set_env(co_env* env);
