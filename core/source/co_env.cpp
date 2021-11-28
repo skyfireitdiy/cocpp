@@ -401,7 +401,7 @@ void co_env::take_ctx__(co_ctx* ctx)
 {
 
     scheduler__->remove_ctx(ctx);
-    ctx_taked().pub(ctx);
+    ctx_taken().pub(ctx);
 }
 
 bool co_env::can_auto_destroy() const

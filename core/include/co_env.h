@@ -47,7 +47,7 @@ class co_env final : private co_noncopyable,
     RegCoEvent(scheduled_flag_reset);
     RegCoEvent(schedule_locked);
     RegCoEvent(schedule_unlocked);
-    RegCoEvent(ctx_taked, co_ctx*);
+    RegCoEvent(ctx_taken, co_ctx*);
     RegCoEvent(ctx_inited, co_ctx*);
     RegCoEvent(shared_stack_saved, co_ctx*);
     RegCoEvent(shared_stack_restored, co_ctx*);
