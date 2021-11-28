@@ -4,8 +4,8 @@ _Pragma("once");
 #include <mutex>
 
 #include "co_define.h"
+#include "co_mutex.h"
 #include "co_noncopyable.h"
-#include "co_spinlock.h"
 
 CO_NAMESPACE_BEGIN
 
@@ -28,13 +28,13 @@ private:
         bool operator==(const lock_context& other) const;
     };
 
-    co_spinlock             spinlock__;
+    co_mutex                spinlock__;
     std::list<lock_context> wait_list__;
     std::list<lock_context> owners__;
 
     void unlock_reader__(co_ctx* ctx);
     void unlock_writer__(co_ctx* ctx);
-    void reader_wait__(co_ctx* ctx, std::unique_lock<co_spinlock>& lck);
+    void reader_wait__(co_ctx* ctx, std::unique_lock<co_mutex>& lck);
     void unlock__(const lock_context& context);
 
 public:

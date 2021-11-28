@@ -25,7 +25,7 @@ bool co_shared_mutex::try_lock()
         ctx
     };
 
-    std::unique_lock<co_spinlock> lck(spinlock__);
+    std::unique_lock<co_mutex> lck(spinlock__);
     if (owners__.empty())
     {
         owners__.push_back(context);
@@ -39,7 +39,7 @@ void co_shared_mutex::unlock__(const lock_context& context)
 {
     auto ctx = context.ctx;
 
-    std::unique_lock<co_spinlock> lck(spinlock__);
+    std::unique_lock<co_mutex> lck(spinlock__);
     if (auto iter = std::find(owners__.begin(), owners__.end(), context); iter == owners__.end())
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
@@ -73,7 +73,7 @@ bool co_shared_mutex::try_lock_shared()
         ctx
     };
 
-    std::unique_lock<co_spinlock> lck(spinlock__);
+    std::unique_lock<co_mutex> lck(spinlock__);
     if (owners__.empty())
     {
         owners__.push_back(context);

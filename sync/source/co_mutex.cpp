@@ -1,12 +1,12 @@
-#include "co_spinlock.h"
 #include "co.h"
 #include "co_define.h"
 #include "co_error.h"
+#include "co_mutex.h"
 #include "co_this_co.h"
 
 CO_NAMESPACE_BEGIN
 
-void co_spinlock::lock()
+void co_mutex::lock()
 {
     auto    ctx  = co::current_ctx();
     co_ctx* null = nullptr;
@@ -18,7 +18,7 @@ void co_spinlock::lock()
     // CO_O_DEBUG("%p locked", ctx);
 }
 
-void co_spinlock::unlock()
+void co_mutex::unlock()
 {
     auto    ctx  = co::current_ctx();
     co_ctx* curr = ctx;
@@ -30,7 +30,7 @@ void co_spinlock::unlock()
     }
 }
 
-bool co_spinlock::try_lock()
+bool co_mutex::try_lock()
 {
     auto    ctx  = co::current_ctx();
     co_ctx* null = nullptr;

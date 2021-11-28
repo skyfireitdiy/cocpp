@@ -95,7 +95,7 @@ TEST(co, wait_timeout)
 {
     co   c1([]() {
         this_co::sleep_for(std::chrono::seconds(1));
-      });
+    });
     auto ret = c1.wait(std::chrono::milliseconds(1));
     EXPECT_FALSE(ret);
     ret = c1.wait(std::chrono::milliseconds(10000));
@@ -108,7 +108,7 @@ TEST(co, priority)
 
     auto env = co::create_env(true);
     co   c1(
-          { with_priority(0), with_bind_env(env) }, [](std::vector<int>& arr) {
+        { with_priority(0), with_bind_env(env) }, [](std::vector<int>& arr) {
             this_co::sleep_for(std::chrono::milliseconds(50));
             arr.push_back(100);
             this_co::yield();
@@ -116,8 +116,8 @@ TEST(co, priority)
             this_co::yield();
             arr.push_back(300);
             this_co::yield();
-          },
-          std::ref(arr));
+        },
+        std::ref(arr));
     co c2(
         { with_priority(1), with_bind_env(env) }, [](std::vector<int>& arr) {
             this_co::sleep_for(std::chrono::milliseconds(50));
@@ -141,7 +141,7 @@ TEST(co, co_id)
     co_id id;
     co    c1([&id]() {
         id = this_co::id();
-       });
+    });
     c1.wait<void>();
     EXPECT_EQ(c1.id(), id);
 }
@@ -161,44 +161,6 @@ TEST(co, other_co_name)
     co c1({ with_name("zhangsan") }, []() {});
     c1.wait<void>();
     EXPECT_EQ(c1.name(), "zhangsan");
-}
-
-TEST(co, co_spinlock_try_lock)
-{
-    co_spinlock mu;
-
-    co c1([&]() {
-        std::lock_guard<co_spinlock> lock(mu);
-        this_co::sleep_for(std::chrono::seconds(1));
-    });
-
-    this_co::sleep_for(std::chrono::milliseconds(500));
-    EXPECT_FALSE(mu.try_lock());
-    c1.wait<void>();
-}
-
-TEST(co, co_spinlock_lock)
-{
-    co_spinlock mu;
-
-    int ret = 0;
-
-    co c1([&]() {
-        for (int i = 0; i < 1000; ++i)
-        {
-            std::lock_guard<co_spinlock> lock(mu);
-            ret += i;
-        }
-    });
-    for (int i = 0; i < 1000; ++i)
-    {
-        std::lock_guard<co_spinlock> lock(mu);
-        ret -= i;
-    }
-
-    c1.wait<void>();
-
-    EXPECT_EQ(ret, 0);
 }
 
 TEST(co, co_mutex_try_lock)
@@ -296,7 +258,7 @@ TEST(co, co_timed_mutex)
         mu.lock();
         this_co::sleep_for(std::chrono::seconds(1));
         mu.unlock();
-                });
+    });
     this_co::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(mu.try_lock_for(std::chrono::milliseconds(100)));
     EXPECT_TRUE(mu.try_lock_for(std::chrono::milliseconds(600)));
@@ -546,7 +508,7 @@ TEST(co, co_chan_buffered2)
             ch.push(i);
         }
         ch.close();
-     });
+    });
     int t;
     for (int i = 0; i < 10; ++i)
     {
@@ -567,7 +529,7 @@ TEST(co, co_chan_no_buffered)
             ch.push(i);
         }
         ch.close();
-     });
+    });
     int t;
     for (int i = 0; i < 10; ++i)
     {
@@ -745,7 +707,7 @@ TEST(co, co_chan_pop_from_empty_chan_closed)
     co              c1([&] {
         this_co::sleep_for(std::chrono::seconds(1));
         ch.close();
-                 });
+    });
     EXPECT_FALSE(ch.pop());
     c1.wait<void>();
 }
@@ -756,7 +718,7 @@ TEST(co, co_chan_pop_from_zero_chan_closed)
     co              c1([&] {
         this_co::sleep_for(std::chrono::seconds(1));
         ch.close();
-                 });
+    });
     EXPECT_FALSE(ch.pop());
     c1.wait<void>();
 }

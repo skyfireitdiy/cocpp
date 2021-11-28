@@ -1,14 +1,22 @@
 _Pragma("once");
 
-#include "co_ctx.h"
-#include "co_define.h"
-#include "co_noncopyable.h"
-#include "co_spinlock.h"
 #include <atomic>
 #include <list>
 
+#include "co_define.h"
+#include "co_noncopyable.h"
+
 CO_NAMESPACE_BEGIN
 
-using co_mutex = co_spinlock;
+class co_ctx;
+class co_mutex : private co_noncopyable
+{
+    std::atomic<co_ctx*> owner__ { nullptr };
+
+public:
+    void lock();
+    void unlock();
+    bool try_lock();
+};
 
 CO_NAMESPACE_END
