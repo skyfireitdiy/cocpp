@@ -13,19 +13,19 @@ co_stack* co_ctx::stack() const
 
 co_state co_ctx::state() const
 {
-    std::lock_guard<std::mutex> lock(lock_state__);
-    return state__;
+    std::lock_guard<std::mutex> lock(state__.lock);
+    return state__.state;
 }
 
 void co_ctx::set_state(co_state state)
 {
-    std::lock_guard<std::mutex> lock(lock_state__);
+    std::lock_guard<std::mutex> lock(state__.lock);
     // finished 状态的ctx不再更新
-    if (state__ != co_state::finished)
+    if (state__.state != co_state::finished)
     {
-        co_state old_state = state__;
-        state__            = state;
-        state_changed().pub(old_state, state__);
+        co_state old_state = state__.state;
+        state__.state      = state;
+        state_changed().pub(old_state, state);
     }
 }
 
@@ -57,7 +57,6 @@ co_env* co_ctx::env() const
 
 co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config)
     : stack__(stack)
-    , state__(co_state::suspended)
     , config__(config)
 {
     set_priority(config.priority);
