@@ -281,18 +281,6 @@ TEST(co, co_shared_mutex_shared_lock)
     c1.wait<void>();
 }
 
-TEST(co, co_shared_mutex_shared_lock_multi)
-{
-    co_shared_mutex mu;
-
-    mu.lock_shared();
-    mu.lock_shared();
-    EXPECT_TRUE(mu.try_lock_shared());
-    mu.unlock_shared();
-    mu.unlock_shared();
-    mu.unlock_shared();
-}
-
 TEST(co, co_shared_mutex_lock)
 {
     co_shared_mutex mu;

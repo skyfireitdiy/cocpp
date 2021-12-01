@@ -25,8 +25,9 @@ co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx
     , shared_stack__(shared_stack)
     , idle_ctx__(idle_ctx)
 {
-    idle_ctx__->set_env(this);
     reset_safepoint();
+    idle_ctx__->set_env(this);
+    sleep_controller__.checker = [this] { return need_sleep__(); };
     if (create_new_thread)
     {
         // 此处设置状态是防止 add_ctx 前调度线程还未准备好，状态断言失败
@@ -308,6 +309,7 @@ void co_env::start_schedule_routine__()
 {
     reset_safepoint();
     schedule_thread_tid__ = gettid();
+    CO_O_DEBUG("get tid: %lld", schedule_thread_tid__);
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
@@ -496,6 +498,26 @@ void co_env::set_safepoint()
 void co_env::reset_safepoint()
 {
     safepoint__ = false;
+}
+
+void co_env::wake_up()
+{
+    std::lock_guard<std::mutex> lock(sleep_controller__.mu);
+    sleep_controller__.cond.notify_one();
+}
+
+void co_env::sleep_if_need()
+{
+    std::unique_lock<std::mutex> lock(sleep_controller__.mu);
+    if (sleep_controller__.checker())
+    {
+        sleep_controller__.cond.wait(lock);
+    }
+}
+
+bool co_env::need_sleep__()
+{
+    return !scheduler__->can_schedule() && state() != co_env_state::destorying;
 }
 
 CO_NAMESPACE_END

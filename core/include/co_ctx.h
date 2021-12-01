@@ -96,6 +96,8 @@ public:
     bool                 can_move() const;
     std::string          name() const;
     co_id                id() const;
+    void                 enter_wait_rc_state(int rc_type, void* rc);
+    void                 leave_wait_rc_state();
 
     template <typename T>
     T& local(const std::string& name);

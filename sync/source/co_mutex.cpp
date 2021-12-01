@@ -1,49 +1,61 @@
+#include "co_mutex.h"
 #include "co.h"
+#include "co_defer.h"
 #include "co_define.h"
 #include "co_error.h"
-#include "co_mutex.h"
 #include "co_this_co.h"
 
 CO_NAMESPACE_BEGIN
 
 void co_mutex::lock()
 {
-    auto    ctx  = co::current_ctx();
-    co_ctx* null = nullptr;
-    while (!owner__.compare_exchange_strong(null, ctx))
+    auto ctx = co::current_ctx();
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    while (owner__ != nullptr)
     {
-        co::current_env()->schedule_switch(true);
-        null = nullptr;
+        ctx->enter_wait_rc_state(CO_RC_TYPE_MUTEX, this);
+        wait_list__.push_back(ctx);
+        spinlock__.unlock(ctx);
+        this_co::yield();
+        spinlock__.lock(ctx);
     }
-    // CO_O_DEBUG("%p locked", ctx);
-}
-
-void co_mutex::unlock()
-{
-    auto    ctx  = co::current_ctx();
-    co_ctx* curr = ctx;
-    // CO_O_DEBUG("%p unlock, owner is %p", ctx, owner__.load());
-    if (!owner__.compare_exchange_strong(curr, nullptr))
-    {
-        CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, curr);
-        throw co_error("ctx is not owner[", ctx, "]");
-    }
+    owner__ = ctx;
+    CO_O_DEBUG("ctx %p lock", ctx);
 }
 
 bool co_mutex::try_lock()
 {
-    auto    ctx  = co::current_ctx();
-    co_ctx* null = nullptr;
-    if (owner__.compare_exchange_strong(null, ctx))
+    auto ctx = co::current_ctx();
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    if (owner__ != nullptr)
     {
-        // CO_O_DEBUG("%p try locked", ctx);
-        return true;
-    }
-    else
-    {
-        // CO_O_DEBUG("%p try lock failed", ctx);
         return false;
     }
+    owner__ = ctx;
+    return true;
+}
+
+void co_mutex::unlock()
+{
+    auto ctx = co::current_ctx();
+    CO_O_DEBUG("ctx %p unlock", ctx);
+    spinlock__.lock(ctx);
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    if (owner__ != ctx)
+    {
+        CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__);
+        throw co_error("ctx is not owner[", ctx, "]");
+    }
+
+    owner__ = nullptr;
+    if (wait_list__.empty())
+    {
+        return;
+    }
+
+    auto next = wait_list__.front();
+    wait_list__.pop_front();
+    next->leave_wait_rc_state();
 }
 
 CO_NAMESPACE_END

@@ -10,96 +10,178 @@ CO_NAMESPACE_BEGIN
 
 void co_shared_mutex::lock()
 {
-    while (!try_lock())
+    auto         ctx = co::current_ctx();
+    lock_context context {
+        .type = lock_type::unique,
+        .ctx  = ctx
+    };
+
+    spinlock__.lock(ctx);
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    while (!owners__.empty())
     {
-        co::current_env()->schedule_switch(true);
+        ctx->enter_wait_rc_state(CO_RC_TYPE_SHARED_MUTEX, this);
+        wait_list__.push_back(context);
+        spinlock__.unlock(ctx);
+        this_co::yield();
+        spinlock__.lock(ctx);
     }
+    owners__.insert(context);
 }
 
 bool co_shared_mutex::try_lock()
 {
-    auto ctx = co::current_ctx();
-
+    auto         ctx = co::current_ctx();
     lock_context context {
-        lock_type::unique,
-        ctx
+        .type = lock_type::unique,
+        .ctx  = ctx
     };
 
-    std::unique_lock<co_mutex> lck(mu_lock__);
-    if (owners__.empty())
+    spinlock__.lock(ctx);
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    while (!owners__.empty())
     {
-        owners__.push_back(context);
-        return true;
+        return false;
     }
-
-    return false;
-}
-
-void co_shared_mutex::unlock__(const lock_context& context)
-{
-    auto ctx = context.ctx;
-
-    std::unique_lock<co_mutex> lck(mu_lock__);
-    if (auto iter = std::find(owners__.begin(), owners__.end(), context); iter == owners__.end())
-    {
-        CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-        throw co_error("ctx is not owner[", ctx, "]");
-    }
-    else
-    {
-        owners__.erase(iter);
-    }
+    owners__.insert(context);
+    return true;
 }
 
 void co_shared_mutex::unlock()
 {
-    unlock__({ lock_type::unique, co::current_ctx() });
+    auto         ctx = co::current_ctx();
+    lock_context context {
+        .type = lock_type::unique,
+        .ctx  = ctx
+    };
+
+    spinlock__.lock(ctx);
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+
+    if (!owners__.contains(context))
+    {
+        CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
+        throw co_error("ctx is not owner[", ctx, "]");
+    }
+
+    owners__.erase(context);
+
+    if (wait_list__.empty())
+    {
+        return;
+    }
+
+    if (wait_list__.front().type == lock_type::unique)
+    {
+        auto next = wait_list__.front();
+        wait_list__.pop_front();
+        next.ctx->leave_wait_rc_state();
+        return;
+    }
+
+    auto iter = std::remove_if(wait_list__.begin(), wait_list__.end(), [](auto& c) {
+        return c.type == lock_type::shared;
+    });
+
+    std::list<lock_context> new_owner { iter, wait_list__.end() };
+    wait_list__.erase(iter, wait_list__.end());
+    for (auto& c : new_owner)
+    {
+        c.ctx->leave_wait_rc_state();
+    }
 }
 
 void co_shared_mutex::lock_shared()
 {
-    while (!try_lock_shared())
+    auto         ctx = co::current_ctx();
+    lock_context context {
+        .type = lock_type::shared,
+        .ctx  = ctx
+    };
+
+    spinlock__.lock(ctx);
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    while (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
-        co::current_env()->schedule_switch(true);
+        ctx->enter_wait_rc_state(CO_RC_TYPE_SHARED_MUTEX, this);
+        wait_list__.push_back(context);
+        spinlock__.unlock(ctx);
+        this_co::yield();
+        spinlock__.lock(ctx);
     }
+    owners__.insert(context);
 }
 
 bool co_shared_mutex::try_lock_shared()
 {
-    auto ctx = co::current_ctx();
-
+    auto         ctx = co::current_ctx();
     lock_context context {
-        lock_type::shared,
-        ctx
+        .type = lock_type::shared,
+        .ctx  = ctx
     };
 
-    std::unique_lock<co_mutex> lck(mu_lock__);
-    if (owners__.empty())
+    spinlock__.lock(ctx);
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    if (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
-        owners__.push_back(context);
-
-        return true;
+        return false;
     }
-
-    auto curr_type = owners__.front().type;
-    if (curr_type == lock_type::shared)
-    {
-        owners__.push_back(context);
-
-        return true;
-    }
-
-    return false;
+    owners__.insert(context);
+    return true;
 }
 
 void co_shared_mutex::unlock_shared()
 {
-    unlock__({ lock_type::shared, co::current_ctx() });
+    auto         ctx = co::current_ctx();
+    lock_context context {
+        .type = lock_type::shared,
+        .ctx  = ctx
+    };
+
+    spinlock__.lock(ctx);
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+
+    if (!owners__.contains(context))
+    {
+        CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
+        throw co_error("ctx is not owner[", ctx, "]");
+    }
+
+    owners__.erase(context);
+
+    if (wait_list__.empty())
+    {
+        return;
+    }
+
+    if (wait_list__.front().type == lock_type::unique)
+    {
+        auto next = wait_list__.front();
+        wait_list__.pop_front();
+        next.ctx->leave_wait_rc_state();
+        return;
+    }
+
+    auto iter = std::remove_if(wait_list__.begin(), wait_list__.end(), [](auto& c) {
+        return c.type == lock_type::shared;
+    });
+
+    std::list<lock_context> new_owner { iter, wait_list__.end() };
+    wait_list__.erase(iter, wait_list__.end());
+    for (auto& c : new_owner)
+    {
+        c.ctx->leave_wait_rc_state();
+    }
 }
 
 bool co_shared_mutex::lock_context::operator==(const co_shared_mutex::lock_context& other) const
 {
     return ctx == other.ctx && type == other.type;
+}
+
+std::size_t co_shared_mutex::lock_context_hasher::operator()(const lock_context& other) const
+{
+    return std::hash<co_ctx*> {}(other.ctx) ^ (std::hash<lock_type> {}(other.type) << 1);
 }
 
 CO_NAMESPACE_END

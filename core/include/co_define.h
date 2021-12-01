@@ -24,6 +24,7 @@ constexpr static size_t DEFAULT_TIMING_TICK_DURATION_IN_MS = 10;
 constexpr static size_t TICKS_COUNT_OF_FREE_MEM            = 1000;
 
 // 协程flag
+constexpr int CO_CTX_FLAG_WAITING      = 0; // 等待
 constexpr int CO_CTX_FLAG_LOCKED       = 1; // 被co对象持有，暂时不能销毁
 constexpr int CO_CTX_FLAG_BIND         = 2; // 绑定env，不可移动
 constexpr int CO_CTX_FLAG_IDLE         = 3; // idle ctx

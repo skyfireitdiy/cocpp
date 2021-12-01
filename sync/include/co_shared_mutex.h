@@ -1,11 +1,12 @@
 _Pragma("once");
 
+#include "co_define.h"
+#include "co_noncopyable.h"
+#include "co_spinlock.h"
+
 #include <list>
 #include <mutex>
-
-#include "co_define.h"
-#include "co_mutex.h"
-#include "co_noncopyable.h"
+#include <unordered_set>
 
 CO_NAMESPACE_BEGIN
 
@@ -28,14 +29,14 @@ private:
         bool operator==(const lock_context& other) const;
     };
 
-    co_mutex                mu_lock__;
-    std::list<lock_context> wait_list__;
-    std::list<lock_context> owners__;
+    struct lock_context_hasher
+    {
+        std::size_t operator()(const lock_context& other) const;
+    };
 
-    void unlock_reader__(co_ctx* ctx);
-    void unlock_writer__(co_ctx* ctx);
-    void reader_wait__(co_ctx* ctx, std::unique_lock<co_mutex>& lck);
-    void unlock__(const lock_context& context);
+    co_spinlock                                           spinlock__;
+    std::list<lock_context>                               wait_list__;
+    std::unordered_set<lock_context, lock_context_hasher> owners__;
 
 public:
     void lock();

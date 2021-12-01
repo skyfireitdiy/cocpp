@@ -83,6 +83,7 @@ private:
     void               switch_normal_ctx__();
     std::list<co_ctx*> moveable_ctx_list__();
     void               take_ctx__(co_ctx* ctx);
+    bool               need_sleep__();
 
     static size_t get_valid_stack_size__(co_ctx* ctx);
     static void   update_ctx_state__(co_ctx* curr, co_ctx* next);
@@ -93,6 +94,13 @@ private:
         co_ctx* to { nullptr };
         bool    need_switch { false };
     } shared_stack_switch_context__;
+
+    struct
+    {
+        std::mutex              mu;
+        std::condition_variable cond;
+        std::function<bool()>   checker;
+    } sleep_controller__;
 
 public:
     void                           add_ctx(co_ctx* ctx);
@@ -120,6 +128,8 @@ public:
     void                           set_safepoint();
     void                           reset_safepoint();
     bool                           safepoint() const;
+    void                           wake_up();
+    void                           sleep_if_need();
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;
