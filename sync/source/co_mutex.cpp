@@ -10,6 +10,7 @@ CO_NAMESPACE_BEGIN
 void co_mutex::lock()
 {
     auto ctx = co::current_ctx();
+    spinlock__.lock(ctx);
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     while (owner__ != nullptr)
     {
@@ -20,12 +21,12 @@ void co_mutex::lock()
         spinlock__.lock(ctx);
     }
     owner__ = ctx;
-    CO_O_DEBUG("ctx %p lock", ctx);
 }
 
 bool co_mutex::try_lock()
 {
     auto ctx = co::current_ctx();
+    spinlock__.lock(ctx);
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (owner__ != nullptr)
     {
@@ -38,7 +39,6 @@ bool co_mutex::try_lock()
 void co_mutex::unlock()
 {
     auto ctx = co::current_ctx();
-    CO_O_DEBUG("ctx %p unlock", ctx);
     spinlock__.lock(ctx);
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (owner__ != ctx)

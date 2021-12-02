@@ -121,14 +121,12 @@ void co_ctx::enter_wait_rc_state(int rc_type, void* rc)
     wait_data__.type = rc_type;
     wait_data__.rc   = rc;
     set_flag(CO_CTX_FLAG_WAITING);
-    CO_O_DEBUG("sleep : %p", this);
 }
 
 void co_ctx::leave_wait_rc_state()
 {
     reset_flag(CO_CTX_FLAG_WAITING);
     env__->wake_up();
-    CO_O_DEBUG("wake up: %lld", env__->schedule_thread_tid());
 }
 
 CO_NAMESPACE_END

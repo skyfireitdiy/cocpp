@@ -11,7 +11,8 @@ CO_NAMESPACE_BEGIN
 void co_recursive_mutex::lock()
 {
     auto ctx = co::current_ctx();
-    CoDefer([this,ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock(ctx);
+    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     while (owner__ != ctx && owner__ != nullptr)
     {
         ctx->enter_wait_rc_state(CO_RC_TYPE_RECURSIVE_MUTEX, this);
@@ -27,6 +28,7 @@ void co_recursive_mutex::lock()
 bool co_recursive_mutex::try_lock()
 {
     auto ctx = co::current_ctx();
+    spinlock__.lock(ctx);
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (owner__ != ctx && owner__ != nullptr)
     {
