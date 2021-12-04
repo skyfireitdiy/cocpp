@@ -10,8 +10,6 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-class co_ctx* ctx;
-
 class co_shared_mutex : private co_noncopyable
 {
 private:

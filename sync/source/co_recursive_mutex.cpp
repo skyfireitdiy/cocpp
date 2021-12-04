@@ -2,6 +2,7 @@
 #include "co.h"
 #include "co_define.h"
 #include "co_error.h"
+#include "co_sync_helper.h"
 #include "co_this_co.h"
 #include <cassert>
 #include <mutex>
@@ -17,12 +18,8 @@ void co_recursive_mutex::lock()
     {
         ctx->enter_wait_rc_state(CO_RC_TYPE_RECURSIVE_MUTEX, this);
         wait_list__.push_back(ctx);
-        do
-        {
-            spinlock__.unlock(ctx);
-            this_co::yield();
-            spinlock__.lock(ctx);
-        } while (owner__ != ctx && owner__ != nullptr);
+
+        lock_yield__(ctx, spinlock__, [this, ctx] { return owner__ != ctx && owner__ != nullptr; });
     }
 
     owner__ = ctx;

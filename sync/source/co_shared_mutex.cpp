@@ -1,6 +1,7 @@
 #include "co_shared_mutex.h"
 #include "co.h"
 #include "co_error.h"
+#include "co_sync_helper.h"
 #include "co_this_co.h"
 
 #include <cassert>
@@ -22,12 +23,8 @@ void co_shared_mutex::lock()
     {
         ctx->enter_wait_rc_state(CO_RC_TYPE_SHARED_MUTEX, this);
         wait_list__.push_back(context);
-        do
-        {
-            spinlock__.unlock(ctx);
-            this_co::yield();
-            spinlock__.lock(ctx);
-        } while (!owners__.empty());
+
+        lock_yield__(ctx, spinlock__, [this] { return !owners__.empty(); });
     }
 
     owners__.insert(context);
@@ -109,13 +106,8 @@ void co_shared_mutex::lock_shared()
     {
         ctx->enter_wait_rc_state(CO_RC_TYPE_SHARED_MUTEX, this);
         wait_list__.push_back(context);
-        do
-        {
 
-            spinlock__.unlock(ctx);
-            this_co::yield();
-            spinlock__.lock(ctx);
-        } while (!owners__.empty() && (*owners__.begin()).type == lock_type::unique);
+        lock_yield__(ctx, spinlock__, [this] { return !owners__.empty() && (*owners__.begin()).type == lock_type::unique; });
     }
 
     owners__.insert(context);

@@ -3,6 +3,7 @@
 #include "co_defer.h"
 #include "co_define.h"
 #include "co_error.h"
+#include "co_sync_helper.h"
 #include "co_this_co.h"
 
 CO_NAMESPACE_BEGIN
@@ -16,12 +17,8 @@ void co_mutex::lock()
     {
         ctx->enter_wait_rc_state(CO_RC_TYPE_MUTEX, this);
         wait_list__.push_back(ctx);
-        do
-        {
-            spinlock__.unlock(ctx);
-            this_co::yield();
-            spinlock__.lock(ctx);
-        } while (owner__ != nullptr);
+
+        lock_yield__(ctx, spinlock__, [this] { return owner__ != nullptr; });
     }
     owner__ = ctx;
 }
