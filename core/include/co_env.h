@@ -7,6 +7,7 @@ _Pragma("once");
 #include "co_noncopyable.h"
 #include "co_object_pool.h"
 #include "co_return_value.h"
+#include "co_sleep_controller.h"
 #include "co_stack_factory.h"
 #include "co_state_manager.h"
 #include "co_type.h"
@@ -57,6 +58,8 @@ class co_env final : private co_noncopyable,
 private:
     std::future<void> worker__;
 
+    co_sleep_controller sleep_controller__;
+
     co_ctx_factory* const   ctx_factory__ { co_ctx_factory::instance() };
     co_stack_factory* const stack_factory__ { co_stack_factory::instance() };
 
@@ -95,13 +98,6 @@ private:
         bool    need_switch { false };
     } shared_stack_switch_context__;
 
-    struct
-    {
-        std::mutex              mu;
-        std::condition_variable cond;
-        std::function<bool()>   checker;
-    } sleep_controller__;
-
 public:
     void                           add_ctx(co_ctx* ctx);
     std::optional<co_return_value> wait_ctx(co_ctx*                         ctx,
@@ -128,8 +124,9 @@ public:
     void                           set_safepoint();
     void                           reset_safepoint();
     bool                           safepoint() const;
-    void                           wake_up();
-    void                           sleep_if_need();
+
+    CoMemberMethodProxy(sleep_controller__, sleep_if_need);
+    CoMemberMethodProxy(sleep_controller__, wake_up);
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;

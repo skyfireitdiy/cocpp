@@ -21,13 +21,13 @@ CO_NAMESPACE_BEGIN
 thread_local co_env* current_env__ = nullptr;
 
 co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
-    : scheduler__(scheduler)
+    : sleep_controller__([this] { return need_sleep__(); })
+    , scheduler__(scheduler)
     , shared_stack__(shared_stack)
     , idle_ctx__(idle_ctx)
 {
     reset_safepoint();
     idle_ctx__->set_env(this);
-    sleep_controller__.checker = [this] { return need_sleep__(); };
     if (create_new_thread)
     {
         // 此处设置状态是防止 add_ctx 前调度线程还未准备好，状态断言失败
@@ -503,21 +503,6 @@ void co_env::set_safepoint()
 void co_env::reset_safepoint()
 {
     safepoint__ = false;
-}
-
-void co_env::wake_up()
-{
-    std::lock_guard<std::mutex> lock(sleep_controller__.mu);
-    sleep_controller__.cond.notify_one();
-}
-
-void co_env::sleep_if_need()
-{
-    std::unique_lock<std::mutex> lock(sleep_controller__.mu);
-    if (sleep_controller__.checker())
-    {
-        sleep_controller__.cond.wait(lock);
-    }
 }
 
 bool co_env::need_sleep__()
