@@ -55,6 +55,8 @@ void co_env::add_ctx(co_ctx* ctx)
     scheduler__->add_ctx(ctx); // 添加到调度器
     set_state(co_env_state::busy);
 
+    wake_up();
+
     // CO_O_DEBUG("add ctx wake up env: %p", this);
     ctx_added().pub(ctx);
 }
@@ -264,6 +266,8 @@ void co_env::stop_schedule()
         set_state(co_env_state::destorying);
     }
 
+    wake_up();
+
     // CO_O_DEBUG("%p : stop schedule wake up idle co", this);
     schedule_stopped().pub();
 }
@@ -309,7 +313,6 @@ void co_env::start_schedule_routine__()
 {
     reset_safepoint();
     schedule_thread_tid__ = gettid();
-    CO_O_DEBUG("get tid: %lld", schedule_thread_tid__);
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
@@ -326,6 +329,8 @@ void co_env::start_schedule_routine__()
 
         set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
         remove_detached_ctx__();       // 切换回来之后，将完成的ctx删除
+
+        sleep_if_need();
 
         // 切回idle之后，睡眠等待
         // CO_O_DEBUG("idle co start wait add ctx or destroying ... %p", this);
