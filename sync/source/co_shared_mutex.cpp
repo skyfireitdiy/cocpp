@@ -1,5 +1,6 @@
 #include "co_shared_mutex.h"
 #include "co.h"
+#include "co_define.h"
 #include "co_error.h"
 #include "co_sync_helper.h"
 #include "co_this_co.h"
@@ -11,8 +12,8 @@ CO_NAMESPACE_BEGIN
 
 void co_shared_mutex::lock()
 {
-    auto         ctx = co::current_ctx();
-    lock_context context {
+    auto                ctx = co::current_ctx();
+    shared_lock_context context {
         .type = lock_type::unique,
         .ctx  = ctx
     };
@@ -21,9 +22,7 @@ void co_shared_mutex::lock()
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (!owners__.empty())
     {
-        ctx->enter_wait_rc_state(CO_RC_TYPE_SHARED_MUTEX, this);
-        wait_list__.push_back(context);
-
+        ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_list__, context);
         lock_yield__(ctx, spinlock__, [this] { return !owners__.empty(); });
     }
 
@@ -32,8 +31,8 @@ void co_shared_mutex::lock()
 
 bool co_shared_mutex::try_lock()
 {
-    auto         ctx = co::current_ctx();
-    lock_context context {
+    auto                ctx = co::current_ctx();
+    shared_lock_context context {
         .type = lock_type::unique,
         .ctx  = ctx
     };
@@ -50,8 +49,8 @@ bool co_shared_mutex::try_lock()
 
 void co_shared_mutex::unlock()
 {
-    auto         ctx = co::current_ctx();
-    lock_context context {
+    auto                ctx = co::current_ctx();
+    shared_lock_context context {
         .type = lock_type::unique,
         .ctx  = ctx
     };
@@ -66,36 +65,13 @@ void co_shared_mutex::unlock()
     }
 
     owners__.erase(context);
-
-    if (wait_list__.empty())
-    {
-        return;
-    }
-
-    if (wait_list__.front().type == lock_type::unique)
-    {
-        auto next = wait_list__.front();
-        wait_list__.pop_front();
-        next.ctx->leave_wait_rc_state();
-        return;
-    }
-
-    auto iter = std::remove_if(wait_list__.begin(), wait_list__.end(), [](auto& c) {
-        return c.type == lock_type::shared;
-    });
-
-    std::list<lock_context> new_owner { iter, wait_list__.end() };
-    wait_list__.erase(iter, wait_list__.end());
-    for (auto& c : new_owner)
-    {
-        c.ctx->leave_wait_rc_state();
-    }
+    wake_up_waiters__();
 }
 
 void co_shared_mutex::lock_shared()
 {
-    auto         ctx = co::current_ctx();
-    lock_context context {
+    auto                ctx = co::current_ctx();
+    shared_lock_context context {
         .type = lock_type::shared,
         .ctx  = ctx
     };
@@ -104,8 +80,7 @@ void co_shared_mutex::lock_shared()
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
-        ctx->enter_wait_rc_state(CO_RC_TYPE_SHARED_MUTEX, this);
-        wait_list__.push_back(context);
+        ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_list__, context);
 
         lock_yield__(ctx, spinlock__, [this] { return !owners__.empty() && (*owners__.begin()).type == lock_type::unique; });
     }
@@ -115,8 +90,8 @@ void co_shared_mutex::lock_shared()
 
 bool co_shared_mutex::try_lock_shared()
 {
-    auto         ctx = co::current_ctx();
-    lock_context context {
+    auto                ctx = co::current_ctx();
+    shared_lock_context context {
         .type = lock_type::shared,
         .ctx  = ctx
     };
@@ -133,8 +108,8 @@ bool co_shared_mutex::try_lock_shared()
 
 void co_shared_mutex::unlock_shared()
 {
-    auto         ctx = co::current_ctx();
-    lock_context context {
+    auto                ctx = co::current_ctx();
+    shared_lock_context context {
         .type = lock_type::shared,
         .ctx  = ctx
     };
@@ -149,7 +124,11 @@ void co_shared_mutex::unlock_shared()
     }
 
     owners__.erase(context);
+    wake_up_waiters__();
+}
 
+void co_shared_mutex::wake_up_waiters__()
+{
     if (wait_list__.empty())
     {
         return;
@@ -157,9 +136,9 @@ void co_shared_mutex::unlock_shared()
 
     if (wait_list__.front().type == lock_type::unique)
     {
-        auto next = wait_list__.front();
-        wait_list__.pop_front();
-        next.ctx->leave_wait_rc_state();
+        wake_front__(wait_list__, std::function([](shared_lock_context& ctx) {
+                         ctx.ctx->leave_wait_rc_state();
+                     }));
         return;
     }
 
@@ -167,7 +146,7 @@ void co_shared_mutex::unlock_shared()
         return c.type == lock_type::shared;
     });
 
-    std::list<lock_context> new_owner { iter, wait_list__.end() };
+    std::list<shared_lock_context> new_owner { iter, wait_list__.end() };
     wait_list__.erase(iter, wait_list__.end());
     for (auto& c : new_owner)
     {
@@ -175,12 +154,12 @@ void co_shared_mutex::unlock_shared()
     }
 }
 
-bool co_shared_mutex::lock_context::operator==(const co_shared_mutex::lock_context& other) const
+bool co_shared_mutex::shared_lock_context::operator==(const co_shared_mutex::shared_lock_context& other) const
 {
     return ctx == other.ctx && type == other.type;
 }
 
-std::size_t co_shared_mutex::lock_context_hasher::operator()(const lock_context& other) const
+std::size_t co_shared_mutex::lock_context_hasher::operator()(const shared_lock_context& other) const
 {
     return std::hash<co_ctx*> {}(other.ctx) ^ (std::hash<lock_type> {}(other.type) << 1);
 }

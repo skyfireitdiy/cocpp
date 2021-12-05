@@ -16,9 +16,7 @@ void co_recursive_mutex::lock()
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (owner__ != ctx && owner__ != nullptr)
     {
-        ctx->enter_wait_rc_state(CO_RC_TYPE_RECURSIVE_MUTEX, this);
-        wait_list__.push_back(ctx);
-
+        ctx_enter_wait_state__(ctx, CO_RC_TYPE_RECURSIVE_MUTEX, this, wait_list__);
         lock_yield__(ctx, spinlock__, [this, ctx] { return owner__ != ctx && owner__ != nullptr; });
     }
 
@@ -58,14 +56,7 @@ void co_recursive_mutex::unlock()
     }
 
     owner__ = nullptr;
-    if (wait_list__.empty())
-    {
-        return;
-    }
-
-    auto next = wait_list__.front();
-    wait_list__.pop_front();
-    next->leave_wait_rc_state();
+    wake_front__(wait_list__);
 }
 
 CO_NAMESPACE_END

@@ -19,22 +19,24 @@ private:
         shared
     };
 
-    struct lock_context
+    struct shared_lock_context
     {
         lock_type type;
         co_ctx*   ctx;
 
-        bool operator==(const lock_context& other) const;
+        bool operator==(const shared_lock_context& other) const;
     };
 
     struct lock_context_hasher
     {
-        std::size_t operator()(const lock_context& other) const;
+        std::size_t operator()(const shared_lock_context& other) const;
     };
 
-    co_spinlock                                           spinlock__;
-    std::list<lock_context>                               wait_list__;
-    std::unordered_set<lock_context, lock_context_hasher> owners__;
+    co_spinlock                                                  spinlock__;
+    std::list<shared_lock_context>                               wait_list__;
+    std::unordered_set<shared_lock_context, lock_context_hasher> owners__;
+
+    void wake_up_waiters__();
 
 public:
     void lock();
