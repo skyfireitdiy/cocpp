@@ -2,6 +2,8 @@ _Pragma("once");
 
 #include "co_define.h"
 
+#include <mutex>
+
 CO_NAMESPACE_BEGIN
 
 class co_ctx;
@@ -25,6 +27,13 @@ enum class co_env_state : unsigned char
     blocked,    // 阻塞状态，需要创建更多的env分担任务
     destorying, // 正在销毁状态，不再调度ctx
     created,    // 创建完成状态，此env不能用于调度ctx，通常是普通线程适配产生的env
+};
+
+struct co_ctx_wait_data
+{
+    std::mutex mu;
+    int        type;
+    void*      rc;
 };
 
 CO_NAMESPACE_END
