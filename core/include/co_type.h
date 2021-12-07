@@ -3,10 +3,12 @@ _Pragma("once");
 #include "co_define.h"
 
 #include <mutex>
+#include <unordered_set>
 
 CO_NAMESPACE_BEGIN
 
 class co_ctx;
+class co_env;
 
 using co_byte          = unsigned char;
 using co_id            = unsigned long long;
@@ -34,6 +36,12 @@ struct co_ctx_wait_data
     std::mutex mu;
     int        type;
     void*      rc;
+};
+
+struct co_env_set
+{
+    std::unordered_set<co_env*> data;
+    std::recursive_mutex        lock;
 };
 
 CO_NAMESPACE_END

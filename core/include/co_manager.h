@@ -10,11 +10,13 @@ _Pragma("once");
 #include "co_stack_factory.h"
 
 #include <condition_variable>
+#include <deque>
 #include <functional>
 #include <future>
 #include <list>
 #include <map>
 #include <mutex>
+#include <unordered_set>
 
 CO_NAMESPACE_BEGIN
 
@@ -47,8 +49,7 @@ class co_manager final : public co_singleton_static<co_manager>
     RegCoEvent(timing_routine_timout);
 
 private:
-    std::list<co_env*>   env_list__;
-    std::recursive_mutex mu_env_list__;
+    co_env_set env_set__;
 
     std::atomic<bool> clean_up__ = { false };
 

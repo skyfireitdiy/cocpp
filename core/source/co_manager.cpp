@@ -14,16 +14,16 @@ CO_NAMESPACE_BEGIN
 
 co_env* co_manager::get_best_env__()
 {
-    std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
-    if (env_list__.empty())
+    std::lock_guard<std::recursive_mutex> lck(env_set__.lock);
+    if (env_set__.data.empty())
     {
         return create_env(true);
     }
 
-    auto   best_env               = env_list__.front();
-    auto   min_workload           = best_env->workload();
-    size_t can_schedule_env_count = 0;
-    for (auto& env : env_list__)
+    co_env* best_env               = nullptr;
+    auto    min_workload           = std::numeric_limits<int>::max();
+    size_t  can_schedule_env_count = 0;
+    for (auto& env : env_set__.data)
     {
         if (env->state() == co_env_state::idle)
         {
@@ -86,8 +86,8 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     {
         env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
     }
-    std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
-    env_list__.push_back(env);
+    std::lock_guard<std::recursive_mutex> lck(env_set__.lock);
+    env_set__.data.insert(env);
     ++exist_env_count__;
     // CO_O_DEBUG("create env : %p", env);
 
@@ -171,8 +171,9 @@ co_manager::co_manager()
 
 void co_manager::remove_env__(co_env* env)
 {
-    std::scoped_lock lock(mu_env_list__, mu_clean_up__);
-    env_list__.remove(env);
+    std::scoped_lock lock(env_set__.lock, mu_clean_up__);
+    env_set__.data.erase(env);
+
     std::lock_guard<std::recursive_mutex> lck(mu_clean_up__);
     // CO_O_DEBUG("push to clean up: %p", env);
     expired_env__.push_back(env);
@@ -183,12 +184,12 @@ void co_manager::remove_env__(co_env* env)
 
 void co_manager::create_env_from_this_thread__()
 {
-    std::lock_guard<std::recursive_mutex> lck(mu_env_list__);
+    std::lock_guard<std::recursive_mutex> lck(env_set__.lock);
     current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
 
     sub_env_event__(current_env__);
 
-    env_list__.push_back(current_env__);
+    env_set__.data.insert(current_env__);
     ++exist_env_count__;
     // CO_O_DEBUG("create env from this thread : %p", current_env__);
 
@@ -206,11 +207,11 @@ co_env* co_manager::current_env()
 
 void co_manager::set_clean_up__()
 {
-    std::scoped_lock lock(mu_clean_up__, mu_env_list__);
+    std::scoped_lock lock(mu_clean_up__, env_set__.lock);
     // CO_O_DEBUG("set clean up!!!");
-    clean_up__         = true;
-    auto env_list_back = env_list__; // 在下面的清理操作中需要删除list中的元素导致迭代器失效，此处创建一个副本（也可以直接加入过期列表，然后清空env_list__，但是这样表达力会好些）
-    for (auto& env : env_list_back)
+    clean_up__       = true;
+    auto backup_data = env_set__.data;
+    for (auto& env : backup_data)
     {
         if (env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
         {
@@ -270,12 +271,12 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
 
 void co_manager::force_schedule__()
 {
-    std::scoped_lock lock(mu_clean_up__, mu_env_list__);
+    std::scoped_lock lock(mu_clean_up__, env_set__.lock);
     if (clean_up__)
     {
         return;
     }
-    for (auto& env : env_list__)
+    for (auto& env : env_set__.data)
     {
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
         if (env->is_blocked())
@@ -288,7 +289,7 @@ void co_manager::force_schedule__()
 
 void co_manager::redistribute_ctx__()
 {
-    std::scoped_lock lock(mu_clean_up__, mu_env_list__);
+    std::scoped_lock lock(mu_clean_up__, env_set__.lock);
     if (clean_up__)
     {
         return;
@@ -300,7 +301,7 @@ void co_manager::redistribute_ctx__()
         target.insert(target.end(), src.begin(), src.end());
     };
 
-    for (auto& env : env_list__)
+    for (auto& env : env_set__.data)
     {
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
         if (env->is_blocked())
@@ -324,12 +325,12 @@ void co_manager::redistribute_ctx__()
 
 void co_manager::destroy_redundant_env__()
 {
-    std::lock_guard<std::recursive_mutex> lock(mu_env_list__);
+    std::lock_guard<std::recursive_mutex> lock(env_set__.lock);
     // 然后删除多余的处于idle状态的env
     size_t               can_schedule_env_count = 0;
     std::vector<co_env*> idle_env_list;
-    idle_env_list.reserve(env_list__.size());
-    for (auto& env : env_list__)
+    idle_env_list.reserve(env_set__.data.size());
+    for (auto& env : env_set__.data)
     {
         if (env->can_schedule_ctx())
         {
