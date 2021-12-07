@@ -46,6 +46,9 @@ struct co_env_set
     std::unordered_set<co_env*> expired_set;
     std::recursive_mutex        expired_lock;
     std::condition_variable_any cond_expired_env;
+    unsigned int                normal_env_count { 0 };
+    unsigned int                base_env_count { std::thread::hardware_concurrency() };
+    unsigned int                max_env_count { std::thread::hardware_concurrency() * 2 };
 };
 
 CO_NAMESPACE_END

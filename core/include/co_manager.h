@@ -55,10 +55,6 @@ private:
 
     std::list<std::future<void>> background_task__;
 
-    std::atomic<unsigned int> exist_env_count__ { 0 };
-    std::atomic<unsigned int> base_thread_count__ { std::thread::hardware_concurrency() };
-    std::atomic<unsigned int> max_thread_count__ { std::thread::hardware_concurrency() * 2 };
-
     co_scheduler_factory* const scheduler_factory__ { nullptr };
     co_env_factory* const       env_factory__ { co_env_factory::instance() };
     co_ctx_factory* const       ctx_factory__ { co_ctx_factory::instance() };

@@ -51,7 +51,7 @@ co_env* co_manager::get_best_env__()
     }
 
     // 如果可用于调度的env数量小于基础线程数量，创建一个来调度新的ctx
-    if (can_schedule_env_count < base_thread_count__)
+    if (can_schedule_env_count < env_set__.base_env_count)
     {
         auto ret = create_env(true);
         best_env_got().pub(ret);
@@ -88,7 +88,7 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     }
     std::lock_guard<std::recursive_mutex> lck(env_set__.normal_lock);
     env_set__.normal_set.insert(env);
-    ++exist_env_count__;
+    ++env_set__.normal_env_count;
     // CO_O_DEBUG("create env : %p", env);
 
     env_created().pub(env);
@@ -190,7 +190,7 @@ void co_manager::create_env_from_this_thread__()
     sub_env_event__(current_env__);
 
     env_set__.normal_set.insert(current_env__);
-    ++exist_env_count__;
+    ++env_set__.normal_env_count;
     // CO_O_DEBUG("create env from this thread : %p", current_env__);
 
     env_from_this_thread_created().pub(current_env__);
@@ -231,16 +231,16 @@ void co_manager::set_clean_up__()
 void co_manager::clean_env_routine__()
 {
     std::unique_lock<std::recursive_mutex> lck(env_set__.expired_lock);
-    while (!clean_up__ || exist_env_count__ != 0)
+    while (!clean_up__ || env_set__.normal_env_count != 0)
     {
         // CO_O_DEBUG("wait to wake up ...");
         env_set__.cond_expired_env.wait(lck);
-        // CO_O_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)exist_env_count__, env_set__.expired_set.size());
+        // CO_O_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)env_set__.normal_env_count, env_set__.expired_set.size());
         for (auto& p : env_set__.expired_set)
         {
             // CO_O_DEBUG("clean up an env: %p", p);
             env_factory__->destroy_env(p);
-            --exist_env_count__;
+            --env_set__.normal_env_count;
         }
         env_set__.expired_set.clear();
     }
@@ -255,8 +255,8 @@ void co_manager::set_base_schedule_thread_count(size_t base_thread_count)
     {
         base_thread_count = 1;
     }
-    base_thread_count__ = base_thread_count;
-    base_thread_count_set().pub(base_thread_count__);
+    env_set__.base_env_count = base_thread_count;
+    base_thread_count_set().pub(env_set__.base_env_count);
 }
 
 void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
@@ -265,8 +265,8 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
     {
         max_thread_count = 1;
     }
-    max_thread_count__ = max_thread_count;
-    max_thread_count_set().pub(max_thread_count__);
+    env_set__.max_env_count = max_thread_count;
+    max_thread_count_set().pub(env_set__.max_env_count);
 }
 
 void co_manager::force_schedule__()
@@ -342,9 +342,9 @@ void co_manager::destroy_redundant_env__()
         }
     }
     // 超出max_thread_count__，需要销毁env
-    if (can_schedule_env_count > max_thread_count__)
+    if (can_schedule_env_count > env_set__.max_env_count)
     {
-        auto should_destroy_count = can_schedule_env_count - max_thread_count__;
+        auto should_destroy_count = can_schedule_env_count - env_set__.max_env_count;
         for (size_t i = 0; i < should_destroy_count && i < idle_env_list.size(); ++i)
         {
             idle_env_list[i]->stop_schedule();
