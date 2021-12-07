@@ -54,9 +54,6 @@ private:
     std::atomic<bool> clean_up__ = { false };
 
     std::list<std::future<void>> background_task__;
-    std::list<co_env*>           expired_env__;
-    mutable std::recursive_mutex mu_clean_up__;
-    std::condition_variable_any  cond_expired_env__;
 
     std::atomic<unsigned int> exist_env_count__ { 0 };
     std::atomic<unsigned int> base_thread_count__ { std::thread::hardware_concurrency() };

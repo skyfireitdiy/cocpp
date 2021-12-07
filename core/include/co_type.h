@@ -2,6 +2,7 @@ _Pragma("once");
 
 #include "co_define.h"
 
+#include <condition_variable>
 #include <mutex>
 #include <unordered_set>
 
@@ -40,8 +41,11 @@ struct co_ctx_wait_data
 
 struct co_env_set
 {
-    std::unordered_set<co_env*> data;
-    std::recursive_mutex        lock;
+    std::unordered_set<co_env*> normal_set;
+    std::recursive_mutex        normal_lock;
+    std::unordered_set<co_env*> expired_set;
+    std::recursive_mutex        expired_lock;
+    std::condition_variable_any cond_expired_env;
 };
 
 CO_NAMESPACE_END

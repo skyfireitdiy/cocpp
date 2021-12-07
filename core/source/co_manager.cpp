@@ -14,8 +14,8 @@ CO_NAMESPACE_BEGIN
 
 co_env* co_manager::get_best_env__()
 {
-    std::lock_guard<std::recursive_mutex> lck(env_set__.lock);
-    if (env_set__.data.empty())
+    std::lock_guard<std::recursive_mutex> lck(env_set__.normal_lock);
+    if (env_set__.normal_set.empty())
     {
         return create_env(true);
     }
@@ -23,7 +23,7 @@ co_env* co_manager::get_best_env__()
     co_env* best_env               = nullptr;
     auto    min_workload           = std::numeric_limits<int>::max();
     size_t  can_schedule_env_count = 0;
-    for (auto& env : env_set__.data)
+    for (auto& env : env_set__.normal_set)
     {
         if (env->state() == co_env_state::idle)
         {
@@ -86,8 +86,8 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     {
         env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
     }
-    std::lock_guard<std::recursive_mutex> lck(env_set__.lock);
-    env_set__.data.insert(env);
+    std::lock_guard<std::recursive_mutex> lck(env_set__.normal_lock);
+    env_set__.normal_set.insert(env);
     ++exist_env_count__;
     // CO_O_DEBUG("create env : %p", env);
 
@@ -171,25 +171,25 @@ co_manager::co_manager()
 
 void co_manager::remove_env__(co_env* env)
 {
-    std::scoped_lock lock(env_set__.lock, mu_clean_up__);
-    env_set__.data.erase(env);
+    std::scoped_lock lock(env_set__.normal_lock, env_set__.expired_lock);
+    env_set__.normal_set.erase(env);
 
-    std::lock_guard<std::recursive_mutex> lck(mu_clean_up__);
+    std::lock_guard<std::recursive_mutex> lck(env_set__.expired_lock);
     // CO_O_DEBUG("push to clean up: %p", env);
-    expired_env__.push_back(env);
-    cond_expired_env__.notify_one();
+    env_set__.expired_set.insert(env);
+    env_set__.cond_expired_env.notify_one();
 
     env_removed().pub(env);
 }
 
 void co_manager::create_env_from_this_thread__()
 {
-    std::lock_guard<std::recursive_mutex> lck(env_set__.lock);
+    std::lock_guard<std::recursive_mutex> lck(env_set__.normal_lock);
     current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
 
     sub_env_event__(current_env__);
 
-    env_set__.data.insert(current_env__);
+    env_set__.normal_set.insert(current_env__);
     ++exist_env_count__;
     // CO_O_DEBUG("create env from this thread : %p", current_env__);
 
@@ -207,10 +207,10 @@ co_env* co_manager::current_env()
 
 void co_manager::set_clean_up__()
 {
-    std::scoped_lock lock(mu_clean_up__, env_set__.lock);
+    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock);
     // CO_O_DEBUG("set clean up!!!");
     clean_up__       = true;
-    auto backup_data = env_set__.data;
+    auto backup_data = env_set__.normal_set;
     for (auto& env : backup_data)
     {
         if (env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
@@ -223,26 +223,26 @@ void co_manager::set_clean_up__()
         // CO_O_DEBUG("call stop_schedule on %p", env);
         env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
     }
-    cond_expired_env__.notify_one();
+    env_set__.cond_expired_env.notify_one();
 
     clean_up_set().pub();
 }
 
 void co_manager::clean_env_routine__()
 {
-    std::unique_lock<std::recursive_mutex> lck(mu_clean_up__);
+    std::unique_lock<std::recursive_mutex> lck(env_set__.expired_lock);
     while (!clean_up__ || exist_env_count__ != 0)
     {
         // CO_O_DEBUG("wait to wake up ...");
-        cond_expired_env__.wait(lck);
-        // CO_O_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)exist_env_count__, expired_env__.size());
-        for (auto& p : expired_env__)
+        env_set__.cond_expired_env.wait(lck);
+        // CO_O_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)exist_env_count__, env_set__.expired_set.size());
+        for (auto& p : env_set__.expired_set)
         {
             // CO_O_DEBUG("clean up an env: %p", p);
             env_factory__->destroy_env(p);
             --exist_env_count__;
         }
-        expired_env__.clear();
+        env_set__.expired_set.clear();
     }
     // CO_O_DEBUG("clean up env finished\n");
 
@@ -271,12 +271,12 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
 
 void co_manager::force_schedule__()
 {
-    std::scoped_lock lock(mu_clean_up__, env_set__.lock);
+    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock);
     if (clean_up__)
     {
         return;
     }
-    for (auto& env : env_set__.data)
+    for (auto& env : env_set__.normal_set)
     {
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
         if (env->is_blocked())
@@ -289,7 +289,7 @@ void co_manager::force_schedule__()
 
 void co_manager::redistribute_ctx__()
 {
-    std::scoped_lock lock(mu_clean_up__, env_set__.lock);
+    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock);
     if (clean_up__)
     {
         return;
@@ -301,7 +301,7 @@ void co_manager::redistribute_ctx__()
         target.insert(target.end(), src.begin(), src.end());
     };
 
-    for (auto& env : env_set__.data)
+    for (auto& env : env_set__.normal_set)
     {
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
         if (env->is_blocked())
@@ -325,12 +325,12 @@ void co_manager::redistribute_ctx__()
 
 void co_manager::destroy_redundant_env__()
 {
-    std::lock_guard<std::recursive_mutex> lock(env_set__.lock);
+    std::lock_guard<std::recursive_mutex> lock(env_set__.normal_lock);
     // 然后删除多余的处于idle状态的env
     size_t               can_schedule_env_count = 0;
     std::vector<co_env*> idle_env_list;
-    idle_env_list.reserve(env_set__.data.size());
-    for (auto& env : env_set__.data)
+    idle_env_list.reserve(env_set__.normal_set.size());
+    for (auto& env : env_set__.normal_set)
     {
         if (env->can_schedule_ctx())
         {
