@@ -3,7 +3,7 @@ _Pragma("once");
 #include "co_define.h"
 #include "co_noncopyable.h"
 #include "co_type.h"
-#include <list>
+#include <deque>
 #include <mutex>
 #include <vector>
 
@@ -19,10 +19,10 @@ private:
 
     std::mutex mu__;
 
-    const size_t                     min_zone__;
-    const size_t                     zone_count__;
-    const size_t                     max_cap__;
-    std::vector<std::list<co_byte*>> mem_pool__;
+    const size_t                      min_zone__;
+    const size_t                      zone_count__;
+    const size_t                      max_cap__;
+    std::vector<std::deque<co_byte*>> mem_pool__;
 
 public:
     co_mem_pool(size_t min_zone, size_t zone_count, size_t max_cap);

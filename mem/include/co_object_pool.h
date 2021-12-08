@@ -1,10 +1,11 @@
 _Pragma("once");
 
 #include "co_define.h"
+#include "co_noncopyable.h"
 #include "co_type.h"
 #include <cassert>
 #include <cstdlib>
-#include <list>
+#include <deque>
 #include <mutex>
 
 CO_NAMESPACE_BEGIN
@@ -13,9 +14,9 @@ template <typename ObjectType>
 class co_object_pool final : private co_noncopyable
 {
 private:
-    std::list<void*> pool__;
-    std::mutex       mu__;
-    size_t           max_cap__;
+    std::deque<void*> pool__;
+    std::mutex        mu__;
+    size_t            max_cap__;
 
 public:
     co_object_pool(size_t max_cap);

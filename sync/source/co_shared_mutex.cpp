@@ -22,7 +22,7 @@ void co_shared_mutex::lock()
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (!owners__.empty())
     {
-        ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_list__, context);
+        ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_deque__, context);
         lock_yield__(ctx, spinlock__, [this] { return !owners__.empty(); });
     }
 
@@ -80,7 +80,7 @@ void co_shared_mutex::lock_shared()
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
-        ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_list__, context);
+        ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_deque__, context);
 
         lock_yield__(ctx, spinlock__, [this] { return !owners__.empty() && (*owners__.begin()).type == lock_type::unique; });
     }
@@ -129,25 +129,25 @@ void co_shared_mutex::unlock_shared()
 
 void co_shared_mutex::wake_up_waiters__()
 {
-    if (wait_list__.empty())
+    if (wait_deque__.empty())
     {
         return;
     }
 
-    if (wait_list__.front().type == lock_type::unique)
+    if (wait_deque__.front().type == lock_type::unique)
     {
-        wake_front__(wait_list__, std::function([](shared_lock_context& ctx) {
+        wake_front__(wait_deque__, std::function([](shared_lock_context& ctx) {
                          ctx.ctx->leave_wait_rc_state();
                      }));
         return;
     }
 
-    auto iter = std::remove_if(wait_list__.begin(), wait_list__.end(), [](auto& c) {
+    auto iter = std::remove_if(wait_deque__.begin(), wait_deque__.end(), [](auto& c) {
         return c.type == lock_type::shared;
     });
 
-    std::list<shared_lock_context> new_owner { iter, wait_list__.end() };
-    wait_list__.erase(iter, wait_list__.end());
+    std::deque<shared_lock_context> new_owner { iter, wait_deque__.end() };
+    wait_deque__.erase(iter, wait_deque__.end());
     for (auto& c : new_owner)
     {
         c.ctx->leave_wait_rc_state();

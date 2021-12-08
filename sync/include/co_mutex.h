@@ -1,7 +1,7 @@
 _Pragma("once");
 
 #include <atomic>
-#include <list>
+#include <deque>
 
 #include "co_define.h"
 #include "co_noncopyable.h"
@@ -12,9 +12,9 @@ CO_NAMESPACE_BEGIN
 class co_ctx;
 class co_mutex : private co_noncopyable
 {
-    co_ctx*            owner__ { nullptr };
-    co_spinlock        spinlock__;
-    std::list<co_ctx*> wait_list__;
+    co_ctx*             owner__ { nullptr };
+    co_spinlock         spinlock__;
+    std::deque<co_ctx*> wait_deque__;
 
 public:
     void lock();

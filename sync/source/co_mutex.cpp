@@ -15,7 +15,7 @@ void co_mutex::lock()
     CoDefer([this, ctx] { spinlock__.unlock(ctx); });
     if (owner__ != nullptr)
     {
-        ctx_enter_wait_state__(ctx, CO_RC_TYPE_MUTEX, this, wait_list__);
+        ctx_enter_wait_state__(ctx, CO_RC_TYPE_MUTEX, this, wait_deque__);
         lock_yield__(ctx, spinlock__, [this] { return owner__ != nullptr; });
     }
     owner__ = ctx;
@@ -47,7 +47,7 @@ void co_mutex::unlock()
 
     owner__ = nullptr;
 
-    wake_front__(wait_list__);
+    wake_front__(wait_deque__);
 }
 
 CO_NAMESPACE_END

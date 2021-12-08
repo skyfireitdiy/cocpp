@@ -4,7 +4,7 @@ _Pragma("once");
 #include "co_noncopyable.h"
 #include "co_spinlock.h"
 
-#include <list>
+#include <deque>
 #include <mutex>
 #include <unordered_set>
 
@@ -33,7 +33,7 @@ private:
     };
 
     co_spinlock                                                  spinlock__;
-    std::list<shared_lock_context>                               wait_list__;
+    std::deque<shared_lock_context>                               wait_deque__;
     std::unordered_set<shared_lock_context, lock_context_hasher> owners__;
 
     void wake_up_waiters__();
