@@ -55,10 +55,7 @@ private:
 
     std::list<std::future<void>> background_task__;
 
-    co_scheduler_factory* const scheduler_factory__ { nullptr };
-    co_env_factory* const       env_factory__ { co_env_factory::instance() };
-    co_ctx_factory* const       ctx_factory__ { co_ctx_factory::instance() };
-    co_stack_factory* const     stack_factory__ { co_stack_factory::instance() };
+    co_factory_set factory_set__;
 
     mutable std::mutex                           mu_timing_duration__;
     std::chrono::high_resolution_clock::duration timing_duration__ { std::chrono::milliseconds(10) };

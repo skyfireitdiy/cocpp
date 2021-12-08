@@ -10,6 +10,10 @@ CO_NAMESPACE_BEGIN
 
 class co_ctx;
 class co_env;
+class co_scheduler_factory;
+class co_env_factory;
+class co_ctx_factory;
+class co_stack_factory;
 
 using co_byte          = unsigned char;
 using co_id            = unsigned long long;
@@ -46,9 +50,16 @@ struct co_env_set
     std::unordered_set<co_env*> expired_set;
     std::recursive_mutex        expired_lock;
     std::condition_variable_any cond_expired_env;
-    unsigned int                normal_env_count { 0 };
-    unsigned int                base_env_count { std::thread::hardware_concurrency() };
-    unsigned int                max_env_count { std::thread::hardware_concurrency() * 2 };
+    unsigned int                normal_env_count;
+    unsigned int                base_env_count;
+    unsigned int                max_env_count;
+};
+
+struct co_factory_set
+{
+    co_env_factory* const   env_factory;
+    co_ctx_factory* const   ctx_factory;
+    co_stack_factory* const stack_factory;
 };
 
 CO_NAMESPACE_END

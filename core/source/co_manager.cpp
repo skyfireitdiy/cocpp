@@ -78,7 +78,7 @@ void co_manager::sub_ctx_event__(co_ctx* ctx)
 co_env* co_manager::create_env(bool dont_auto_destory)
 {
     assert(!clean_up__);
-    auto env = env_factory__->create_env(default_shared_stack_size__);
+    auto env = factory_set__.env_factory->create_env(default_shared_stack_size__);
 
     sub_env_event__(env);
 
@@ -144,29 +144,34 @@ void co_manager::free_mem__()
     {
         if (need_free_mem_cb__())
         {
-            env_factory__->free_obj_pool();
+            factory_set__.env_factory->free_obj_pool();
         }
         if (need_free_mem_cb__())
         {
-            ctx_factory__->free_obj_pool();
+            factory_set__.ctx_factory->free_obj_pool();
         }
         if (need_free_mem_cb__())
         {
-            stack_factory__->free_obj_pool();
+            factory_set__.stack_factory->free_obj_pool();
         }
         if (need_free_mem_cb__())
         {
-            stack_factory__->free_stack_mem_pool();
+            factory_set__.stack_factory->free_stack_mem_pool();
         }
     }
 }
 
 co_manager::co_manager()
+    : env_set__ {
+        .normal_env_count = 0,
+        .base_env_count   = std::thread::hardware_concurrency(),
+        .max_env_count    = std::thread::hardware_concurrency() * 2
+    }
+    , factory_set__ { .env_factory = co_env_factory::instance(), .ctx_factory = co_ctx_factory::instance(), .stack_factory = co_stack_factory::instance() }
 {
     sub_manager_event__();
-    create_background_task__();
-
     setup_switch_handler();
+    create_background_task__();
 }
 
 void co_manager::remove_env__(co_env* env)
@@ -185,7 +190,7 @@ void co_manager::remove_env__(co_env* env)
 void co_manager::create_env_from_this_thread__()
 {
     std::lock_guard<std::recursive_mutex> lck(env_set__.normal_lock);
-    current_env__ = env_factory__->create_env_from_this_thread(default_shared_stack_size__);
+    current_env__ = factory_set__.env_factory->create_env_from_this_thread(default_shared_stack_size__);
 
     sub_env_event__(current_env__);
 
@@ -239,7 +244,7 @@ void co_manager::clean_env_routine__()
         for (auto& p : env_set__.expired_set)
         {
             // CO_O_DEBUG("clean up an env: %p", p);
-            env_factory__->destroy_env(p);
+            factory_set__.env_factory->destroy_env(p);
             --env_set__.normal_env_count;
         }
         env_set__.expired_set.clear();
@@ -394,7 +399,6 @@ co_manager::~co_manager()
 
 void co_manager::destroy_all_factory__()
 {
-    delete scheduler_factory__;
     co_stack_factory::destroy_instance();
     co_ctx_factory::destroy_instance();
     co_env_factory::destroy_instance();
@@ -412,7 +416,7 @@ void co_manager::wait_background_task__()
 
 co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lock_destroy)
 {
-    auto ctx = ctx_factory__->create_ctx(config);
+    auto ctx = factory_set__.ctx_factory->create_ctx(config);
     sub_ctx_event__(ctx);
     if (lock_destroy)
     {
