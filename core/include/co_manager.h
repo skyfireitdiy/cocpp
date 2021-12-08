@@ -49,13 +49,21 @@ class co_manager final : public co_singleton_static<co_manager>
     RegCoEvent(timing_routine_timout);
 
 private:
-    co_env_set env_set__;
+    co_env_set env_set__ {
+        .normal_env_count = 0,
+        .base_env_count   = std::thread::hardware_concurrency(),
+        .max_env_count    = std::thread::hardware_concurrency() * 2
+    };
 
     bool clean_up__ { false };
 
     std::list<std::future<void>> background_task__;
 
-    co_factory_set factory_set__;
+    co_factory_set factory_set__ {
+        .env_factory   = co_env_factory::instance(),
+        .ctx_factory   = co_ctx_factory::instance(),
+        .stack_factory = co_stack_factory::instance()
+    };
 
     mutable std::mutex                           mu_timing_duration__;
     std::chrono::high_resolution_clock::duration timing_duration__ { std::chrono::milliseconds(10) };

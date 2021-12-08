@@ -162,12 +162,6 @@ void co_manager::free_mem__()
 }
 
 co_manager::co_manager()
-    : env_set__ {
-        .normal_env_count = 0,
-        .base_env_count   = std::thread::hardware_concurrency(),
-        .max_env_count    = std::thread::hardware_concurrency() * 2
-    }
-    , factory_set__ { .env_factory = co_env_factory::instance(), .ctx_factory = co_ctx_factory::instance(), .stack_factory = co_stack_factory::instance() }
 {
     sub_manager_event__();
     setup_switch_handler();
