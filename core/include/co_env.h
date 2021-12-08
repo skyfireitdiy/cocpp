@@ -71,7 +71,7 @@ private:
 
     co_tid schedule_thread_tid__ {};
 
-    std::atomic<bool> safepoint__ { false };
+    bool safepoint__ { false };
 
     co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 

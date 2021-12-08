@@ -51,7 +51,7 @@ class co_manager final : public co_singleton_static<co_manager>
 private:
     co_env_set env_set__;
 
-    std::atomic<bool> clean_up__ = { false };
+    bool clean_up__ { false };
 
     std::list<std::future<void>> background_task__;
 

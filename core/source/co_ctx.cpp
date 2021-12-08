@@ -67,7 +67,7 @@ void co_ctx::set_priority(int priority)
     }
     if (old_priority != priority__ && !test_flag(CO_CTX_FLAG_IDLE))
     {
-        priority_changed().pub(old_priority, priority__.load());
+        priority_changed().pub(old_priority, priority__);
     }
 }
 
