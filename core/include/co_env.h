@@ -49,7 +49,7 @@ class co_env final : private co_noncopyable,
     RegCoEvent(schedule_locked);
     RegCoEvent(schedule_unlocked);
     RegCoEvent(ctx_taken, co_ctx*);
-    RegCoEvent(ctx_inited, co_ctx*);
+    RegCoEvent(ctx_initted, co_ctx*);
     RegCoEvent(shared_stack_saved, co_ctx*);
     RegCoEvent(shared_stack_restored, co_ctx*);
     RegCoEvent(moveable_ctx_taken, std::list<co_ctx*>);

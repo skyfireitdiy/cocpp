@@ -50,7 +50,7 @@ void co_env::add_ctx(co_ctx* ctx)
     ctx->set_env(this);
 
     init_ctx(shared_stack__, ctx); // 初始化ctx
-    ctx_inited().pub(ctx);
+    ctx_initted().pub(ctx);
 
     scheduler__->add_ctx(ctx); // 添加到调度器
     set_state(co_env_state::busy);
