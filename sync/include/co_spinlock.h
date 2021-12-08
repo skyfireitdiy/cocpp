@@ -3,18 +3,19 @@ _Pragma("once");
 #include "co_define.h"
 #include "co_noncopyable.h"
 
-CO_NAMESPACE_BEGIN
+#include <atomic>
 
-class co_ctx;
+CO_NAMESPACE_BEGIN
 
 class co_spinlock final : private co_noncopyable
 {
 private:
-    std::atomic<co_ctx*> owner__;
+    std::atomic<bool> locked__ { false };
 
 public:
-    void lock(co_ctx* const ctx);
-    void unlock(co_ctx* const ctx);
+    void lock();
+    bool try_lock();
+    void unlock();
 };
 
 CO_NAMESPACE_END

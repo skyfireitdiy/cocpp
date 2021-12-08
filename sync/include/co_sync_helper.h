@@ -11,7 +11,7 @@ CO_NAMESPACE_BEGIN
 class co_ctx;
 class co_spinlock;
 
-void lock_yield__(co_ctx* ctx, co_spinlock& lk, std::function<bool()> checker);
+void lock_yield__(co_spinlock& lk, std::function<bool()> checker);
 
 void ctx_enter_wait_state__(co_ctx* ctx, int rc_type, void* rc, std::deque<co_ctx*>& wait_list);
 

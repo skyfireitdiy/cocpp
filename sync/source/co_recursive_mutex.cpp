@@ -12,12 +12,12 @@ CO_NAMESPACE_BEGIN
 void co_recursive_mutex::lock()
 {
     auto ctx = co::current_ctx();
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
     if (owner__ != ctx && owner__ != nullptr)
     {
         ctx_enter_wait_state__(ctx, CO_RC_TYPE_RECURSIVE_MUTEX, this, wait_deque__);
-        lock_yield__(ctx, spinlock__, [this, ctx] { return owner__ != ctx && owner__ != nullptr; });
+        lock_yield__(spinlock__, [this, ctx] { return owner__ != ctx && owner__ != nullptr; });
     }
 
     owner__ = ctx;
@@ -27,8 +27,8 @@ void co_recursive_mutex::lock()
 bool co_recursive_mutex::try_lock()
 {
     auto ctx = co::current_ctx();
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
     if (owner__ != ctx && owner__ != nullptr)
     {
         return false;
@@ -41,8 +41,8 @@ bool co_recursive_mutex::try_lock()
 void co_recursive_mutex::unlock()
 {
     auto ctx = co::current_ctx();
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
     if (owner__ != ctx)
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__);

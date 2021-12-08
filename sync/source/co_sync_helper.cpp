@@ -5,13 +5,13 @@
 
 CO_NAMESPACE_BEGIN
 
-void lock_yield__(co_ctx* ctx, co_spinlock& lk, std::function<bool()> checker)
+void lock_yield__(co_spinlock& lk, std::function<bool()> checker)
 {
     do
     {
-        lk.unlock(ctx);
+        lk.unlock();
         this_co::yield();
-        lk.lock(ctx);
+        lk.lock();
     } while (checker());
 }
 

@@ -4,23 +4,29 @@
 
 CO_NAMESPACE_BEGIN
 
-void co_spinlock::lock(co_ctx* const ctx)
+void co_spinlock::lock()
 {
-    co_ctx* null = nullptr;
-    while (!owner__.compare_exchange_strong(null, ctx))
+    bool lk = false;
+    while (!locked__.compare_exchange_strong(lk, true))
     {
         this_co::yield();
-        null = nullptr;
+        lk = false;
     }
 }
 
-void co_spinlock::unlock(co_ctx* const ctx)
+bool co_spinlock::try_lock()
 {
-    co_ctx* curr = ctx;
-    while (!owner__.compare_exchange_strong(curr, nullptr))
+    bool lk = false;
+    return locked__.compare_exchange_strong(lk, true);
+}
+
+void co_spinlock::unlock()
+{
+    bool lk = true;
+    while (!locked__.compare_exchange_strong(lk, false))
     {
         this_co::yield();
-        curr = ctx;
+        lk = true;
     }
 }
 

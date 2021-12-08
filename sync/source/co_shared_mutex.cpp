@@ -18,12 +18,12 @@ void co_shared_mutex::lock()
         .ctx  = ctx
     };
 
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
     if (!owners__.empty())
     {
         ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_deque__, context);
-        lock_yield__(ctx, spinlock__, [this] { return !owners__.empty(); });
+        lock_yield__(spinlock__, [this] { return !owners__.empty(); });
     }
 
     owners__.insert(context);
@@ -37,8 +37,8 @@ bool co_shared_mutex::try_lock()
         .ctx  = ctx
     };
 
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
     while (!owners__.empty())
     {
         return false;
@@ -55,8 +55,8 @@ void co_shared_mutex::unlock()
         .ctx  = ctx
     };
 
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
 
     if (!owners__.contains(context))
     {
@@ -76,13 +76,13 @@ void co_shared_mutex::lock_shared()
         .ctx  = ctx
     };
 
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
     if (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
         ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_deque__, context);
 
-        lock_yield__(ctx, spinlock__, [this] { return !owners__.empty() && (*owners__.begin()).type == lock_type::unique; });
+        lock_yield__(spinlock__, [this] { return !owners__.empty() && (*owners__.begin()).type == lock_type::unique; });
     }
 
     owners__.insert(context);
@@ -96,8 +96,8 @@ bool co_shared_mutex::try_lock_shared()
         .ctx  = ctx
     };
 
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
     if (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
         return false;
@@ -114,8 +114,8 @@ void co_shared_mutex::unlock_shared()
         .ctx  = ctx
     };
 
-    spinlock__.lock(ctx);
-    CoDefer([this, ctx] { spinlock__.unlock(ctx); });
+    spinlock__.lock();
+    CoDefer([this] { spinlock__.unlock(); });
 
     if (!owners__.contains(context))
     {

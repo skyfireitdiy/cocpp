@@ -10,6 +10,8 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
+class co_ctx;
+
 class co_shared_mutex : private co_noncopyable
 {
 private:
@@ -33,7 +35,7 @@ private:
     };
 
     co_spinlock                                                  spinlock__;
-    std::deque<shared_lock_context>                               wait_deque__;
+    std::deque<shared_lock_context>                              wait_deque__;
     std::unordered_set<shared_lock_context, lock_context_hasher> owners__;
 
     void wake_up_waiters__();
