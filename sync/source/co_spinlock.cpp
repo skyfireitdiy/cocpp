@@ -1,6 +1,7 @@
 #include "co_spinlock.h"
 #include "co_define.h"
 #include "co_this_co.h"
+#include <thread>
 
 CO_NAMESPACE_BEGIN
 
@@ -12,6 +13,10 @@ void co_spinlock::lock()
         if (need_schedule__)
         {
             this_co::yield();
+        }
+        else
+        {
+            std::this_thread::yield();
         }
         lk = false;
     }
@@ -31,6 +36,10 @@ void co_spinlock::unlock()
         if (need_schedule__)
         {
             this_co::yield();
+        }
+        else
+        {
+            std::this_thread::yield();
         }
         lk = true;
     }
