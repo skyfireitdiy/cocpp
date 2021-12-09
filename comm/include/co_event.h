@@ -2,7 +2,9 @@ _Pragma("once");
 
 #include "co_define.h"
 #include "co_noncopyable.h"
+#include "co_spinlock.h"
 #include "co_type.h"
+
 #include <functional>
 #include <list>
 #include <map>
@@ -16,7 +18,7 @@ class co_event final : private co_noncopyable
 {
 private:
     std::map<int, std::function<void(Args... args)>> cb_list__;
-    mutable std::mutex                               mu_cb_list__;
+    mutable co_spinlock                              mu_cb_list__ { false };
     co_event_handler                                 current_handler__ { 0 };
 
 public:
@@ -30,7 +32,7 @@ public:
 template <typename... Args>
 co_event_handler co_event<Args...>::sub(std::function<void(Args... args)> cb)
 {
-    std::lock_guard<std::mutex> lck(mu_cb_list__);
+    std::lock_guard<co_spinlock> lck(mu_cb_list__);
     cb_list__[current_handler__] = cb;
     return ++current_handler__;
 }
@@ -38,14 +40,14 @@ co_event_handler co_event<Args...>::sub(std::function<void(Args... args)> cb)
 template <typename... Args>
 void co_event<Args...>::unsub(co_event_handler h)
 {
-    std::lock_guard<std::mutex> lck(mu_cb_list__);
+    std::lock_guard<co_spinlock> lck(mu_cb_list__);
     cb_list__.erase(h);
 }
 
 template <typename... Args>
 void co_event<Args...>::pub(Args... args) const
 {
-    std::lock_guard<std::mutex> lck(mu_cb_list__);
+    std::lock_guard<co_spinlock> lck(mu_cb_list__);
     for (auto& [_, cb] : cb_list__)
     {
         cb(args...);

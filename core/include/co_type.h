@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include "co_define.h"
+#include "co_spinlock.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -38,9 +39,9 @@ enum class co_env_state : unsigned char
 
 struct co_ctx_wait_data
 {
-    std::mutex mu;
-    int        type;
-    void*      rc;
+    co_spinlock mu { false };
+    int         type;
+    void*       rc;
 };
 
 struct co_env_set

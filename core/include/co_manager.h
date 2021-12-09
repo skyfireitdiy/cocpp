@@ -7,6 +7,7 @@ _Pragma("once");
 #include "co_event.h"
 #include "co_noncopyable.h"
 #include "co_singleton.h"
+#include "co_spinlock.h"
 #include "co_stack_factory.h"
 
 #include <condition_variable>
@@ -65,7 +66,7 @@ private:
         .stack_factory = co_stack_factory::instance()
     };
 
-    mutable std::mutex                           mu_timing_duration__;
+    mutable co_spinlock                          mu_timing_duration__ { false };
     std::chrono::high_resolution_clock::duration timing_duration__ { std::chrono::milliseconds(10) };
 
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;

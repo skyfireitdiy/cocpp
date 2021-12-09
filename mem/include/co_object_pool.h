@@ -15,7 +15,7 @@ class co_object_pool final : private co_noncopyable
 {
 private:
     std::deque<void*> pool__;
-    std::mutex        mu__;
+    co_spinlock       mu__ { false };
     size_t            max_cap__;
 
 public:
@@ -37,8 +37,8 @@ template <typename ObjectType>
 template <typename... ConstructParam>
 ObjectType* co_object_pool<ObjectType>::create_obj(ConstructParam&&... params)
 {
-    std::lock_guard<std::mutex> lck(mu__);
-    void*                       mem = nullptr;
+    std::lock_guard<co_spinlock> lck(mu__);
+    void*                        mem = nullptr;
     if (pool__.empty())
     {
         mem = std::aligned_alloc(alignof(ObjectType), sizeof(ObjectType));
@@ -55,7 +55,7 @@ ObjectType* co_object_pool<ObjectType>::create_obj(ConstructParam&&... params)
 template <typename ObjectType>
 void co_object_pool<ObjectType>::destroy_obj(ObjectType* obj)
 {
-    std::lock_guard<std::mutex> lck(mu__);
+    std::lock_guard<co_spinlock> lck(mu__);
     obj->~ObjectType();
     pool__.push_front(obj); // 尽快用到这块内存
 }
@@ -63,7 +63,7 @@ void co_object_pool<ObjectType>::destroy_obj(ObjectType* obj)
 template <typename ObjectType>
 void co_object_pool<ObjectType>::clear_free_object()
 {
-    std::lock_guard<std::mutex> lck(mu__);
+    std::lock_guard<co_spinlock> lck(mu__);
     for (auto& obj : pool__)
     {
         free(obj);

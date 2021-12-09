@@ -117,7 +117,7 @@ co_id co_ctx::id() const
 
 void co_ctx::enter_wait_rc_state(int rc_type, void* rc)
 {
-    std::lock_guard<std::mutex> lock(wait_data__.mu);
+    std::lock_guard<co_spinlock> lock(wait_data__.mu);
     wait_data__.type = rc_type;
     wait_data__.rc   = rc;
     set_flag(CO_CTX_FLAG_WAITING);

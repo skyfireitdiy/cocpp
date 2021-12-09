@@ -2,6 +2,7 @@ _Pragma("once");
 
 #include "co_define.h"
 #include "co_scheduler.h"
+#include "co_spinlock.h"
 
 #include <list>
 #include <mutex>
@@ -13,7 +14,7 @@ class co_o1_scheduler : public co_scheduler
 {
 private:
     std::vector<std::list<co_ctx*>> all_ctx__;
-    mutable std::mutex              mu_all_ctx__;
+    mutable co_spinlock             mu_all_ctx__ { false };
     co_ctx*                         curr_obj__ { nullptr };
     int                             min_priority__ = 0;
 

@@ -2,6 +2,7 @@ _Pragma("once");
 
 #include "co_define.h"
 #include "co_noncopyable.h"
+#include "co_spinlock.h"
 #include "co_type.h"
 #include <deque>
 #include <mutex>
@@ -17,7 +18,7 @@ private:
 
     size_t get_zone_index__(size_t size) const;
 
-    std::mutex mu__;
+    co_spinlock mu__ { false };
 
     const size_t                      min_zone__;
     const size_t                      zone_count__;

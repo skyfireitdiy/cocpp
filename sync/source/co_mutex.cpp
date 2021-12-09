@@ -12,7 +12,7 @@ void co_mutex::lock()
 {
     auto ctx = co::current_ctx();
     spinlock__.lock();
-    CoDefer([this, ctx] { spinlock__.unlock(); });
+    CoDefer([this] { spinlock__.unlock(); });
     if (owner__ != nullptr)
     {
         ctx_enter_wait_state__(ctx, CO_RC_TYPE_MUTEX, this, wait_deque__);
