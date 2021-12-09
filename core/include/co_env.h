@@ -8,6 +8,7 @@ _Pragma("once");
 #include "co_object_pool.h"
 #include "co_return_value.h"
 #include "co_sleep_controller.h"
+#include "co_spinlock.h"
 #include "co_stack_factory.h"
 #include "co_state_manager.h"
 #include "co_type.h"
@@ -67,7 +68,7 @@ private:
     co_stack*           shared_stack__ { nullptr };
     co_ctx* const       idle_ctx__ { nullptr };
 
-    std::mutex mu_schedule__;
+    co_spinlock mu_schedule__ { false };
 
     co_tid schedule_thread_tid__ {};
 

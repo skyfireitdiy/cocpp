@@ -207,7 +207,7 @@ void co_env::switch_normal_ctx__()
     co_ctx* next = nullptr;
     {
         // 切换前加锁
-        std::lock_guard<std::mutex> lock(mu_schedule__);
+        std::lock_guard<co_spinlock> lock(mu_schedule__);
 
         remove_detached_ctx__();
 
