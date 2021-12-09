@@ -56,7 +56,14 @@ void co_object_pool<ObjectType>::destroy_obj(ObjectType* obj)
 {
     std::lock_guard<co_spinlock> lck(mu__);
     obj->~ObjectType();
-    pool__.push_front(obj); // 尽快用到这块内存
+    if (pool__.size() > max_cap__)
+    {
+        free(obj);
+    }
+    else
+    {
+        pool__.push_front(obj); // 尽快用到这块内存
+    }
 }
 
 template <typename ObjectType>
