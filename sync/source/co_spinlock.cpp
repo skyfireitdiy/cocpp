@@ -9,7 +9,10 @@ void co_spinlock::lock()
     bool lk = false;
     while (!locked__.compare_exchange_strong(lk, true))
     {
-        this_co::yield();
+        if (need_schedule__)
+        {
+            this_co::yield();
+        }
         lk = false;
     }
 }
@@ -25,9 +28,17 @@ void co_spinlock::unlock()
     bool lk = true;
     while (!locked__.compare_exchange_strong(lk, false))
     {
-        this_co::yield();
+        if (need_schedule__)
+        {
+            this_co::yield();
+        }
         lk = true;
     }
+}
+
+co_spinlock::co_spinlock(bool need_schedule)
+    : need_schedule__(need_schedule)
+{
 }
 
 CO_NAMESPACE_END
