@@ -14,7 +14,6 @@ _Pragma("once");
 #include <atomic>
 #include <bitset>
 #include <memory>
-#include <mutex>
 
 CO_NAMESPACE_BEGIN
 

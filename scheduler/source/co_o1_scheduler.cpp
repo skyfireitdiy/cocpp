@@ -3,7 +3,6 @@
 #include "co_define.h"
 #include "co_entry.h"
 #include <cassert>
-#include <mutex>
 
 CO_NAMESPACE_BEGIN
 

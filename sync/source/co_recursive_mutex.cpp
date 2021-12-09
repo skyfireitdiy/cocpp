@@ -5,7 +5,6 @@
 #include "co_sync_helper.h"
 #include "co_this_co.h"
 #include <cassert>
-#include <mutex>
 
 CO_NAMESPACE_BEGIN
 

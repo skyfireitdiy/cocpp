@@ -7,7 +7,6 @@ _Pragma("once");
 #include "co_this_co.h"
 #include <cassert>
 #include <chrono>
-#include <mutex>
 
 CO_NAMESPACE_BEGIN
 

@@ -6,7 +6,6 @@ _Pragma("once");
 #include <cassert>
 #include <cstdlib>
 #include <deque>
-#include <mutex>
 
 CO_NAMESPACE_BEGIN
 

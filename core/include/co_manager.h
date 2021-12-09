@@ -16,7 +16,6 @@ _Pragma("once");
 #include <future>
 #include <list>
 #include <map>
-#include <mutex>
 #include <unordered_set>
 
 CO_NAMESPACE_BEGIN

@@ -5,7 +5,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <mutex>
 #include <new>
 
 CO_NAMESPACE_BEGIN

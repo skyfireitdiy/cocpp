@@ -8,7 +8,6 @@ _Pragma("once");
 #include <functional>
 #include <list>
 #include <map>
-#include <mutex>
 #include <utility>
 
 CO_NAMESPACE_BEGIN

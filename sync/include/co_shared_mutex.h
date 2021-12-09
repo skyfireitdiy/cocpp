@@ -5,7 +5,6 @@ _Pragma("once");
 #include "co_spinlock.h"
 
 #include <deque>
-#include <mutex>
 #include <unordered_set>
 
 CO_NAMESPACE_BEGIN

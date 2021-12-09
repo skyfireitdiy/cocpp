@@ -6,7 +6,6 @@ _Pragma("once");
 #include "co_mutex.h"
 #include "co_noncopyable.h"
 #include <deque>
-#include <mutex>
 #include <optional>
 
 CO_NAMESPACE_BEGIN

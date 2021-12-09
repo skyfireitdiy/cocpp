@@ -14,7 +14,6 @@
 #include <cstring>
 #include <future>
 #include <iterator>
-#include <mutex>
 
 CO_NAMESPACE_BEGIN
 
