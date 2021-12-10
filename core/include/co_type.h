@@ -39,7 +39,7 @@ enum class co_env_state : unsigned char
 
 struct co_ctx_wait_data
 {
-    co_spinlock mu { false };
+    co_spinlock mu { co_spinlock::lock_type::in_thread };
     int         type;
     void*       rc;
 };

@@ -65,7 +65,7 @@ private:
         .stack_factory = co_stack_factory::instance()
     };
 
-    mutable co_spinlock                          mu_timing_duration__ { false };
+    mutable co_spinlock                          mu_timing_duration__ { co_spinlock::lock_type::in_thread };
     std::chrono::high_resolution_clock::duration timing_duration__ { std::chrono::milliseconds(10) };
 
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;

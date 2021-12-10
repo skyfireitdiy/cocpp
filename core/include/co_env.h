@@ -67,7 +67,7 @@ private:
     co_stack*           shared_stack__ { nullptr };
     co_ctx* const       idle_ctx__ { nullptr };
 
-    co_spinlock mu_schedule__ { false };
+    co_spinlock mu_schedule__ { co_spinlock::lock_type::in_thread };
 
     co_tid schedule_thread_tid__ {};
 

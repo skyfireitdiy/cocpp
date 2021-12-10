@@ -17,7 +17,7 @@ private:
 
     size_t get_zone_index__(size_t size) const;
 
-    co_spinlock mu__ { false };
+    co_spinlock mu__ { co_spinlock::lock_type::in_thread };
 
     const size_t                      min_zone__;
     const size_t                      zone_count__;

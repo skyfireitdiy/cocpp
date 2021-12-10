@@ -17,7 +17,7 @@ class co_event final : private co_noncopyable
 {
 private:
     std::map<int, std::function<void(Args... args)>> cb_list__;
-    mutable co_spinlock                              mu_cb_list__ { false };
+    mutable co_spinlock                              mu_cb_list__ { co_spinlock::lock_type::in_thread };
     co_event_handler                                 current_handler__ { 0 };
 
 public:

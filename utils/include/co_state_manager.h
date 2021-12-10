@@ -9,7 +9,7 @@ template <typename T, T InitState, T FinalState>
 class co_state_manager
 {
 private:
-    mutable co_spinlock mu_state__ { false };
+    mutable co_spinlock mu_state__ { co_spinlock::lock_type::in_thread };
     T                   state__ { InitState };
 
 public:

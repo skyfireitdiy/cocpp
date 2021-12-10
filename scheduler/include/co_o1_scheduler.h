@@ -13,7 +13,7 @@ class co_o1_scheduler : public co_scheduler
 {
 private:
     std::vector<std::list<co_ctx*>> all_ctx__;
-    mutable co_spinlock             mu_all_ctx__ { false };
+    mutable co_spinlock             mu_all_ctx__ { co_spinlock::lock_type::in_thread };
     co_ctx*                         curr_obj__ { nullptr };
     int                             min_priority__ = 0;
 

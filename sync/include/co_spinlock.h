@@ -9,12 +9,19 @@ CO_NAMESPACE_BEGIN
 
 class co_spinlock final : private co_noncopyable
 {
+public:
+    enum class lock_type
+    {
+        in_coroutine,
+        in_thread
+    };
+
 private:
-    const bool        need_schedule__ { true };
+    const lock_type   lock_type__;
     std::atomic<bool> locked__ { false };
 
 public:
-    co_spinlock(bool need_schedule = true);
+    co_spinlock(lock_type lt = lock_type::in_coroutine);
     void lock();
     bool try_lock();
     void unlock();

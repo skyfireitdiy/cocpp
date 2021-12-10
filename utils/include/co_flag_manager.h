@@ -12,7 +12,7 @@ class co_flag_manager
 {
 private:
     std::bitset<MAX_FLAG_COUNT> flags__;
-    mutable co_spinlock         mu__ { false };
+    mutable co_spinlock         mu__ { co_spinlock::lock_type::in_thread };
 
 public:
     void set_flag(size_t flag)

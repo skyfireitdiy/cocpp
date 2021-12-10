@@ -14,7 +14,7 @@ class co_object_pool final : private co_noncopyable
 {
 private:
     std::deque<void*> pool__;
-    co_spinlock       mu__ { false };
+    co_spinlock       mu__ { co_spinlock::lock_type::in_thread };
     size_t            max_cap__;
 
 public:

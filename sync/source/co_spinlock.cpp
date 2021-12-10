@@ -10,7 +10,7 @@ void co_spinlock::lock()
     bool lk = false;
     while (!locked__.compare_exchange_strong(lk, true))
     {
-        if (need_schedule__)
+        if (lock_type__ == lock_type::in_coroutine)
         {
             this_co::yield();
         }
@@ -33,7 +33,7 @@ void co_spinlock::unlock()
     bool lk = true;
     while (!locked__.compare_exchange_strong(lk, false))
     {
-        if (need_schedule__)
+        if (lock_type__ == lock_type::in_coroutine)
         {
             this_co::yield();
         }
@@ -45,8 +45,8 @@ void co_spinlock::unlock()
     }
 }
 
-co_spinlock::co_spinlock(bool need_schedule)
-    : need_schedule__(need_schedule)
+co_spinlock::co_spinlock(lock_type lt)
+    : lock_type__(lt)
 {
 }
 
