@@ -39,7 +39,7 @@ private:
 
 public:
     // 静态函数
-    CoMemberMethodProxyStatic(*manager__, set_if_gc_callback);
+    CoMemberMethodProxyStatic(*manager__, set_if_free_mem_callback);
     CoMemberMethodProxyStatic(*manager__, create_env);
     CoMemberMethodProxyStatic(*manager__, current_env);
     CoMemberMethodProxyStatic(*manager__, set_env_shared_stack_size);

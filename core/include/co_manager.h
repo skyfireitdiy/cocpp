@@ -98,7 +98,7 @@ public:
     co_env* current_env();
     void    set_base_schedule_thread_count(size_t base_thread_count);
     void    set_max_schedule_thread_count(size_t max_thread_count);
-    void    set_if_gc_callback(std::function<bool()> cb);
+    void    set_if_free_mem_callback(std::function<bool()> cb);
     void    set_timing_tick_duration(
            const std::chrono::high_resolution_clock::duration& duration);
     const std::chrono::high_resolution_clock::duration& timing_duration() const;

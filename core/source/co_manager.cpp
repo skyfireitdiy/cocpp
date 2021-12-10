@@ -430,7 +430,7 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lo
     return ctx;
 }
 
-void co_manager::set_if_gc_callback(std::function<bool()> cb)
+void co_manager::set_if_free_mem_callback(std::function<bool()> cb)
 {
     need_free_mem_cb__ = cb;
 }
