@@ -147,23 +147,6 @@ void co_o1_scheduler::ctx_enter_wait_state(co_ctx* ctx)
     blocked_ctx__.insert(ctx);
 }
 
-co_ctx* co_o1_scheduler::take_one_movable_ctx()
-{
-    std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
-    for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
-    {
-        for (auto& ctx : all_scheduleable_ctx__[i])
-        {
-            if (ctx->can_move())
-            {
-                all_scheduleable_ctx__[i].remove(ctx);
-                return ctx;
-            }
-        }
-    }
-    return nullptr;
-}
-
 std::list<co_ctx*> co_o1_scheduler::take_all_movable_ctx()
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);

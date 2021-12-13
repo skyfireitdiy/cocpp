@@ -102,6 +102,7 @@ public:
     void    set_timing_tick_duration(
            const std::chrono::high_resolution_clock::duration& duration);
     const std::chrono::high_resolution_clock::duration& timing_duration() const;
+    bool                                                steal_ctx(co_env* env);
 
     ~co_manager();
 

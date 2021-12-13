@@ -1,4 +1,5 @@
 #include "co_env.h"
+#include "co.h"
 #include "co_ctx.h"
 #include "co_ctx_config.h"
 #include "co_ctx_factory.h"
@@ -205,9 +206,6 @@ void co_env::switch_normal_ctx__()
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
     {
-        // 切换前加锁
-        std::lock_guard<co_spinlock> lock(mu_schedule__);
-
         remove_detached_ctx__();
 
         if (!prepare_to_switch(curr, next))
@@ -342,7 +340,7 @@ void co_env::start_schedule_routine__()
     // CO_O_DEBUG("stop schedule, prepare to cleanup");
 
     remove_all_ctx__();
-    env_task_finished().pub();
+    task_finished().pub();
     current_env__ = nullptr;
 }
 
@@ -372,25 +370,6 @@ void co_env::reset_scheduled_flag()
 {
     reset_flag(CO_ENV_FLAG_SCHEDULED);
     scheduled_flag_reset().pub();
-}
-
-void co_env::lock_schedule()
-{
-    mu_schedule__.lock();
-    schedule_locked().pub();
-}
-
-void co_env::unlock_schedule()
-{
-    mu_schedule__.unlock();
-    schedule_unlocked().pub();
-}
-
-void co_env::take_ctx__(co_ctx* ctx)
-{
-
-    scheduler__->remove_ctx(ctx);
-    ctx_taken().pub(ctx);
 }
 
 bool co_env::can_auto_destroy() const
@@ -435,19 +414,9 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
     shared_stack_restored().pub(ctx);
 }
 
-std::list<co_ctx*> co_env::take_moveable_ctx()
-{
-    return scheduler__->take_all_movable_ctx();
-}
-
 co_tid co_env::schedule_thread_tid() const
 {
     return schedule_thread_tid__;
-}
-
-bool co_env::try_lock_schedule()
-{
-    return mu_schedule__.try_lock();
 }
 
 bool co_env::can_schedule_ctx() const

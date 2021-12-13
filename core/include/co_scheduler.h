@@ -23,7 +23,6 @@ public:
     virtual void               change_priority(int old, co_ctx* ctx) = 0;
     virtual void               ctx_leave_wait_state(co_ctx* ctx)     = 0;
     virtual void               ctx_enter_wait_state(co_ctx* ctx)     = 0;
-    virtual co_ctx*            take_one_movable_ctx()                = 0;
     virtual std::list<co_ctx*> take_all_movable_ctx()                = 0;
 
     virtual ~co_scheduler() = default;

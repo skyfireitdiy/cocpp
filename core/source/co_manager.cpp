@@ -63,7 +63,7 @@ co_env* co_manager::get_best_env__()
 
 void co_manager::sub_env_event__(co_env* env)
 {
-    env->env_task_finished().sub([this, env]() {
+    env->task_finished().sub([this, env]() {
         remove_env__(env);
     });
 }
@@ -71,7 +71,7 @@ void co_manager::sub_env_event__(co_env* env)
 void co_manager::sub_ctx_event__(co_ctx* ctx)
 {
     ctx->priority_changed().sub([ctx](int old, int new_) {
-        ctx->env()->scheduler()->change_priority(old, ctx);
+        ctx->env()->change_priority(old, ctx);
     });
 }
 
@@ -302,14 +302,14 @@ void co_manager::redistribute_ctx__()
 
     for (auto& env : env_set__.normal_set)
     {
-        // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
+        // 如果检测到某个env被阻塞了，收集可转移的ctx
         if (env->is_blocked())
         {
             // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
             env->set_state(co_env_state::blocked);
 
             // CO_O_DEBUG("env %p is blocked, redistribute ctx", env);
-            merge_list(moved_ctx_list, env->take_moveable_ctx()); // 将阻塞的env中可移动的ctx收集起来
+            merge_list(moved_ctx_list, env->take_all_movable_ctx()); // 将阻塞的env中可移动的ctx收集起来
         }
         env->reset_scheduled_flag();
     }

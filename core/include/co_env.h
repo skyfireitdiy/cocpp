@@ -7,6 +7,7 @@ _Pragma("once");
 #include "co_noncopyable.h"
 #include "co_object_pool.h"
 #include "co_return_value.h"
+#include "co_scheduler.h"
 #include "co_sleep_controller.h"
 #include "co_spinlock.h"
 #include "co_stack_factory.h"
@@ -26,14 +27,13 @@ _Pragma("once");
 CO_NAMESPACE_BEGIN
 
 class co_manager;
-class co_scheduler;
 class co_ctx;
 
 class co_env final : private co_noncopyable,
                      public co_flag_manager<CO_ENV_FLAG_MAX>,
                      public co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying>
 {
-    RegCoEvent(env_task_finished);
+    RegCoEvent(task_finished);
     RegCoEvent(ctx_added, co_ctx*);                        // 被加入的ctx
     RegCoEvent(wait_ctx_timeout, co_ctx*);                 // 等待的ctx
     RegCoEvent(wait_ctx_finished, co_ctx*);                // 等待的ctx
@@ -67,8 +67,6 @@ private:
     co_stack*           shared_stack__ { nullptr };
     co_ctx* const       idle_ctx__ { nullptr };
 
-    co_spinlock mu_schedule__ { co_spinlock::lock_type::in_thread };
-
     co_tid schedule_thread_tid__ {};
 
     bool safepoint__ { false };
@@ -84,7 +82,6 @@ private:
     void restore_shared_stack__(co_ctx* ctx);
     void switch_shared_stack_ctx__();
     void switch_normal_ctx__();
-    void take_ctx__(co_ctx* ctx);
     bool need_sleep__();
 
     static size_t get_valid_stack_size__(co_ctx* ctx);
@@ -111,21 +108,19 @@ public:
     void                           schedule_in_this_thread();
     co_scheduler*                  scheduler() const;
     void                           reset_scheduled_flag();
-    std::list<co_ctx*>             take_moveable_ctx();
     bool                           can_auto_destroy() const;
     co_tid                         schedule_thread_tid() const;
-    bool                           try_lock_schedule();
     bool                           can_schedule_ctx() const;
     bool                           is_blocked() const;
     bool                           prepare_to_switch(co_ctx*& from, co_ctx*& to);
-    void                           lock_schedule();
-    void                           unlock_schedule();
     void                           set_safepoint();
     void                           reset_safepoint();
     bool                           safepoint() const;
 
-    CoMemberMethodProxy(sleep_controller__, sleep_if_need);
-    CoMemberMethodProxy(sleep_controller__, wake_up);
+    CoMemberMethodProxy(&sleep_controller__, sleep_if_need);
+    CoMemberMethodProxy(&sleep_controller__, wake_up);
+    CoMemberMethodProxy(scheduler__, take_all_movable_ctx);
+    CoMemberMethodProxy(scheduler__, change_priority);
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;
