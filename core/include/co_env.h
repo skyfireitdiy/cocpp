@@ -80,13 +80,12 @@ private:
     void    remove_all_ctx__();
     co_ctx* next_ctx__();
 
-    void               save_shared_stack__(co_ctx* ctx);
-    void               restore_shared_stack__(co_ctx* ctx);
-    void               switch_shared_stack_ctx__();
-    void               switch_normal_ctx__();
-    std::list<co_ctx*> moveable_ctx_list__();
-    void               take_ctx__(co_ctx* ctx);
-    bool               need_sleep__();
+    void save_shared_stack__(co_ctx* ctx);
+    void restore_shared_stack__(co_ctx* ctx);
+    void switch_shared_stack_ctx__();
+    void switch_normal_ctx__();
+    void take_ctx__(co_ctx* ctx);
+    bool need_sleep__();
 
     static size_t get_valid_stack_size__(co_ctx* ctx);
     static void   update_ctx_state__(co_ctx* curr, co_ctx* next);

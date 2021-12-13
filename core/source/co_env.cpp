@@ -112,7 +112,7 @@ int co_env::workload() const
 void co_env::remove_detached_ctx__()
 {
     auto curr    = scheduler__->current_ctx();
-    auto all_ctx = scheduler__->all_ctx();
+    auto all_ctx = scheduler__->all_scheduleable_ctx();
     for (auto& ctx : all_ctx)
     {
         // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
@@ -386,23 +386,6 @@ void co_env::unlock_schedule()
     schedule_unlocked().pub();
 }
 
-std::list<co_ctx*> co_env::moveable_ctx_list__()
-{
-
-    auto               all_ctx = scheduler__->all_ctx();
-    std::list<co_ctx*> ret;
-    for (auto& ctx : all_ctx)
-    {
-        // 绑定env的协程和当前协程不能移动
-        if (!ctx->can_move())
-        {
-            continue;
-        }
-        ret.push_back(ctx);
-    }
-    return ret;
-}
-
 void co_env::take_ctx__(co_ctx* ctx)
 {
 
@@ -454,17 +437,7 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
 
 std::list<co_ctx*> co_env::take_moveable_ctx()
 {
-    lock_schedule();
-    CoDefer([this] {
-        unlock_schedule();
-    });
-    auto ret = moveable_ctx_list__();
-    for (auto& ctx : ret)
-    {
-        take_ctx__(ctx);
-    }
-    moveable_ctx_taken().pub(ret);
-    return ret;
+    return scheduler__->take_all_movable_ctx();
 }
 
 co_tid co_env::schedule_thread_tid() const

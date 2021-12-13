@@ -36,6 +36,8 @@ public:
     void               change_priority(int old, co_ctx* ctx) override;
     void               ctx_leave_wait_state(co_ctx* ctx) override;
     void               ctx_enter_wait_state(co_ctx* ctx) override;
+    co_ctx*            take_one_movable_ctx() override;
+    std::list<co_ctx*> take_all_movable_ctx() override;
 
     friend class co_o1_scheduler_factory;
 };
