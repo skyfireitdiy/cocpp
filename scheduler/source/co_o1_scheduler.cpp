@@ -153,7 +153,8 @@ std::list<co_ctx*> co_o1_scheduler::take_all_movable_ctx()
     std::list<co_ctx*>           ret;
     for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
     {
-        for (auto& ctx : all_scheduleable_ctx__[i])
+        auto backup = all_scheduleable_ctx__[i];
+        for (auto& ctx : backup)
         {
             if (ctx->can_move())
             {
