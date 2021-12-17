@@ -16,9 +16,9 @@ template <typename... Args>
 class co_event final : private co_noncopyable
 {
 private:
-    std::map<int, std::function<void(Args... args)>> cb_list__;
-    mutable co_spinlock                              mu_cb_list__ { co_spinlock::lock_type::in_thread };
-    co_event_handler                                 current_handler__ { 0 };
+    std::unordered_map<int, std::function<void(Args... args)>> cb_list__;
+    mutable co_spinlock                                        mu_cb_list__ { co_spinlock::lock_type::in_thread };
+    co_event_handler                                           current_handler__ { 0 };
 
 public:
     co_event_handler sub(std::function<void(Args... args)> cb);
@@ -53,8 +53,6 @@ void co_event<Args...>::pub(Args... args) const
     }
 }
 
-CO_NAMESPACE_END
-
 #define RegCoEvent(eventName, ...)       \
 private:                                 \
     co_event<__VA_ARGS__> eventName##__; \
@@ -64,3 +62,5 @@ public:                                  \
     {                                    \
         return eventName##__;            \
     }
+
+CO_NAMESPACE_END

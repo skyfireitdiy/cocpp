@@ -37,11 +37,6 @@ void co_env_factory::destroy_env(co_env* env)
     stack_factory__->destroy_stack(shared_stack);
 }
 
-void co_env_factory::set_scheduler_factory(co_scheduler_factory* scheduler_factory)
-{
-    scheduler_factory__ = scheduler_factory;
-}
-
 co_env* co_env_factory::create_env_from_this_thread(size_t stack_size)
 {
     auto idle_ctx     = create_idle_ctx__();

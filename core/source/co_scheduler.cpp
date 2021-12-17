@@ -1,4 +1,4 @@
-#include "co_o1_scheduler.h"
+#include "co_scheduler.h"
 #include "co_ctx.h"
 #include "co_define.h"
 #include "co_entry.h"
@@ -7,12 +7,12 @@
 
 CO_NAMESPACE_BEGIN
 
-co_o1_scheduler::co_o1_scheduler()
+co_scheduler::co_scheduler()
     : all_scheduleable_ctx__(CO_MAX_PRIORITY)
 {
 }
 
-void co_o1_scheduler::add_ctx(co_ctx* ctx)
+void co_scheduler::add_ctx(co_ctx* ctx)
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
     all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
@@ -20,7 +20,7 @@ void co_o1_scheduler::add_ctx(co_ctx* ctx)
     // CO_O_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, (int)ctx->state());
 }
 
-void co_o1_scheduler::remove_ctx(co_ctx* ctx)
+void co_scheduler::remove_ctx(co_ctx* ctx)
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
     // CO_O_DEBUG("remove ctx %s %p , state: %d", ctx->config().name.c_str(), ctx, (int)ctx->state());
@@ -28,7 +28,7 @@ void co_o1_scheduler::remove_ctx(co_ctx* ctx)
     all_scheduleable_ctx__[ctx->priority()].remove(ctx);
 }
 
-co_ctx* co_o1_scheduler::choose_ctx()
+co_ctx* co_scheduler::choose_ctx()
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
     for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
@@ -50,7 +50,7 @@ co_ctx* co_o1_scheduler::choose_ctx()
     return nullptr;
 }
 
-std::list<co_ctx*> co_o1_scheduler::all_ctx() const
+std::list<co_ctx*> co_scheduler::all_ctx() const
 {
     std::scoped_lock   lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
     std::list<co_ctx*> ret;
@@ -62,7 +62,7 @@ std::list<co_ctx*> co_o1_scheduler::all_ctx() const
     return ret;
 }
 
-std::list<co_ctx*> co_o1_scheduler::all_scheduleable_ctx() const
+std::list<co_ctx*> co_scheduler::all_scheduleable_ctx() const
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
     std::list<co_ctx*>           ret;
@@ -73,7 +73,7 @@ std::list<co_ctx*> co_o1_scheduler::all_scheduleable_ctx() const
     return ret;
 }
 
-size_t co_o1_scheduler::count() const
+size_t co_scheduler::count() const
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
 
@@ -85,14 +85,14 @@ size_t co_o1_scheduler::count() const
     return ret;
 }
 
-co_ctx* co_o1_scheduler::current_ctx() const
+co_ctx* co_scheduler::current_ctx() const
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
 
     return curr_obj__;
 }
 
-bool co_o1_scheduler::can_schedule() const
+bool co_scheduler::can_schedule() const
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
     for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
@@ -108,7 +108,7 @@ bool co_o1_scheduler::can_schedule() const
     return false;
 }
 
-void co_o1_scheduler::change_priority(int old, co_ctx* ctx)
+void co_scheduler::change_priority(int old, co_ctx* ctx)
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
     for (auto iter = all_scheduleable_ctx__[old].begin(); iter != all_scheduleable_ctx__[old].end(); ++iter)
@@ -124,7 +124,7 @@ void co_o1_scheduler::change_priority(int old, co_ctx* ctx)
     assert(false);
 }
 
-void co_o1_scheduler::ctx_leave_wait_state(co_ctx* ctx)
+void co_scheduler::ctx_leave_wait_state(co_ctx* ctx)
 {
     std::scoped_lock lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
     blocked_ctx__.erase(ctx);
@@ -132,7 +132,7 @@ void co_o1_scheduler::ctx_leave_wait_state(co_ctx* ctx)
     update_min_priority__(ctx->priority());
 }
 
-void co_o1_scheduler::update_min_priority__(int priority)
+void co_scheduler::update_min_priority__(int priority)
 {
     if (priority < min_priority__)
     {
@@ -140,14 +140,14 @@ void co_o1_scheduler::update_min_priority__(int priority)
     }
 }
 
-void co_o1_scheduler::ctx_enter_wait_state(co_ctx* ctx)
+void co_scheduler::ctx_enter_wait_state(co_ctx* ctx)
 {
     std::scoped_lock lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
     all_scheduleable_ctx__[ctx->priority()].remove(ctx);
     blocked_ctx__.insert(ctx);
 }
 
-std::list<co_ctx*> co_o1_scheduler::take_all_movable_ctx()
+std::list<co_ctx*> co_scheduler::take_all_movable_ctx()
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
     std::list<co_ctx*>           ret;

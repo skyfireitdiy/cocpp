@@ -8,6 +8,7 @@ _Pragma("once");
 #include "co_object_pool.h"
 #include "co_return_value.h"
 #include "co_scheduler.h"
+#include "co_scheduler_factory.h"
 #include "co_sleep_controller.h"
 #include "co_spinlock.h"
 #include "co_stack_factory.h"
@@ -62,10 +63,10 @@ private:
 
     co_ctx_factory* const   ctx_factory__ { co_ctx_factory::instance() };
     co_stack_factory* const stack_factory__ { co_stack_factory::instance() };
+    co_scheduler* const     scheduler__ { nullptr };
 
-    co_scheduler* const scheduler__ = nullptr;
-    co_stack*           shared_stack__ { nullptr };
-    co_ctx* const       idle_ctx__ { nullptr };
+    co_stack*     shared_stack__ { nullptr };
+    co_ctx* const idle_ctx__ { nullptr };
 
     co_tid schedule_thread_tid__ {};
 

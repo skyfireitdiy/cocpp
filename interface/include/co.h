@@ -48,8 +48,6 @@ public:
     CoMemberMethodProxyStatic(manager__, set_timing_tick_duration);
     CoMemberMethodProxyStatic(manager__, timing_duration);
 
-    CoMemberMethodProxyStatic((co_env_factory::instance()), set_scheduler_factory);
-
     CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), workload, current_env_);
     CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), state, current_env_);
     CoMemberMethodProxyStatic((manager__->current_env()), schedule_in_this_thread);
