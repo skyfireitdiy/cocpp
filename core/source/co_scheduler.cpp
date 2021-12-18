@@ -81,21 +81,21 @@ co_scheduler::co_scheduler()
 //     return false;
 // }
 
-void co_scheduler::change_priority(int old, co_ctx* ctx)
-{
-    std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
-    for (auto iter = all_scheduleable_ctx__[old].begin(); iter != all_scheduleable_ctx__[old].end(); ++iter)
-    {
-        if (*iter == ctx)
-        {
-            all_scheduleable_ctx__[old].erase(iter);
-            all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
-            update_min_priority__(ctx->priority());
-            return;
-        }
-    }
-    assert(false);
-}
+// void co_scheduler::change_priority(int old, co_ctx* ctx)
+// {
+//     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
+//     for (auto iter = all_scheduleable_ctx__[old].begin(); iter != all_scheduleable_ctx__[old].end(); ++iter)
+//     {
+//         if (*iter == ctx)
+//         {
+//             all_scheduleable_ctx__[old].erase(iter);
+//             all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+//             update_min_priority__(ctx->priority());
+//             return;
+//         }
+//     }
+//     assert(false);
+// }
 
 void co_scheduler::ctx_leave_wait_state(co_ctx* ctx)
 {

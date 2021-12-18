@@ -123,11 +123,11 @@ public:
     void                           set_safepoint();
     void                           reset_safepoint();
     bool                           safepoint() const;
+    void                           change_priority(int old, co_ctx* ctx);
 
     CoMemberMethodProxy(&sleep_controller__, sleep_if_need);
     CoMemberMethodProxy(&sleep_controller__, wake_up);
     CoMemberMethodProxy(scheduler__, take_all_movable_ctx);
-    CoMemberMethodProxy(scheduler__, change_priority);
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;

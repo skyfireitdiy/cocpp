@@ -447,6 +447,22 @@ bool co_env::can_schedule_ctx() const
     return s != co_env_state::blocked && s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
 }
 
+void co_env::change_priority(int old, co_ctx* ctx)
+{
+    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    for (auto iter = scheduler__->all_scheduleable_ctx__[old].begin(); iter != scheduler__->all_scheduleable_ctx__[old].end(); ++iter)
+    {
+        if (*iter == ctx)
+        {
+            scheduler__->all_scheduleable_ctx__[old].erase(iter);
+            scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+            scheduler__->update_min_priority__(ctx->priority());
+            return;
+        }
+    }
+    assert(false);
+}
+
 bool co_env::can_schedule__() const
 {
     std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
