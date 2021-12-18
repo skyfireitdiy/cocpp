@@ -46,19 +46,26 @@ void co_env::add_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
     assert(state() != co_env_state::created && state() != co_env_state::destorying);
-
-    ctx->set_env(this);
-
     init_ctx(shared_stack__, ctx); // 初始化ctx
     ctx_initted().pub(ctx);
+
+    receive_ctx(ctx);
+
+    // CO_O_DEBUG("add ctx wake up env: %p", this);
+    ctx_added().pub(ctx);
+}
+
+void co_env::receive_ctx(co_ctx* ctx)
+{
+    assert(ctx != nullptr);
+    assert(state() != co_env_state::created && state() != co_env_state::destorying);
+
+    ctx->set_env(this);
 
     scheduler__->add_ctx(ctx); // 添加到调度器
     set_state(co_env_state::busy);
 
     wake_up();
-
-    // CO_O_DEBUG("add ctx wake up env: %p", this);
-    ctx_added().pub(ctx);
 }
 
 std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)

@@ -96,7 +96,9 @@ private:
     } shared_stack_switch_context__;
 
 public:
-    void                           add_ctx(co_ctx* ctx);
+    void add_ctx(co_ctx* ctx);
+    void receive_ctx(co_ctx* ctx);
+
     std::optional<co_return_value> wait_ctx(co_ctx*                         ctx,
                                             const std::chrono::nanoseconds& timeout);
     co_return_value                wait_ctx(co_ctx* ctx);

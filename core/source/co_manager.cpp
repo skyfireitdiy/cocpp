@@ -317,7 +317,7 @@ void co_manager::redistribute_ctx__()
     // 重新选择合适的env进行调度
     for (auto& ctx : moved_ctx_list)
     {
-        get_best_env__()->add_ctx(ctx);
+        get_best_env__()->receive_ctx(ctx);
     }
 
     ctx_redistributed().pub();
