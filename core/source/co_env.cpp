@@ -125,7 +125,7 @@ int co_env::workload() const
 void co_env::remove_detached_ctx__()
 {
     auto curr    = scheduler__->current_ctx();
-    auto all_ctx = scheduler__->all_scheduleable_ctx();
+    auto all_ctx = all_scheduleable_ctx__();
     for (auto& ctx : all_ctx)
     {
         // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
@@ -497,6 +497,17 @@ std::list<co_ctx*> co_env::all_ctx__()
         ret.insert(ret.end(), lst.begin(), lst.end());
     }
     ret.insert(ret.begin(), scheduler__->blocked_ctx__.begin(), scheduler__->blocked_ctx__.end());
+    return ret;
+}
+
+std::list<co_ctx*> co_env::all_scheduleable_ctx__() const
+{
+    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    std::list<co_ctx*>           ret;
+    for (auto& lst : scheduler__->all_scheduleable_ctx__)
+    {
+        ret.insert(ret.end(), lst.begin(), lst.end());
+    }
     return ret;
 }
 

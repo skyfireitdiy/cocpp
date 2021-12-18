@@ -31,7 +31,7 @@ public:
     // void               remove_ctx(co_ctx* ctx);
     // co_ctx*            choose_ctx();
     // std::list<co_ctx*> all_ctx() const;
-    std::list<co_ctx*> all_scheduleable_ctx() const;
+    // std::list<co_ctx*> all_scheduleable_ctx() const;
     size_t             count() const;
     co_ctx*            current_ctx() const;
     bool               can_schedule() const;
