@@ -145,7 +145,7 @@ co_ctx* co_env::next_ctx__()
     }
     else
     {
-        auto next = scheduler__->choose_ctx();
+        auto next = choose_ctx__();
         return next == nullptr ? idle_ctx__ : next;
     }
 }
@@ -464,6 +464,28 @@ void co_env::reset_safepoint()
 bool co_env::need_sleep__()
 {
     return !scheduler__->can_schedule() && state() != co_env_state::destorying;
+}
+
+co_ctx* co_env::choose_ctx__()
+{
+    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    for (unsigned int i = scheduler__->min_priority__; i < scheduler__->all_scheduleable_ctx__.size(); ++i)
+    {
+        for (auto& ctx : scheduler__->all_scheduleable_ctx__[i])
+        {
+            if (ctx->can_schedule())
+            {
+                auto ret = ctx;
+                scheduler__->all_scheduleable_ctx__[i].remove(ctx);
+                scheduler__->all_scheduleable_ctx__[i].push_back(ret);
+                scheduler__->curr_obj__     = ret;
+                scheduler__->min_priority__ = i;
+                return ret;
+            }
+        }
+    }
+    scheduler__->curr_obj__ = nullptr;
+    return nullptr;
 }
 
 CO_NAMESPACE_END

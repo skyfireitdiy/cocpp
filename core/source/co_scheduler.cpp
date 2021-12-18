@@ -20,27 +20,27 @@ co_scheduler::co_scheduler()
 //     // CO_O_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, (int)ctx->state());
 // }
 
-co_ctx* co_scheduler::choose_ctx()
-{
-    std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
-    for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
-    {
-        for (auto& ctx : all_scheduleable_ctx__[i])
-        {
-            if (ctx->can_schedule())
-            {
-                auto ret = ctx;
-                all_scheduleable_ctx__[i].remove(ctx);
-                all_scheduleable_ctx__[i].push_back(ret);
-                curr_obj__     = ret;
-                min_priority__ = i;
-                return ret;
-            }
-        }
-    }
-    curr_obj__ = nullptr;
-    return nullptr;
-}
+// co_ctx* co_scheduler::choose_ctx()
+// {
+//     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
+//     for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
+//     {
+//         for (auto& ctx : all_scheduleable_ctx__[i])
+//         {
+//             if (ctx->can_schedule())
+//             {
+//                 auto ret = ctx;
+//                 all_scheduleable_ctx__[i].remove(ctx);
+//                 all_scheduleable_ctx__[i].push_back(ret);
+//                 curr_obj__     = ret;
+//                 min_priority__ = i;
+//                 return ret;
+//             }
+//         }
+//     }
+//     curr_obj__ = nullptr;
+//     return nullptr;
+// }
 
 std::list<co_ctx*> co_scheduler::all_ctx() const
 {
