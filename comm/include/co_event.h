@@ -16,9 +16,10 @@ template <typename... Args>
 class co_event final : private co_noncopyable
 {
 private:
-    std::unordered_map<int, std::function<void(Args... args)>> cb_list__;
-    mutable co_spinlock                                        mu_cb_list__ { co_spinlock::lock_type::in_thread };
-    co_event_handler                                           current_handler__ { 0 };
+    // FIXME: 此处如果使用unordered_map，则会有低概率的崩溃问题，原因未知
+    std::map<int, std::function<void(Args... args)>> cb_list__;
+    mutable co_spinlock                              mu_cb_list__ { co_spinlock::lock_type::in_thread };
+    co_event_handler                                 current_handler__ { 0 };
 
 public:
     co_event_handler sub(std::function<void(Args... args)> cb);
