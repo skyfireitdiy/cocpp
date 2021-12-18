@@ -65,18 +65,6 @@ co_scheduler::co_scheduler()
 //     return ret;
 // }
 
-size_t co_scheduler::count() const
-{
-    std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
-
-    size_t ret = 0;
-    for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
-    {
-        ret += all_scheduleable_ctx__[i].size();
-    }
-    return ret;
-}
-
 co_ctx* co_scheduler::current_ctx() const
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);

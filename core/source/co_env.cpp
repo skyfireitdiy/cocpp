@@ -119,7 +119,14 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
 int co_env::workload() const
 {
-    return scheduler__->count();
+    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+
+    size_t ret = 0;
+    for (unsigned int i = scheduler__->min_priority__; i < scheduler__->all_scheduleable_ctx__.size(); ++i)
+    {
+        ret += scheduler__->all_scheduleable_ctx__[i].size();
+    }
+    return ret;
 }
 
 void co_env::remove_detached_ctx__()

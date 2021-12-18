@@ -32,7 +32,7 @@ public:
     // co_ctx*            choose_ctx();
     // std::list<co_ctx*> all_ctx() const;
     // std::list<co_ctx*> all_scheduleable_ctx() const;
-    size_t             count() const;
+    // size_t             count() const;
     co_ctx*            current_ctx() const;
     bool               can_schedule() const;
     void               change_priority(int old, co_ctx* ctx);
