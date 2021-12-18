@@ -131,8 +131,7 @@ void co_env::remove_detached_ctx__()
         // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
         if (ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr)
         {
-            scheduler__->remove_ctx(ctx);
-            ctx_factory__->destroy_ctx(ctx);
+            remove_ctx(ctx);
         }
     }
 }
@@ -250,8 +249,12 @@ void co_env::schedule_switch(bool safe_return)
 
 void co_env::remove_ctx(co_ctx* ctx)
 {
-
-    scheduler__->remove_ctx(ctx);
+    {
+        std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+        // CO_O_DEBUG("remove ctx %s %p , state: %d", ctx->config().name.c_str(), ctx, (int)ctx->state());
+        // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
+        scheduler__->all_scheduleable_ctx__[ctx->priority()].remove(ctx);
+    }
     ctx_factory__->destroy_ctx(ctx);
     ctx_removed().pub(ctx);
 }

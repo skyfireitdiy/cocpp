@@ -20,14 +20,6 @@ co_scheduler::co_scheduler()
 //     // CO_O_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, (int)ctx->state());
 // }
 
-void co_scheduler::remove_ctx(co_ctx* ctx)
-{
-    std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
-    // CO_O_DEBUG("remove ctx %s %p , state: %d", ctx->config().name.c_str(), ctx, (int)ctx->state());
-    // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
-    all_scheduleable_ctx__[ctx->priority()].remove(ctx);
-}
-
 co_ctx* co_scheduler::choose_ctx()
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);

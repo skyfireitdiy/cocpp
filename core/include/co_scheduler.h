@@ -28,7 +28,7 @@ private:
 
 public:
     // void               add_ctx(co_ctx* ctx);
-    void               remove_ctx(co_ctx* ctx);
+    // void               remove_ctx(co_ctx* ctx);
     co_ctx*            choose_ctx();
     std::list<co_ctx*> all_ctx() const;
     std::list<co_ctx*> all_scheduleable_ctx() const;
