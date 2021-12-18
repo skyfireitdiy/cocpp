@@ -27,7 +27,7 @@ private:
     co_scheduler();
 
 public:
-    void               add_ctx(co_ctx* ctx);
+    // void               add_ctx(co_ctx* ctx);
     void               remove_ctx(co_ctx* ctx);
     co_ctx*            choose_ctx();
     std::list<co_ctx*> all_ctx() const;
@@ -42,6 +42,7 @@ public:
     co_ctx*            take_one_movable_ctx();
 
     friend class co_scheduler_factory;
+    friend class co_env;
 };
 
 CO_NAMESPACE_END

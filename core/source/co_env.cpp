@@ -62,7 +62,12 @@ void co_env::receive_ctx(co_ctx* ctx)
 
     ctx->set_env(this);
 
-    scheduler__->add_ctx(ctx); // 添加到调度器
+    {
+        std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+        scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+        scheduler__->update_min_priority__(ctx->priority());
+    }
+
     set_state(co_env_state::busy);
 
     wake_up();

@@ -12,13 +12,13 @@ co_scheduler::co_scheduler()
 {
 }
 
-void co_scheduler::add_ctx(co_ctx* ctx)
-{
-    std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
-    all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
-    update_min_priority__(ctx->priority());
-    // CO_O_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, (int)ctx->state());
-}
+// void co_scheduler::add_ctx(co_ctx* ctx)
+// {
+//     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
+//     all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+//     update_min_priority__(ctx->priority());
+//     // CO_O_DEBUG("add ctx %s %p , state: %d\n", ctx->config().name.c_str(), ctx, (int)ctx->state());
+// }
 
 void co_scheduler::remove_ctx(co_ctx* ctx)
 {
