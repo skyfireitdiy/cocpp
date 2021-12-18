@@ -65,13 +65,6 @@ co_scheduler::co_scheduler()
 //     return ret;
 // }
 
-co_ctx* co_scheduler::current_ctx() const
-{
-    std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
-
-    return curr_obj__;
-}
-
 bool co_scheduler::can_schedule() const
 {
     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);

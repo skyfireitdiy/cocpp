@@ -131,7 +131,7 @@ int co_env::workload() const
 
 void co_env::remove_detached_ctx__()
 {
-    auto curr    = scheduler__->current_ctx();
+    auto curr    = current_ctx();
     auto all_ctx = all_scheduleable_ctx__();
     for (auto& ctx : all_ctx)
     {
@@ -268,13 +268,12 @@ void co_env::remove_ctx(co_ctx* ctx)
 
 co_ctx* co_env::current_ctx() const
 {
-
-    auto ret = scheduler__->current_ctx();
-    if (ret == nullptr)
+    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    if (scheduler__->curr_obj__ == nullptr)
     {
         return idle_ctx__;
     }
-    return ret;
+    return scheduler__->curr_obj__;
 }
 
 void co_env::stop_schedule()
