@@ -65,21 +65,21 @@ co_scheduler::co_scheduler()
 //     return ret;
 // }
 
-bool co_scheduler::can_schedule() const
-{
-    std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
-    for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
-    {
-        for (auto& ctx : all_scheduleable_ctx__[i])
-        {
-            if (ctx->can_schedule())
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
+// bool co_scheduler::can_schedule() const
+// {
+//     std::lock_guard<co_spinlock> lock(mu_scheduleable_ctx__);
+//     for (unsigned int i = min_priority__; i < all_scheduleable_ctx__.size(); ++i)
+//     {
+//         for (auto& ctx : all_scheduleable_ctx__[i])
+//         {
+//             if (ctx->can_schedule())
+//             {
+//                 return true;
+//             }
+//         }
+//     }
+//     return false;
+// }
 
 void co_scheduler::change_priority(int old, co_ctx* ctx)
 {

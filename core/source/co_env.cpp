@@ -447,6 +447,22 @@ bool co_env::can_schedule_ctx() const
     return s != co_env_state::blocked && s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
 }
 
+bool co_env::can_schedule__() const
+{
+    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    for (unsigned int i = scheduler__->min_priority__; i < scheduler__->all_scheduleable_ctx__.size(); ++i)
+    {
+        for (auto& ctx : scheduler__->all_scheduleable_ctx__[i])
+        {
+            if (ctx->can_schedule())
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool co_env::is_blocked() const
 {
     return state() == co_env_state::busy && !test_flag(CO_ENV_FLAG_SCHEDULED);
@@ -469,7 +485,7 @@ void co_env::reset_safepoint()
 
 bool co_env::need_sleep__()
 {
-    return !scheduler__->can_schedule() && state() != co_env_state::destorying;
+    return !can_schedule__() && state() != co_env_state::destorying;
 }
 
 co_ctx* co_env::choose_ctx__()
