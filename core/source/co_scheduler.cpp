@@ -42,17 +42,17 @@ co_scheduler::co_scheduler()
 //     return nullptr;
 // }
 
-std::list<co_ctx*> co_scheduler::all_ctx() const
-{
-    std::scoped_lock   lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
-    std::list<co_ctx*> ret;
-    for (auto& lst : all_scheduleable_ctx__)
-    {
-        ret.insert(ret.end(), lst.begin(), lst.end());
-    }
-    ret.insert(ret.begin(), blocked_ctx__.begin(), blocked_ctx__.end());
-    return ret;
-}
+// std::list<co_ctx*> co_scheduler::all_ctx() const
+// {
+//     std::scoped_lock   lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
+//     std::list<co_ctx*> ret;
+//     for (auto& lst : all_scheduleable_ctx__)
+//     {
+//         ret.insert(ret.end(), lst.begin(), lst.end());
+//     }
+//     ret.insert(ret.begin(), blocked_ctx__.begin(), blocked_ctx__.end());
+//     return ret;
+// }
 
 std::list<co_ctx*> co_scheduler::all_scheduleable_ctx() const
 {

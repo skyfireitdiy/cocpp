@@ -367,7 +367,7 @@ void co_env::schedule_in_this_thread()
 
 void co_env::remove_all_ctx__()
 {
-    auto all_ctx = scheduler__->all_ctx();
+    auto all_ctx = all_ctx__();
     for (auto& obj : all_ctx)
     {
         remove_ctx(obj);
@@ -486,6 +486,18 @@ co_ctx* co_env::choose_ctx__()
     }
     scheduler__->curr_obj__ = nullptr;
     return nullptr;
+}
+
+std::list<co_ctx*> co_env::all_ctx__()
+{
+    std::scoped_lock   lock(scheduler__->mu_scheduleable_ctx__, scheduler__->mu_blocked_ctx__);
+    std::list<co_ctx*> ret;
+    for (auto& lst : scheduler__->all_scheduleable_ctx__)
+    {
+        ret.insert(ret.end(), lst.begin(), lst.end());
+    }
+    ret.insert(ret.begin(), scheduler__->blocked_ctx__.begin(), scheduler__->blocked_ctx__.end());
+    return ret;
 }
 
 CO_NAMESPACE_END
