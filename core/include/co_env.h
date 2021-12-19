@@ -126,10 +126,10 @@ public:
     void                           change_priority(int old, co_ctx* ctx);
     void                           ctx_leave_wait_state(co_ctx* ctx);
     void                           ctx_enter_wait_state(co_ctx* ctx);
+    std::list<co_ctx*>             take_all_movable_ctx();
 
     CoMemberMethodProxy(&sleep_controller__, sleep_if_need);
     CoMemberMethodProxy(&sleep_controller__, wake_up);
-    CoMemberMethodProxy(scheduler__, take_all_movable_ctx);
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;

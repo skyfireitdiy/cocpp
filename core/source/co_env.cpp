@@ -564,4 +564,23 @@ void co_env::ctx_enter_wait_state(co_ctx* ctx)
     scheduler__->blocked_ctx__.insert(ctx);
 }
 
+std::list<co_ctx*> co_env::take_all_movable_ctx()
+{
+    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    std::list<co_ctx*>           ret;
+    for (unsigned int i = scheduler__->min_priority__; i < scheduler__->all_scheduleable_ctx__.size(); ++i)
+    {
+        auto backup = scheduler__->all_scheduleable_ctx__[i];
+        for (auto& ctx : backup)
+        {
+            if (ctx->can_move())
+            {
+                scheduler__->all_scheduleable_ctx__[i].remove(ctx);
+                ret.push_back(ctx);
+            }
+        }
+    }
+    return ret;
+}
+
 CO_NAMESPACE_END
