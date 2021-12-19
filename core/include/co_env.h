@@ -88,6 +88,7 @@ private:
     std::list<co_ctx*> all_ctx__();
     std::list<co_ctx*> all_scheduleable_ctx__() const;
     bool               can_schedule__() const;
+    void               update_min_priority__(int priority);
 
     static size_t get_valid_stack_size__(co_ctx* ctx);
     static void   update_ctx_state__(co_ctx* curr, co_ctx* next);

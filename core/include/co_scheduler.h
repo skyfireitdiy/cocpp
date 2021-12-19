@@ -22,7 +22,7 @@ private:
     co_ctx*                         curr_obj__ { nullptr };
     int                             min_priority__ = 0;
 
-    void update_min_priority__(int priority);
+    // void update_min_priority__(int priority);
 
     co_scheduler();
 
@@ -39,7 +39,7 @@ public:
     // void               ctx_leave_wait_state(co_ctx* ctx);
     // void               ctx_enter_wait_state(co_ctx* ctx);
     // std::list<co_ctx*> take_all_movable_ctx();
-    co_ctx*            take_one_movable_ctx();
+    // co_ctx*            take_one_movable_ctx();
 
     friend class co_scheduler_factory;
     friend class co_env;

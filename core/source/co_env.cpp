@@ -65,7 +65,7 @@ void co_env::receive_ctx(co_ctx* ctx)
     {
         std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
         scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
-        scheduler__->update_min_priority__(ctx->priority());
+        update_min_priority__(ctx->priority());
     }
 
     set_state(co_env_state::busy);
@@ -456,7 +456,7 @@ void co_env::change_priority(int old, co_ctx* ctx)
         {
             scheduler__->all_scheduleable_ctx__[old].erase(iter);
             scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
-            scheduler__->update_min_priority__(ctx->priority());
+            update_min_priority__(ctx->priority());
             return;
         }
     }
@@ -554,7 +554,7 @@ void co_env::ctx_leave_wait_state(co_ctx* ctx)
     std::scoped_lock lock(scheduler__->mu_scheduleable_ctx__, scheduler__->mu_blocked_ctx__);
     scheduler__->blocked_ctx__.erase(ctx);
     scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
-    scheduler__->update_min_priority__(ctx->priority());
+    update_min_priority__(ctx->priority());
 }
 
 void co_env::ctx_enter_wait_state(co_ctx* ctx)
@@ -581,6 +581,14 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
         }
     }
     return ret;
+}
+
+void co_env::update_min_priority__(int priority)
+{
+    if (priority < scheduler__->min_priority__)
+    {
+        scheduler__->min_priority__ = priority;
+    }
 }
 
 CO_NAMESPACE_END

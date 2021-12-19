@@ -105,14 +105,6 @@ co_scheduler::co_scheduler()
 //     update_min_priority__(ctx->priority());
 // }
 
-void co_scheduler::update_min_priority__(int priority)
-{
-    if (priority < min_priority__)
-    {
-        min_priority__ = priority;
-    }
-}
-
 // void co_scheduler::ctx_enter_wait_state(co_ctx* ctx)
 // {
 //     std::scoped_lock lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
