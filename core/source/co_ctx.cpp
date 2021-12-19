@@ -43,7 +43,7 @@ co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config)
     set_priority(config.priority);
 }
 
-int co_ctx::priority() const
+size_t co_ctx::priority() const
 {
     return priority__;
 }

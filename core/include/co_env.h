@@ -7,6 +7,7 @@ _Pragma("once");
 #include "co_noncopyable.h"
 #include "co_object_pool.h"
 #include "co_return_value.h"
+#include "co_scheduler.h"
 #include "co_sleep_controller.h"
 #include "co_spinlock.h"
 #include "co_stack_factory.h"

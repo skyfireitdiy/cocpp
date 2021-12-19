@@ -54,9 +54,9 @@ private:
     co_ctx(co_stack* stack, const co_ctx_config& config);
 
 public:
-    void set_priority(int priority);
-    int  priority() const;
-    bool can_schedule() const;
+    void   set_priority(int priority);
+    size_t priority() const;
+    bool   can_schedule() const;
 
     co_stack*            stack() const;
     co_byte**            regs();
