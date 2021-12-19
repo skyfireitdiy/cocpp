@@ -460,10 +460,13 @@ void co_manager::steal_ctx_routine__()
             {
                 break;
             }
+            // CO_O_DEBUG("take ctx from env: %p", *iter);
             auto ctx = (*iter)->take_one_movable_ctx();
             if (ctx != nullptr)
             {
+                // CO_O_DEBUG("add ctx to env: %p", env);
                 env->receive_ctx(ctx);
+                // CO_O_DEBUG("steal ctx %p from %p to %p", ctx, *iter, env);
                 break;
             }
         }

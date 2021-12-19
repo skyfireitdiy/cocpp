@@ -101,7 +101,7 @@ void co_ctx::set_stack(co_stack* stack)
 
 bool co_ctx::can_move() const
 {
-    return !(state() == co_state::running || test_flag(CO_CTX_FLAG_BIND) || test_flag(CO_CTX_FLAG_SHARED_STACK) || test_flag(CO_CTX_FLAG_SWITCHING));
+    return !(state() == co_state::running || state() == co_state::finished || test_flag(CO_CTX_FLAG_BIND) || test_flag(CO_CTX_FLAG_SHARED_STACK) || test_flag(CO_CTX_FLAG_SWITCHING));
 }
 
 std::string co_ctx::name() const

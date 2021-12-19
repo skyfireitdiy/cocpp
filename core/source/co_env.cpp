@@ -501,7 +501,7 @@ co_ctx* co_env::choose_ctx__()
     std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
-        for (auto ctx : all_normal_ctx__[i])
+        for (auto& ctx : all_normal_ctx__[i])
         {
             if (ctx->can_schedule())
             {
