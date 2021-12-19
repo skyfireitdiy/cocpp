@@ -127,6 +127,8 @@ void co_manager::sub_manager_event__()
         {
             // 重新调度
             redistribute_ctx__();
+            // 偷取ctx
+            steal_ctx_routine__();
             // 销毁多余的env
             destroy_redundant_env__();
             // 释放内存
@@ -434,6 +436,38 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lo
 void co_manager::set_if_free_mem_callback(std::function<bool()> cb)
 {
     need_free_mem_cb__ = cb;
+}
+
+void co_manager::steal_ctx_routine__()
+{
+    std::scoped_lock<std::recursive_mutex> lock(env_set__.normal_lock);
+    std::vector<co_env*>                   idle_env_list;
+    idle_env_list.reserve(env_set__.normal_set.size());
+    for (auto& env : env_set__.normal_set)
+    {
+        if (env->state() == co_env_state::idle)
+        {
+            idle_env_list.push_back(env);
+        }
+    }
+
+    auto iter = env_set__.normal_set.begin();
+    for (auto& env : idle_env_list)
+    {
+        for (; iter != env_set__.normal_set.end(); ++iter)
+        {
+            if ((*iter)->state() == co_env_state::idle)
+            {
+                break;
+            }
+            auto ctx = (*iter)->take_one_movable_ctx();
+            if (ctx != nullptr)
+            {
+                env->receive_ctx(ctx);
+                break;
+            }
+        }
+    }
 }
 
 CO_NAMESPACE_END

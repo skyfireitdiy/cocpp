@@ -575,6 +575,24 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
     return ret;
 }
 
+co_ctx* co_env::take_one_movable_ctx()
+{
+    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
+    {
+        auto backup = all_normal_ctx__[i];
+        for (auto& ctx : backup)
+        {
+            if (ctx->can_move())
+            {
+                all_normal_ctx__[i].remove(ctx);
+                return ctx;
+            }
+        }
+    }
+    return nullptr;
+}
+
 void co_env::update_min_priority__(int priority)
 {
     if (priority < min_priority__)

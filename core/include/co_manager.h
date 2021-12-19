@@ -88,6 +88,7 @@ private:
     void    sub_manager_event__();
     void    create_background_task__();
     void    create_env_from_this_thread__();
+    void    steal_ctx_routine__();
 
     co_manager();
 

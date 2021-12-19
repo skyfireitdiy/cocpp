@@ -7,7 +7,6 @@ _Pragma("once");
 #include "co_noncopyable.h"
 #include "co_object_pool.h"
 #include "co_return_value.h"
-#include "co_scheduler.h"
 #include "co_sleep_controller.h"
 #include "co_spinlock.h"
 #include "co_stack_factory.h"
@@ -132,6 +131,7 @@ public:
     void                           ctx_leave_wait_state(co_ctx* ctx);
     void                           ctx_enter_wait_state(co_ctx* ctx);
     std::list<co_ctx*>             take_all_movable_ctx();
+    co_ctx*                        take_one_movable_ctx();
 
     CoMemberMethodProxy(&sleep_controller__, sleep_if_need);
     CoMemberMethodProxy(&sleep_controller__, wake_up);
