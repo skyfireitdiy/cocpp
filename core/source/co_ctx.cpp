@@ -126,7 +126,7 @@ void co_ctx::enter_wait_rc_state(int rc_type, void* rc)
 void co_ctx::leave_wait_rc_state()
 {
     reset_flag(CO_CTX_FLAG_WAITING);
-    env__->scheduler()->ctx_leave_wait_state(this);
+    env__->ctx_leave_wait_state(this);
     env__->wake_up();
 }
 

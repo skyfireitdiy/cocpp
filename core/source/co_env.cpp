@@ -549,4 +549,12 @@ std::list<co_ctx*> co_env::all_scheduleable_ctx__() const
     return ret;
 }
 
+void co_env::ctx_leave_wait_state(co_ctx* ctx)
+{
+    std::scoped_lock lock(scheduler__->mu_scheduleable_ctx__, scheduler__->mu_blocked_ctx__);
+    scheduler__->blocked_ctx__.erase(ctx);
+    scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+    scheduler__->update_min_priority__(ctx->priority());
+}
+
 CO_NAMESPACE_END

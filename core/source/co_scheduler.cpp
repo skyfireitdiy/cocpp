@@ -97,13 +97,13 @@ co_scheduler::co_scheduler()
 //     assert(false);
 // }
 
-void co_scheduler::ctx_leave_wait_state(co_ctx* ctx)
-{
-    std::scoped_lock lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
-    blocked_ctx__.erase(ctx);
-    all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
-    update_min_priority__(ctx->priority());
-}
+// void co_scheduler::ctx_leave_wait_state(co_ctx* ctx)
+// {
+//     std::scoped_lock lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
+//     blocked_ctx__.erase(ctx);
+//     all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+//     update_min_priority__(ctx->priority());
+// }
 
 void co_scheduler::update_min_priority__(int priority)
 {

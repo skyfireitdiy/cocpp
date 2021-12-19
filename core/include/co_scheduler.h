@@ -36,7 +36,7 @@ public:
     // co_ctx*            current_ctx() const;
     // bool               can_schedule() const;
     // void               change_priority(int old, co_ctx* ctx);
-    void               ctx_leave_wait_state(co_ctx* ctx);
+    // void               ctx_leave_wait_state(co_ctx* ctx);
     void               ctx_enter_wait_state(co_ctx* ctx);
     std::list<co_ctx*> take_all_movable_ctx();
     co_ctx*            take_one_movable_ctx();
