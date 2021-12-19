@@ -127,8 +127,8 @@ void co_manager::sub_manager_event__()
         {
             // 重新调度
             redistribute_ctx__();
-            // 偷取ctx
-            steal_ctx_routine__();
+            // TODO:偷取ctx
+            // steal_ctx_routine__();
             // 销毁多余的env
             destroy_redundant_env__();
             // 释放内存

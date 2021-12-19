@@ -387,9 +387,8 @@ void co_env::reset_scheduled_flag()
 
 bool co_env::can_auto_destroy() const
 {
-
     // 如果是用户自己转换的env，不能被选中销毁
-    return !test_flag(CO_ENV_FLAG_COVERTED) && !test_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
+    return !test_flag(CO_ENV_FLAG_COVERTED) && !test_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY) && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
 }
 
 size_t co_env::get_valid_stack_size__(co_ctx* ctx)
