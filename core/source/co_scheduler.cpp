@@ -113,12 +113,12 @@ void co_scheduler::update_min_priority__(int priority)
     }
 }
 
-void co_scheduler::ctx_enter_wait_state(co_ctx* ctx)
-{
-    std::scoped_lock lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
-    all_scheduleable_ctx__[ctx->priority()].remove(ctx);
-    blocked_ctx__.insert(ctx);
-}
+// void co_scheduler::ctx_enter_wait_state(co_ctx* ctx)
+// {
+//     std::scoped_lock lock(mu_scheduleable_ctx__, mu_blocked_ctx__);
+//     all_scheduleable_ctx__[ctx->priority()].remove(ctx);
+//     blocked_ctx__.insert(ctx);
+// }
 
 std::list<co_ctx*> co_scheduler::take_all_movable_ctx()
 {

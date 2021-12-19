@@ -121,6 +121,7 @@ void co_ctx::enter_wait_rc_state(int rc_type, void* rc)
     wait_data__.type = rc_type;
     wait_data__.rc   = rc;
     set_flag(CO_CTX_FLAG_WAITING);
+    env__->ctx_enter_wait_state(this);
 }
 
 void co_ctx::leave_wait_rc_state()

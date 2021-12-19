@@ -125,6 +125,7 @@ public:
     bool                           safepoint() const;
     void                           change_priority(int old, co_ctx* ctx);
     void                           ctx_leave_wait_state(co_ctx* ctx);
+    void                           ctx_enter_wait_state(co_ctx* ctx);
 
     CoMemberMethodProxy(&sleep_controller__, sleep_if_need);
     CoMemberMethodProxy(&sleep_controller__, wake_up);

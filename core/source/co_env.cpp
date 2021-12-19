@@ -557,4 +557,11 @@ void co_env::ctx_leave_wait_state(co_ctx* ctx)
     scheduler__->update_min_priority__(ctx->priority());
 }
 
+void co_env::ctx_enter_wait_state(co_ctx* ctx)
+{
+    std::scoped_lock lock(scheduler__->mu_scheduleable_ctx__, scheduler__->mu_blocked_ctx__);
+    scheduler__->all_scheduleable_ctx__[ctx->priority()].remove(ctx);
+    scheduler__->blocked_ctx__.insert(ctx);
+}
+
 CO_NAMESPACE_END
