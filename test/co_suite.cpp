@@ -17,7 +17,6 @@
 #include "co_mem_pool.h"
 #include "co_mutex.h"
 #include "co_recursive_mutex.h"
-#include "co_scheduler_factory.h"
 #include "co_shared_mutex.h"
 #include "co_shared_timed_mutex.h"
 #include "co_stack_factory.h"

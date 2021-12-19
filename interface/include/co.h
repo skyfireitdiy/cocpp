@@ -52,7 +52,6 @@ public:
     CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), state, current_env_);
     CoMemberMethodProxyStatic((manager__->current_env()), schedule_in_this_thread);
     CoMemberMethodProxyStatic((manager__->current_env()), current_ctx);
-    CoMemberMethodProxyStatic((manager__->current_env()), scheduler);
     CoMemberMethodProxyStatic((manager__->current_env()), can_auto_destroy);
 
     // 成员函数

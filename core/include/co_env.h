@@ -7,8 +7,6 @@ _Pragma("once");
 #include "co_noncopyable.h"
 #include "co_object_pool.h"
 #include "co_return_value.h"
-#include "co_scheduler.h"
-#include "co_scheduler_factory.h"
 #include "co_sleep_controller.h"
 #include "co_spinlock.h"
 #include "co_stack_factory.h"
@@ -63,7 +61,6 @@ private:
 
     co_ctx_factory* const   ctx_factory__ { co_ctx_factory::instance() };
     co_stack_factory* const stack_factory__ { co_stack_factory::instance() };
-    co_scheduler* const     scheduler__ { nullptr };
 
     co_stack*     shared_stack__ { nullptr };
     co_ctx* const idle_ctx__ { nullptr };
@@ -72,7 +69,14 @@ private:
 
     bool safepoint__ { false };
 
-    co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
+    std::vector<std::list<co_ctx*>> all_normal_ctx__ { CO_MAX_PRIORITY };
+    std::unordered_set<co_ctx*>     blocked_ctx__;
+    mutable co_spinlock             mu_normal_ctx__ { co_spinlock::lock_type::in_thread };
+    mutable co_spinlock             mu_blocked_ctx__ { co_spinlock::lock_type::in_thread };
+    co_ctx*                         curr_obj__ { nullptr };
+    int                             min_priority__ = 0;
+
+    co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
     void    start_schedule_routine__();
     void    remove_detached_ctx__();
@@ -114,7 +118,6 @@ public:
     void                           stop_schedule();
     void                           start_schedule();
     void                           schedule_in_this_thread();
-    co_scheduler*                  scheduler() const;
     void                           reset_scheduled_flag();
     bool                           can_auto_destroy() const;
     co_tid                         schedule_thread_tid() const;

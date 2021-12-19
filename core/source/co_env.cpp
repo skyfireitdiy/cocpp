@@ -6,7 +6,6 @@
 #include "co_defer.h"
 #include "co_define.h"
 #include "co_env_factory.h"
-#include "co_scheduler.h"
 #include "co_stack.h"
 #include "co_type.h"
 #include "co_vos.h"
@@ -20,9 +19,8 @@ CO_NAMESPACE_BEGIN
 
 thread_local co_env* current_env__ = nullptr;
 
-co_env::co_env(co_scheduler* scheduler, co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
+co_env::co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
     : sleep_controller__([this] { return need_sleep__(); })
-    , scheduler__(scheduler)
     , shared_stack__(shared_stack)
     , idle_ctx__(idle_ctx)
 {
@@ -63,8 +61,8 @@ void co_env::receive_ctx(co_ctx* ctx)
     ctx->set_env(this);
 
     {
-        std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
-        scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+        std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+        all_normal_ctx__[ctx->priority()].push_back(ctx);
         update_min_priority__(ctx->priority());
     }
 
@@ -119,12 +117,12 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
 int co_env::workload() const
 {
-    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
 
     size_t ret = 0;
-    for (unsigned int i = scheduler__->min_priority__; i < scheduler__->all_scheduleable_ctx__.size(); ++i)
+    for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
-        ret += scheduler__->all_scheduleable_ctx__[i].size();
+        ret += all_normal_ctx__[i].size();
     }
     return ret;
 }
@@ -257,10 +255,10 @@ void co_env::schedule_switch(bool safe_return)
 void co_env::remove_ctx(co_ctx* ctx)
 {
     {
-        std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+        std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
         // CO_O_DEBUG("remove ctx %s %p , state: %d", ctx->config().name.c_str(), ctx, (int)ctx->state());
         // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
-        scheduler__->all_scheduleable_ctx__[ctx->priority()].remove(ctx);
+        all_normal_ctx__[ctx->priority()].remove(ctx);
     }
     ctx_factory__->destroy_ctx(ctx);
     ctx_removed().pub(ctx);
@@ -268,12 +266,12 @@ void co_env::remove_ctx(co_ctx* ctx)
 
 co_ctx* co_env::current_ctx() const
 {
-    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
-    if (scheduler__->curr_obj__ == nullptr)
+    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    if (curr_obj__ == nullptr)
     {
         return idle_ctx__;
     }
-    return scheduler__->curr_obj__;
+    return curr_obj__;
 }
 
 void co_env::stop_schedule()
@@ -381,12 +379,6 @@ void co_env::remove_all_ctx__()
     all_ctx_removed().pub();
 }
 
-co_scheduler* co_env::scheduler() const
-{
-
-    return scheduler__;
-}
-
 void co_env::reset_scheduled_flag()
 {
     reset_flag(CO_ENV_FLAG_SCHEDULED);
@@ -449,13 +441,13 @@ bool co_env::can_schedule_ctx() const
 
 void co_env::change_priority(int old, co_ctx* ctx)
 {
-    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
-    for (auto iter = scheduler__->all_scheduleable_ctx__[old].begin(); iter != scheduler__->all_scheduleable_ctx__[old].end(); ++iter)
+    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    for (auto iter = all_normal_ctx__[old].begin(); iter != all_normal_ctx__[old].end(); ++iter)
     {
         if (*iter == ctx)
         {
-            scheduler__->all_scheduleable_ctx__[old].erase(iter);
-            scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+            all_normal_ctx__[old].erase(iter);
+            all_normal_ctx__[ctx->priority()].push_back(ctx);
             update_min_priority__(ctx->priority());
             return;
         }
@@ -465,10 +457,10 @@ void co_env::change_priority(int old, co_ctx* ctx)
 
 bool co_env::can_schedule__() const
 {
-    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
-    for (unsigned int i = scheduler__->min_priority__; i < scheduler__->all_scheduleable_ctx__.size(); ++i)
+    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
-        for (auto& ctx : scheduler__->all_scheduleable_ctx__[i])
+        for (auto& ctx : all_normal_ctx__[i])
         {
             if (ctx->can_schedule())
             {
@@ -506,43 +498,43 @@ bool co_env::need_sleep__()
 
 co_ctx* co_env::choose_ctx__()
 {
-    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
-    for (unsigned int i = scheduler__->min_priority__; i < scheduler__->all_scheduleable_ctx__.size(); ++i)
+    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
-        for (auto& ctx : scheduler__->all_scheduleable_ctx__[i])
+        for (auto& ctx : all_normal_ctx__[i])
         {
             if (ctx->can_schedule())
             {
                 auto ret = ctx;
-                scheduler__->all_scheduleable_ctx__[i].remove(ctx);
-                scheduler__->all_scheduleable_ctx__[i].push_back(ret);
-                scheduler__->curr_obj__     = ret;
-                scheduler__->min_priority__ = i;
+                all_normal_ctx__[i].remove(ctx);
+                all_normal_ctx__[i].push_back(ret);
+                curr_obj__     = ret;
+                min_priority__ = i;
                 return ret;
             }
         }
     }
-    scheduler__->curr_obj__ = nullptr;
+    curr_obj__ = nullptr;
     return nullptr;
 }
 
 std::list<co_ctx*> co_env::all_ctx__()
 {
-    std::scoped_lock   lock(scheduler__->mu_scheduleable_ctx__, scheduler__->mu_blocked_ctx__);
+    std::scoped_lock   lock(mu_normal_ctx__, mu_blocked_ctx__);
     std::list<co_ctx*> ret;
-    for (auto& lst : scheduler__->all_scheduleable_ctx__)
+    for (auto& lst : all_normal_ctx__)
     {
         ret.insert(ret.end(), lst.begin(), lst.end());
     }
-    ret.insert(ret.begin(), scheduler__->blocked_ctx__.begin(), scheduler__->blocked_ctx__.end());
+    ret.insert(ret.begin(), blocked_ctx__.begin(), blocked_ctx__.end());
     return ret;
 }
 
 std::list<co_ctx*> co_env::all_scheduleable_ctx__() const
 {
-    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
     std::list<co_ctx*>           ret;
-    for (auto& lst : scheduler__->all_scheduleable_ctx__)
+    for (auto& lst : all_normal_ctx__)
     {
         ret.insert(ret.end(), lst.begin(), lst.end());
     }
@@ -551,31 +543,31 @@ std::list<co_ctx*> co_env::all_scheduleable_ctx__() const
 
 void co_env::ctx_leave_wait_state(co_ctx* ctx)
 {
-    std::scoped_lock lock(scheduler__->mu_scheduleable_ctx__, scheduler__->mu_blocked_ctx__);
-    scheduler__->blocked_ctx__.erase(ctx);
-    scheduler__->all_scheduleable_ctx__[ctx->priority()].push_back(ctx);
+    std::scoped_lock lock(mu_normal_ctx__, mu_blocked_ctx__);
+    blocked_ctx__.erase(ctx);
+    all_normal_ctx__[ctx->priority()].push_back(ctx);
     update_min_priority__(ctx->priority());
 }
 
 void co_env::ctx_enter_wait_state(co_ctx* ctx)
 {
-    std::scoped_lock lock(scheduler__->mu_scheduleable_ctx__, scheduler__->mu_blocked_ctx__);
-    scheduler__->all_scheduleable_ctx__[ctx->priority()].remove(ctx);
-    scheduler__->blocked_ctx__.insert(ctx);
+    std::scoped_lock lock(mu_normal_ctx__, mu_blocked_ctx__);
+    all_normal_ctx__[ctx->priority()].remove(ctx);
+    blocked_ctx__.insert(ctx);
 }
 
 std::list<co_ctx*> co_env::take_all_movable_ctx()
 {
-    std::lock_guard<co_spinlock> lock(scheduler__->mu_scheduleable_ctx__);
+    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
     std::list<co_ctx*>           ret;
-    for (unsigned int i = scheduler__->min_priority__; i < scheduler__->all_scheduleable_ctx__.size(); ++i)
+    for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
-        auto backup = scheduler__->all_scheduleable_ctx__[i];
+        auto backup = all_normal_ctx__[i];
         for (auto& ctx : backup)
         {
             if (ctx->can_move())
             {
-                scheduler__->all_scheduleable_ctx__[i].remove(ctx);
+                all_normal_ctx__[i].remove(ctx);
                 ret.push_back(ctx);
             }
         }
@@ -585,9 +577,9 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
 
 void co_env::update_min_priority__(int priority)
 {
-    if (priority < scheduler__->min_priority__)
+    if (priority < min_priority__)
     {
-        scheduler__->min_priority__ = priority;
+        min_priority__ = priority;
     }
 }
 

@@ -5,7 +5,6 @@ _Pragma("once");
 #include "co_flag_manager.h"
 #include "co_local.h"
 #include "co_object_pool.h"
-#include "co_scheduler.h"
 #include "co_stack.h"
 #include "co_state_manager.h"
 #include "co_type.h"
