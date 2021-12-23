@@ -117,7 +117,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
 int co_env::workload() const
 {
-    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
 
     size_t ret = 0;
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
@@ -266,12 +266,12 @@ void co_env::remove_ctx(co_ctx* ctx)
 
 co_ctx* co_env::current_ctx() const
 {
-    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
-    if (curr_obj__ == nullptr)
+    std::lock_guard<co_spinlock> lock(mu_curr_ctx__);
+    if (curr_ctx__ == nullptr)
     {
         return idle_ctx__;
     }
-    return curr_obj__;
+    return curr_ctx__;
 }
 
 void co_env::stop_schedule()
@@ -456,7 +456,7 @@ void co_env::change_priority(int old, co_ctx* ctx)
 
 bool co_env::can_schedule__() const
 {
-    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         for (auto& ctx : all_normal_ctx__[i])
@@ -477,16 +477,19 @@ bool co_env::is_blocked() const
 
 bool co_env::safepoint() const
 {
+    std::lock_guard<co_spinlock> lock(safepoint_lock__);
     return safepoint__;
 }
 
 void co_env::set_safepoint()
 {
+    std::lock_guard<co_spinlock> lock(safepoint_lock__);
     safepoint__ = true;
 }
 
 void co_env::reset_safepoint()
 {
+    std::lock_guard<co_spinlock> lock(safepoint_lock__);
     safepoint__ = false;
 }
 
@@ -497,7 +500,7 @@ bool co_env::need_sleep__()
 
 co_ctx* co_env::choose_ctx__()
 {
-    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_curr_ctx__, mu_min_priority__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         for (auto& ctx : all_normal_ctx__[i])
@@ -507,13 +510,13 @@ co_ctx* co_env::choose_ctx__()
                 auto ret = ctx;
                 all_normal_ctx__[i].remove(ctx);
                 all_normal_ctx__[i].push_back(ret);
-                curr_obj__     = ret;
                 min_priority__ = i;
+                curr_ctx__     = ret;
                 return ret;
             }
         }
     }
-    curr_obj__ = nullptr;
+    curr_ctx__ = nullptr;
     return nullptr;
 }
 
@@ -557,8 +560,8 @@ void co_env::ctx_enter_wait_state(co_ctx* ctx)
 
 std::list<co_ctx*> co_env::take_all_movable_ctx()
 {
-    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
-    std::list<co_ctx*>           ret;
+    std::scoped_lock   lock(mu_normal_ctx__, mu_min_priority__);
+    std::list<co_ctx*> ret;
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         auto backup = all_normal_ctx__[i];
@@ -576,7 +579,7 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
 
 co_ctx* co_env::take_one_movable_ctx()
 {
-    std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         auto backup = all_normal_ctx__[i];
@@ -594,6 +597,7 @@ co_ctx* co_env::take_one_movable_ctx()
 
 void co_env::update_min_priority__(int priority)
 {
+    std::scoped_lock lock(mu_min_priority__);
     if (priority < min_priority__)
     {
         min_priority__ = priority;

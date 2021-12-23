@@ -67,14 +67,20 @@ private:
 
     co_tid schedule_thread_tid__ {};
 
-    bool safepoint__ { false };
+    bool                safepoint__ { false };
+    mutable co_spinlock safepoint_lock__ { co_spinlock::lock_type::in_thread };
 
     std::vector<std::list<co_ctx*>> all_normal_ctx__ { CO_MAX_PRIORITY };
-    std::unordered_set<co_ctx*>     blocked_ctx__;
     mutable co_spinlock             mu_normal_ctx__ { co_spinlock::lock_type::in_thread };
-    mutable co_spinlock             mu_blocked_ctx__ { co_spinlock::lock_type::in_thread };
-    co_ctx*                         curr_obj__ { nullptr };
-    int                             min_priority__ = 0;
+
+    std::unordered_set<co_ctx*> blocked_ctx__;
+    mutable co_spinlock         mu_blocked_ctx__ { co_spinlock::lock_type::in_thread };
+
+    co_ctx*             curr_ctx__ { nullptr };
+    mutable co_spinlock mu_curr_ctx__ { co_spinlock::lock_type::in_thread };
+
+    int                 min_priority__ = 0;
+    mutable co_spinlock mu_min_priority__ { co_spinlock::lock_type::in_thread };
 
     co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
