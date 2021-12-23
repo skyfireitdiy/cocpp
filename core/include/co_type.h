@@ -52,6 +52,7 @@ struct co_env_set
     std::recursive_mutex        expired_lock;
     std::condition_variable_any cond_expired_env;
     unsigned int                normal_env_count;
+    co_spinlock                 mu_normal_env_count { co_spinlock::lock_type::in_thread };
     unsigned int                base_env_count;
     unsigned int                max_env_count;
 };

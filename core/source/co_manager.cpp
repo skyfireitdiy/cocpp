@@ -86,7 +86,7 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     {
         env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
     }
-    std::lock_guard<std::recursive_mutex> lck(env_set__.normal_lock);
+    std::scoped_lock lck(env_set__.normal_lock, env_set__.mu_normal_env_count);
     env_set__.normal_set.insert(env);
     ++env_set__.normal_env_count;
     // CO_O_DEBUG("create env : %p", env);
@@ -186,7 +186,7 @@ void co_manager::remove_env__(co_env* env)
 
 void co_manager::create_env_from_this_thread__()
 {
-    std::lock_guard<std::recursive_mutex> lck(env_set__.normal_lock);
+    std::scoped_lock lck(env_set__.normal_lock, env_set__.mu_normal_env_count);
     current_env__ = factory_set__.env_factory->create_env_from_this_thread(default_shared_stack_size__);
 
     sub_env_event__(current_env__);
@@ -238,6 +238,7 @@ void co_manager::clean_env_routine__()
         // CO_O_DEBUG("wait to wake up ...");
         env_set__.cond_expired_env.wait(lck);
         // CO_O_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)env_set__.normal_env_count, env_set__.expired_set.size());
+        std::lock_guard<co_spinlock> lock(env_set__.mu_normal_env_count);
         for (auto& p : env_set__.expired_set)
         {
             // CO_O_DEBUG("clean up an env: %p", p);
