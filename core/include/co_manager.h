@@ -55,7 +55,8 @@ private:
         .max_env_count    = std::thread::hardware_concurrency() * 2
     };
 
-    bool clean_up__ { false };
+    bool        clean_up__ { false };
+    co_spinlock clean_up_lock__ { co_spinlock::lock_type::in_thread };
 
     std::list<std::future<void>> background_task__;
 
@@ -71,6 +72,7 @@ private:
     size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
 
     std::function<bool()> need_free_mem_cb__ { [] { return false; } };
+    co_spinlock           need_free_mem_cb_lock__ { co_spinlock::lock_type::in_thread };
 
     void    clean_env_routine__();
     void    timing_routine__();

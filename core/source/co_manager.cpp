@@ -3,6 +3,7 @@
 #include "co_ctx_factory.h"
 #include "co_env.h"
 #include "co_env_factory.h"
+#include "co_spinlock.h"
 #include "co_stack_factory.h"
 #include "co_vos.h"
 #include <cassert>
@@ -145,6 +146,7 @@ void co_manager::free_mem__()
     pass_tick_count = (pass_tick_count + 1) % TICKS_COUNT_OF_FREE_MEM;
     if (pass_tick_count == 0)
     {
+        std::lock_guard<co_spinlock> lck(need_free_mem_cb_lock__);
         if (need_free_mem_cb__())
         {
             factory_set__.env_factory->free_obj_pool();
@@ -209,7 +211,7 @@ co_env* co_manager::current_env()
 
 void co_manager::set_clean_up__()
 {
-    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock);
+    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock, clean_up_lock__);
     // CO_O_DEBUG("set clean up!!!");
     clean_up__       = true;
     auto backup_data = env_set__.normal_set;
@@ -233,10 +235,14 @@ void co_manager::set_clean_up__()
 void co_manager::clean_env_routine__()
 {
     std::unique_lock<std::recursive_mutex> lck(env_set__.expired_lock);
+    std::unique_lock<co_spinlock>          clean_lock(clean_up_lock__);
     while (!clean_up__ || env_set__.normal_env_count != 0)
     {
+        clean_lock.unlock();
         // CO_O_DEBUG("wait to wake up ...");
         env_set__.cond_expired_env.wait(lck);
+
+        clean_lock.lock();
         // CO_O_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)env_set__.normal_env_count, env_set__.expired_set.size());
         std::lock_guard<co_spinlock> lock(env_set__.mu_normal_env_count);
         for (auto& p : env_set__.expired_set)
@@ -274,7 +280,7 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
 
 void co_manager::force_schedule__()
 {
-    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock);
+    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock, clean_up_lock__);
     if (clean_up__)
     {
         return;
@@ -292,7 +298,7 @@ void co_manager::force_schedule__()
 
 void co_manager::redistribute_ctx__()
 {
-    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock);
+    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock, clean_up_lock__);
     if (clean_up__)
     {
         return;
@@ -358,11 +364,13 @@ void co_manager::destroy_redundant_env__()
 
 void co_manager::timing_routine__()
 {
+    std::unique_lock<co_spinlock> lck(clean_up_lock__);
     while (!clean_up__)
     {
+        lck.unlock();
         std::this_thread::sleep_for(timing_duration());
-
         timing_routine_timout().pub();
+        lck.lock();
     }
     timing_routine_finished().pub();
 }
@@ -436,6 +444,7 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lo
 
 void co_manager::set_if_free_mem_callback(std::function<bool()> cb)
 {
+    std::lock_guard<co_spinlock> lck(need_free_mem_cb_lock__);
     need_free_mem_cb__ = cb;
 }
 
