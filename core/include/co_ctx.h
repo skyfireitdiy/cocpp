@@ -35,10 +35,13 @@ private:
 
     co_stack* stack__ { nullptr }; // 当前栈空间
 
-    co_ctx_config config__ {};                         // 协程配置
-    std::any      ret__;                               // 协程返回值，会被传递给 config 中的 entry
-    co_env*       env__ { nullptr };                   // 协程当前对应的运行环境
-    int           priority__ { CO_IDLE_CTX_PRIORITY }; // 优先级
+    co_ctx_config       config__ {};                                      // 协程配置
+    std::any            ret__;                                            // 协程返回值，会被传递给 config 中的 entry
+    co_env*             env__ { nullptr };                                // 协程当前对应的运行环境
+    mutable co_spinlock env_lock__ { co_spinlock::lock_type::in_thread }; // 运行环境锁
+
+    int                 priority__ { CO_IDLE_CTX_PRIORITY };                   // 优先级
+    mutable co_spinlock priority_lock__ { co_spinlock::lock_type::in_thread }; // 优先级锁
 
     std::unordered_map<std::string, std::shared_ptr<co_local_base>> locals__; // 协程局部存储
 

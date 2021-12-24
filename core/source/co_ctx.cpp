@@ -2,6 +2,7 @@
 #include "co_define.h"
 #include "co_env.h"
 #include <cassert>
+#include <mutex>
 
 CO_NAMESPACE_BEGIN
 
@@ -27,12 +28,14 @@ std::any& co_ctx::ret_ref()
 
 void co_ctx::set_env(co_env* env)
 {
+    std::lock_guard<co_spinlock> lock(env_lock__);
     env__ = env;
     env_set().pub(env__);
 }
 
 co_env* co_ctx::env() const
 {
+    std::lock_guard<co_spinlock> lock(env_lock__);
     return env__;
 }
 
@@ -45,12 +48,14 @@ co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config)
 
 size_t co_ctx::priority() const
 {
+    std::scoped_lock lock(priority_lock__);
     return priority__;
 }
 
 void co_ctx::set_priority(int priority)
 {
-    int old_priority = priority__;
+    std::unique_lock<co_spinlock> lock(priority_lock__);
+    int                           old_priority = priority__;
     if (priority >= CO_MAX_PRIORITY)
     {
         priority = CO_MAX_PRIORITY - 1;
@@ -60,13 +65,18 @@ void co_ctx::set_priority(int priority)
         priority = 0;
     }
     priority__ = priority;
-    if (env__ == nullptr) // 首次调用的时候env为空
     {
-        return;
+        std::lock_guard<co_spinlock> lock(env_lock__);
+        if (env__ == nullptr) // 首次调用的时候env为空
+        {
+            return;
+        }
     }
     if (old_priority != priority__ && !test_flag(CO_CTX_FLAG_IDLE))
     {
+        lock.unlock();
         priority_changed().pub(old_priority, priority__);
+        lock.lock();
     }
 }
 
@@ -120,12 +130,14 @@ void co_ctx::enter_wait_rc_state(int rc_type, void* rc)
     wait_data__.type = rc_type;
     wait_data__.rc   = rc;
     set_flag(CO_CTX_FLAG_WAITING);
+    std::lock_guard<co_spinlock> env_lock(env_lock__);
     env__->ctx_enter_wait_state(this);
 }
 
 void co_ctx::leave_wait_rc_state()
 {
     reset_flag(CO_CTX_FLAG_WAITING);
+    std::lock_guard<co_spinlock> lock(env_lock__);
     env__->ctx_leave_wait_state(this);
     env__->wake_up();
 }

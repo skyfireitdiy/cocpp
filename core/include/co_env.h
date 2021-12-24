@@ -82,6 +82,8 @@ private:
     int                 min_priority__ = 0;
     mutable co_spinlock mu_min_priority__ { co_spinlock::lock_type::in_thread };
 
+    co_spinlock schedule_lock__ { co_spinlock::lock_type::in_thread }; // 调度锁
+
     co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread);
 
     void    start_schedule_routine__();
@@ -138,6 +140,8 @@ public:
     void                           ctx_enter_wait_state(co_ctx* ctx);
     std::list<co_ctx*>             take_all_movable_ctx();
     co_ctx*                        take_one_movable_ctx();
+    void                           lock_schedule();
+    void                           unlock_schedule();
 
     CoMemberMethodProxy(&sleep_controller__, sleep_if_need);
     CoMemberMethodProxy(&sleep_controller__, wake_up);

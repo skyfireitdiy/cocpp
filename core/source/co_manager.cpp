@@ -128,8 +128,8 @@ void co_manager::sub_manager_event__()
         {
             // 重新调度
             redistribute_ctx__();
-            // TODO:偷取ctx
-            // steal_ctx_routine__();
+            // 偷取ctx
+            steal_ctx_routine__();
             // 销毁多余的env
             destroy_redundant_env__();
             // 释放内存
@@ -450,8 +450,8 @@ void co_manager::set_if_free_mem_callback(std::function<bool()> cb)
 
 void co_manager::steal_ctx_routine__()
 {
-    std::scoped_lock<std::recursive_mutex> lock(env_set__.normal_lock);
-    std::vector<co_env*>                   idle_env_list;
+    std::scoped_lock     lock(env_set__.normal_lock);
+    std::vector<co_env*> idle_env_list;
     idle_env_list.reserve(env_set__.normal_set.size());
     for (auto& env : env_set__.normal_set)
     {
@@ -471,11 +471,15 @@ void co_manager::steal_ctx_routine__()
                 break;
             }
             // CO_O_DEBUG("take ctx from env: %p", *iter);
+            (*iter)->lock_schedule();
             auto ctx = (*iter)->take_one_movable_ctx();
+            (*iter)->unlock_schedule();
             if (ctx != nullptr)
             {
+                env->lock_schedule();
                 // CO_O_DEBUG("add ctx to env: %p", env);
                 env->receive_ctx(ctx);
+                env->unlock_schedule();
                 // CO_O_DEBUG("steal ctx %p from %p to %p", ctx, *iter, env);
                 break;
             }

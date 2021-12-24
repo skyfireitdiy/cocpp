@@ -14,6 +14,7 @@
 #include <cstring>
 #include <future>
 #include <iterator>
+#include <mutex>
 
 CO_NAMESPACE_BEGIN
 
@@ -63,9 +64,9 @@ void co_env::receive_ctx(co_ctx* ctx)
     {
         std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
         all_normal_ctx__[ctx->priority()].push_back(ctx);
-        update_min_priority__(ctx->priority());
     }
 
+    update_min_priority__(ctx->priority());
     set_state(co_env_state::busy);
 
     wake_up();
@@ -168,7 +169,6 @@ void co_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
 
 bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 {
-
     co_ctx* curr = current_ctx();
     co_ctx* next = next_ctx__();
 
@@ -219,8 +219,9 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 
 void co_env::switch_normal_ctx__()
 {
-    co_ctx* curr = nullptr;
-    co_ctx* next = nullptr;
+    std::unique_lock<co_spinlock> lock(schedule_lock__);
+    co_ctx*                       curr = nullptr;
+    co_ctx*                       next = nullptr;
     {
         remove_detached_ctx__();
 
@@ -231,20 +232,27 @@ void co_env::switch_normal_ctx__()
     }
 
     set_safepoint();
+    lock.unlock();
     switch_to(curr->regs(), next->regs());
+    lock.lock();
     switched_to().pub(curr);
 }
 
 void co_env::schedule_switch(bool safe_return)
 {
+    std::unique_lock<co_spinlock> lock(schedule_lock__);
     reset_safepoint();
     if (shared_stack_switch_context__.need_switch)
     {
+        lock.unlock();
         switch_shared_stack_ctx__();
+        lock.lock();
     }
     else
     {
+        lock.unlock();
         switch_normal_ctx__();
+        lock.lock();
     }
     if (!safe_return)
     {
@@ -298,7 +306,7 @@ void co_env::start_schedule()
 
 void co_env::switch_shared_stack_ctx__()
 {
-
+    std::unique_lock<co_spinlock> lock(schedule_lock__);
     shared_stack_switch_context__.need_switch = false;
 
     // CO_O_DEBUG("switch from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
@@ -320,7 +328,9 @@ void co_env::switch_shared_stack_ctx__()
     // 切换到to
 
     set_safepoint();
+    lock.unlock();
     switch_to(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
+    lock.lock();
 
     switched_to().pub(idle_ctx__);
 }
@@ -602,6 +612,16 @@ void co_env::update_min_priority__(int priority)
     {
         min_priority__ = priority;
     }
+}
+
+void co_env::lock_schedule()
+{
+    schedule_lock__.lock();
+}
+
+void co_env::unlock_schedule()
+{
+    schedule_lock__.unlock();
 }
 
 CO_NAMESPACE_END
