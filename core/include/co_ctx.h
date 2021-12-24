@@ -45,6 +45,8 @@ private:
 
     std::unordered_map<std::string, std::shared_ptr<co_local_base>> locals__; // 协程局部存储
 
+    std::function<void(std::any&)> entry__; // 协程入口函数
+
 #ifdef __GNUC__
 #ifdef __x86_64__
 
@@ -54,28 +56,31 @@ private:
 #endif
 #endif
 
-    co_ctx(co_stack* stack, const co_ctx_config& config);
+    co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(std::any&)> entry);
 
 public:
     void   set_priority(int priority);
     size_t priority() const;
     bool   can_schedule() const;
 
-    co_stack*            stack() const;
-    co_byte**            regs();
-    const co_ctx_config& config() const;
-    std::any&            ret_ref();
-    void                 set_env(co_env* env);
-    co_env*              env() const;
-    bool                 can_destroy() const;
-    void                 lock_destroy();
-    void                 unlock_destroy();
-    void                 set_stack(co_stack* stack);
-    bool                 can_move() const;
-    std::string          name() const;
-    co_id                id() const;
-    void                 enter_wait_rc_state(int rc_type, void* rc);
-    void                 leave_wait_rc_state();
+    co_stack*                      stack() const;
+    co_byte**                      regs();
+    const co_ctx_config&           config() const;
+    std::any&                      ret_ref();
+    void                           set_env(co_env* env);
+    co_env*                        env() const;
+    bool                           can_destroy() const;
+    void                           lock_destroy();
+    void                           unlock_destroy();
+    void                           set_stack(co_stack* stack);
+    bool                           can_move() const;
+    std::string                    name() const;
+    co_id                          id() const;
+    void                           enter_wait_rc_state(int rc_type, void* rc);
+    void                           leave_wait_rc_state();
+    std::function<void(std::any&)> entry() const;
+
+    static void real_entry(co_ctx* ctx);
 
     template <typename T>
     T& local(const std::string& name);

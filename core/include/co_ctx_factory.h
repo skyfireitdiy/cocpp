@@ -12,7 +12,7 @@ private:
     co_object_pool<co_ctx> ctx_pool__ { MAX_CTX_CACHE_COUNT };
 
 public:
-    co_ctx* create_ctx(const co_ctx_config& config);
+    co_ctx* create_ctx(const co_ctx_config& config, std::function<void(std::any&)> entry);
     void    destroy_ctx(co_ctx* ctx);
     void    free_obj_pool();
 };

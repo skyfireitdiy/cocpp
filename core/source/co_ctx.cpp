@@ -39,11 +39,27 @@ co_env* co_ctx::env() const
     return env__;
 }
 
-co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config)
+co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(std::any&)> entry)
     : stack__(stack)
     , config__(config)
+    , entry__(entry)
 {
     set_priority(config.priority);
+}
+
+std::function<void(std::any&)> co_ctx::entry() const
+{
+    return entry__;
+}
+
+void co_ctx::real_entry(co_ctx* ctx)
+{
+    ctx->entry()(ctx->ret_ref());
+    // CO_DEBUG("ctx %s %p finished", ctx->config().name.c_str(), ctx);
+    ctx->set_state(co_state::finished);
+    ctx->finished().pub();
+    assert(ctx->env() != nullptr);
+    ctx->env()->schedule_switch(false); // 此处的ctx对应的env不可能为空，如果为空，这个ctx就不可能被调度
 }
 
 size_t co_ctx::priority() const

@@ -96,7 +96,7 @@ private:
 
 public:
     co_env* create_env(bool dont_auto_destory);
-    co_ctx* create_and_schedule_ctx(const co_ctx_config& config, bool lock_destroy = true);
+    co_ctx* create_and_schedule_ctx(const co_ctx_config& config, std::function<void(std::any&)> entry, bool lock_destroy = true);
     void    set_env_shared_stack_size(size_t size);
     co_env* current_env();
     void    set_base_schedule_thread_count(size_t base_thread_count);

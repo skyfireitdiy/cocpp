@@ -132,7 +132,7 @@ void init_ctx(co_stack* shared_stack, co_ctx* ctx)
 
     CO_SETREG(context, sp, stack->stack_top());
     CO_SETREG(context, bp, stack->stack_top());
-    CO_SETREG(context, ip, co_entry);
+    CO_SETREG(context, ip, &co_ctx::real_entry);
     CO_SETREG(context, di, ctx);
 }
 

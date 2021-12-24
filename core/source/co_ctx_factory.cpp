@@ -1,6 +1,5 @@
 #include "co_ctx_factory.h"
 #include "co_ctx.h"
-#include "co_entry.h"
 #include "co_manager.h"
 #include "co_stack_factory.h"
 
@@ -8,9 +7,9 @@
 
 CO_NAMESPACE_BEGIN
 
-co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config)
+co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config, std::function<void(std::any&)> entry)
 {
-    auto ret = ctx_pool__.create_obj(config.shared_stack ? nullptr : co_stack_factory::instance()->create_stack(config.stack_size), config);
+    auto ret = ctx_pool__.create_obj(config.shared_stack ? nullptr : co_stack_factory::instance()->create_stack(config.stack_size), config, entry);
     assert(ret != nullptr);
     if (config.bind_env != nullptr)
     {

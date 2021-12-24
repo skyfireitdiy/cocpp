@@ -51,7 +51,7 @@ co_ctx* co_env_factory::create_idle_ctx__()
     config.name       = "idle";
     config.stack_size = 0;
     config.priority   = CO_IDLE_CTX_PRIORITY;
-    auto ret          = co_ctx_factory::instance()->create_ctx(config);
+    auto ret          = co_ctx_factory::instance()->create_ctx(config, nullptr);
     ret->set_flag(CO_CTX_FLAG_IDLE);
     return ret;
 }

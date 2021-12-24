@@ -420,9 +420,9 @@ void co_manager::wait_background_task__()
     background_task_finished().pub();
 }
 
-co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, bool lock_destroy)
+co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, std::function<void(std::any&)> entry, bool lock_destroy)
 {
-    auto ctx = factory_set__.ctx_factory->create_ctx(config);
+    auto ctx = factory_set__.ctx_factory->create_ctx(config, entry);
     sub_ctx_event__(ctx);
     if (lock_destroy)
     {

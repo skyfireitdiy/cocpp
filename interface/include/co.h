@@ -151,22 +151,23 @@ public:
 template <typename Func, typename... Args>
 void co::init__(co_ctx_config config, Func&& func, Args&&... args)
 {
+    std::function<void(std::any&)> entry;
     if constexpr (std::is_same_v<std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>, void>)
     {
-        config.entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
+        entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
             std::forward<Func>(func)(std::forward<Args>(args)...);
         };
     }
     else
     {
-        config.entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
+        entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
             // CO_O_DEBUG("before run");
             ret = std::forward<Func>(func)(std::forward<Args>(args)...);
             // CO_O_DEBUG("after run");
         };
     }
 
-    ctx__ = manager__->create_and_schedule_ctx(config, true);
+    ctx__ = manager__->create_and_schedule_ctx(config, entry, true);
 }
 
 template <typename Func, typename... Args>
