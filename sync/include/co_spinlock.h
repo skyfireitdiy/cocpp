@@ -12,19 +12,18 @@ class co_spinlock final : private co_noncopyable
 public:
     enum class lock_type
     {
-        in_coroutine,
-        in_thread
+        in_coroutine, // 在协程中
+        in_thread     // 在线程中
     };
 
 private:
-    const lock_type   lock_type__;
-    std::atomic<bool> locked__ { false };
-
-public:
-    co_spinlock(lock_type lt = lock_type::in_coroutine);
-    void lock();
-    bool try_lock();
-    void unlock();
+    const lock_type   lock_type__;                       // 锁类型
+    std::atomic<bool> locked__ { false };                // 是否锁定
+public:                                                  //
+    co_spinlock(lock_type lt = lock_type::in_coroutine); // 构造
+    void lock();                                         // 加锁
+    bool try_lock();                                     // 尝试加锁
+    void unlock();                                       // 解锁
 };
 
 CO_NAMESPACE_END

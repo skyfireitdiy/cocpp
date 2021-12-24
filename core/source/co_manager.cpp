@@ -62,14 +62,14 @@ co_env* co_manager::get_best_env__()
     return best_env;
 }
 
-void co_manager::sub_env_event__(co_env* env)
+void co_manager::subscribe_env_event__(co_env* env)
 {
     env->task_finished().sub([this, env]() {
         remove_env__(env);
     });
 }
 
-void co_manager::sub_ctx_event__(co_ctx* ctx)
+void co_manager::subscribe_ctx_event__(co_ctx* ctx)
 {
     ctx->priority_changed().sub([ctx](int old, int new_) {
         ctx->env()->change_priority(old, ctx);
@@ -81,7 +81,7 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     assert(!clean_up__);
     auto env = factory_set__.env_factory->create_env(default_shared_stack_size__);
 
-    sub_env_event__(env);
+    subscribe_env_event__(env);
 
     if (dont_auto_destory)
     {
@@ -108,13 +108,13 @@ void co_manager::create_background_task__()
         clean_env_routine__();
     }));
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
-        timing_routine__();
+        timer_routine__();
     }));
 
     background_task_created().pub();
 }
 
-void co_manager::sub_manager_event__()
+void co_manager::subscribe_manager_event__()
 {
     timing_routine_timout().sub([this] {
         // 每两次超时重新分配一次
@@ -168,7 +168,7 @@ void co_manager::free_mem__()
 
 co_manager::co_manager()
 {
-    sub_manager_event__();
+    subscribe_manager_event__();
     setup_switch_handler();
     create_background_task__();
 }
@@ -191,7 +191,7 @@ void co_manager::create_env_from_this_thread__()
     std::scoped_lock lck(env_set__.normal_lock, env_set__.mu_normal_env_count);
     current_env__ = factory_set__.env_factory->create_env_from_this_thread(default_shared_stack_size__);
 
-    sub_env_event__(current_env__);
+    subscribe_env_event__(current_env__);
 
     env_set__.normal_set.insert(current_env__);
     ++env_set__.normal_env_count;
@@ -326,7 +326,7 @@ void co_manager::redistribute_ctx__()
     // 重新选择合适的env进行调度
     for (auto& ctx : moved_ctx_list)
     {
-        get_best_env__()->receive_ctx(ctx);
+        get_best_env__()->move_ctx_to_here(ctx);
     }
 
     ctx_redistributed().pub();
@@ -362,7 +362,7 @@ void co_manager::destroy_redundant_env__()
     redundant_env_destroyed().pub();
 }
 
-void co_manager::timing_routine__()
+void co_manager::timer_routine__()
 {
     std::unique_lock<co_spinlock> lck(clean_up_lock__);
     while (!clean_up__)
@@ -375,25 +375,25 @@ void co_manager::timing_routine__()
     timing_routine_finished().pub();
 }
 
-void co_manager::set_timing_tick_duration(
+void co_manager::set_timer_tick_duration(
     const std::chrono::high_resolution_clock::duration& duration)
 {
-    std::lock_guard<co_spinlock> lock(mu_timing_duration__);
+    std::lock_guard<co_spinlock> lock(mu_timer_duration__);
     if (duration < std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
     {
-        timing_duration__ = std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS);
+        timer_duration__ = std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS);
     }
     else
     {
-        timing_duration__ = duration;
+        timer_duration__ = duration;
     }
     timing_duration_set().pub();
 }
 
 const std::chrono::high_resolution_clock::duration& co_manager::timing_duration() const
 {
-    std::lock_guard<co_spinlock> lock(mu_timing_duration__);
-    return timing_duration__;
+    std::lock_guard<co_spinlock> lock(mu_timer_duration__);
+    return timer_duration__;
 }
 
 co_manager::~co_manager()
@@ -423,7 +423,7 @@ void co_manager::wait_background_task__()
 co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, std::function<void(std::any&)> entry, bool lock_destroy)
 {
     auto ctx = factory_set__.ctx_factory->create_ctx(config, entry);
-    sub_ctx_event__(ctx);
+    subscribe_ctx_event__(ctx);
     if (lock_destroy)
     {
         ctx->lock_destroy();
@@ -478,7 +478,7 @@ void co_manager::steal_ctx_routine__()
             {
                 env->lock_schedule();
                 // CO_O_DEBUG("add ctx to env: %p", env);
-                env->receive_ctx(ctx);
+                env->move_ctx_to_here(ctx);
                 env->unlock_schedule();
                 // CO_O_DEBUG("steal ctx %p from %p to %p", ctx, *iter, env);
                 break;

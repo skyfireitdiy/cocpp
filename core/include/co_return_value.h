@@ -9,16 +9,13 @@ CO_NAMESPACE_BEGIN
 // 协程返回值对象
 class co_return_value
 {
-    // 用来存储返回值
-    std::any value__;
 
-public:
-    co_return_value(const std::any& value);
-    co_return_value() = default;
-
-    // 类型转换操作符，如果类型不匹配会抛出异常
-    template <typename T>
-    operator T();
+    std::any value__;                       // 用来存储返回值
+public:                                     //
+    co_return_value(const std::any& value); // 构造函数
+    co_return_value() = default;            // 构造函数
+    template <typename T>                   //
+    operator T();                           // 类型转换操作符，如果类型不匹配会抛出异常
 };
 
 template <typename T>

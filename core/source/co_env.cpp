@@ -48,13 +48,13 @@ void co_env::add_ctx(co_ctx* ctx)
     init_ctx(shared_stack__, ctx); // 初始化ctx
     ctx_initted().pub(ctx);
 
-    receive_ctx(ctx);
+    move_ctx_to_here(ctx);
 
     // CO_O_DEBUG("add ctx wake up env: %p", this);
     ctx_added().pub(ctx);
 }
 
-void co_env::receive_ctx(co_ctx* ctx)
+void co_env::move_ctx_to_here(co_ctx* ctx)
 {
     assert(ctx != nullptr);
     assert(state() != co_env_state::created && state() != co_env_state::destorying);
@@ -151,7 +151,7 @@ co_ctx* co_env::next_ctx__()
     }
     else
     {
-        auto next = choose_ctx__();
+        auto next = choose_ctx_from_normal_list__();
         return next == nullptr ? idle_ctx__ : next;
     }
 }
@@ -189,9 +189,9 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 
     if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK) || next->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
-        shared_stack_switch_context__.from        = curr;
-        shared_stack_switch_context__.to          = next;
-        shared_stack_switch_context__.need_switch = true;
+        shared_stack_switch_info__.from        = curr;
+        shared_stack_switch_info__.to          = next;
+        shared_stack_switch_info__.need_switch = true;
 
         // CO_DEBUG("prepare from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
 
@@ -242,7 +242,7 @@ void co_env::schedule_switch(bool safe_return)
 {
     std::unique_lock<co_spinlock> lock(schedule_lock__);
     reset_safepoint();
-    if (shared_stack_switch_context__.need_switch)
+    if (shared_stack_switch_info__.need_switch)
     {
         lock.unlock();
         switch_shared_stack_ctx__();
@@ -307,21 +307,21 @@ void co_env::start_schedule()
 void co_env::switch_shared_stack_ctx__()
 {
     std::unique_lock<co_spinlock> lock(schedule_lock__);
-    shared_stack_switch_context__.need_switch = false;
+    shared_stack_switch_info__.need_switch = false;
 
     // CO_O_DEBUG("switch from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
 
-    if (shared_stack_switch_context__.from->test_flag(CO_CTX_FLAG_SHARED_STACK))
+    if (shared_stack_switch_info__.from->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
         // CO_O_DEBUG("save ctx %p stack", shared_stack_switch_context__.from);
-        save_shared_stack__(shared_stack_switch_context__.from);
+        save_shared_stack__(shared_stack_switch_info__.from);
         // 保存栈完成后退出切换状态
-        shared_stack_switch_context__.from->reset_flag(CO_CTX_FLAG_SWITCHING);
+        shared_stack_switch_info__.from->reset_flag(CO_CTX_FLAG_SWITCHING);
     }
-    if (shared_stack_switch_context__.to->test_flag(CO_CTX_FLAG_SHARED_STACK))
+    if (shared_stack_switch_info__.to->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
         // CO_O_DEBUG("restore ctx %p stack", shared_stack_switch_context__.from);
-        restore_shared_stack__(shared_stack_switch_context__.to);
+        restore_shared_stack__(shared_stack_switch_info__.to);
     }
 
     // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
@@ -329,7 +329,7 @@ void co_env::switch_shared_stack_ctx__()
 
     set_safepoint();
     lock.unlock();
-    switch_to(idle_ctx__->regs(), shared_stack_switch_context__.to->regs());
+    switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
     lock.lock();
 
     switched_to().pub(idle_ctx__);
@@ -348,7 +348,7 @@ void co_env::start_schedule_routine__()
         schedule_switch(false);
 
         // 切换回来检测是否需要执行共享栈切换
-        if (shared_stack_switch_context__.need_switch)
+        if (shared_stack_switch_info__.need_switch)
         {
             continue;
         }
@@ -508,7 +508,7 @@ bool co_env::need_sleep__()
     return !can_schedule__() && state() != co_env_state::destorying;
 }
 
-co_ctx* co_env::choose_ctx__()
+co_ctx* co_env::choose_ctx_from_normal_list__()
 {
     std::scoped_lock lock(mu_normal_ctx__, mu_curr_ctx__, mu_min_priority__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)

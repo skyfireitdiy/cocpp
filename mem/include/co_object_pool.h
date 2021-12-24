@@ -13,18 +13,19 @@ template <typename ObjectType>
 class co_object_pool final : private co_noncopyable
 {
 private:
-    std::deque<void*> pool__;
-    co_spinlock       mu__ { co_spinlock::lock_type::in_thread };
-    size_t            max_cap__;
-
-public:
-    co_object_pool(size_t max_cap);
-    template <typename... ConstructParam>
-    ObjectType* create_obj(ConstructParam&&... params);
-    void        destroy_obj(ObjectType* obj);
-    void        clear_free_object();
-    ~co_object_pool();
+    std::deque<void*> pool__;                                     // 内存池
+    co_spinlock       mu__ { co_spinlock::lock_type::in_thread }; // 互斥锁
+    size_t            max_cap__;                                  // 最大容量
+public:                                                           //
+    co_object_pool(size_t max_cap);                               // 构造函数
+    template <typename... ConstructParam>                         //
+    ObjectType* create_obj(ConstructParam&&... params);           // 创建对象
+    void        destroy_obj(ObjectType* obj);                     // 销毁对象
+    void        clear_free_object();                              // 清空空闲对象
+    ~co_object_pool();                                            // 析构函数
 };
+
+// 模板实现
 
 template <typename ObjectType>
 co_object_pool<ObjectType>::co_object_pool(size_t max_cap)

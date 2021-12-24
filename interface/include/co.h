@@ -23,19 +23,18 @@ class co_manager;
 class co_ctx;
 
 template <typename T>
-concept co_is_void = std::is_same_v<T, void>;
+concept CoIsVoid = std::is_same_v<T, void>;
 
 template <typename T>
-concept co_not_void = !std::is_same_v<T, void>;
+concept CoIsNotVoid = !std::is_same_v<T, void>;
 
 class co final : private co_noncopyable
 {
 private:
-    co_ctx*                   ctx__;
-    inline static co_manager* manager__ = co_manager::instance();
-
-    template <typename Func, typename... Args>
-    void init__(co_ctx_config config, Func&& func, Args&&... args);
+    co_ctx*                   ctx__;                                // 当前协程的上下文
+    inline static co_manager* manager__ = co_manager::instance();   // 协程管理器
+    template <typename Func, typename... Args>                      //
+    void init__(co_ctx_config config, Func&& func, Args&&... args); // 初始化协程
 
 public:
     // 静态函数
@@ -45,7 +44,7 @@ public:
     CoMemberMethodProxyStatic(manager__, set_env_shared_stack_size);
     CoMemberMethodProxyStatic(manager__, set_base_schedule_thread_count);
     CoMemberMethodProxyStatic(manager__, set_max_schedule_thread_count);
-    CoMemberMethodProxyStatic(manager__, set_timing_tick_duration);
+    CoMemberMethodProxyStatic(manager__, set_timer_tick_duration);
     CoMemberMethodProxyStatic(manager__, timing_duration);
 
     CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), workload, current_env_);
@@ -118,32 +117,22 @@ public:
     CoMemberMethodProxyStaticWithPrefix(manager__, ctx_created, manager_);
     CoMemberMethodProxyStaticWithPrefix(manager__, timing_routine_timout, manager_);
 
-    // 构造一个协程，自动开始调度，参数为可调用对象与参数列表，如：co c(add, 1, 2);
     template <typename Func, typename... Args>
-    co(Func&& func, Args&&... args);
-
-    template <typename Func, typename... Args>
-    co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args);
-
-    // 等待协程执行结束返回
-    template <co_not_void Ret>
-    Ret wait();
-
-    template <co_is_void Ret>
-    Ret wait();
-
-    // 等待指定时间
-    template <class Rep, class Period>
-    std::optional<co_return_value> wait(const std::chrono::duration<Rep, Period>& wait_duration);
-
-    // 分离协程，之后此协程就不再受到co对象的管理了
-    void detach();
-
+    co(Func&& func, Args&&... args);                                                                  // 构造一个协程，参数为可调用对象与参数列表，如：co c(add, 1, 2);
+    template <typename Func, typename... Args>                                                        //
+    co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args); // 使用配置构造一个协程
+    template <CoIsNotVoid Ret>                                                                        //
+    Ret wait();                                                                                       // 等待协程执行完毕，返回协程的返回值
+    template <CoIsVoid Ret>                                                                           //
+    Ret wait();                                                                                       // 等待协程执行完毕，返回协程的返回值
+    template <class Rep, class Period>                                                                //
+    std::optional<co_return_value> wait(const std::chrono::duration<Rep, Period>& wait_duration);     // 等待协程执行完毕，返回协程的返回值
+    void                           detach();                                                          // 协程分离，协程结束后自动回收
     ~co();
 };
 
-#define CoLocal(name, type) []() -> type& {              \
-    return cocpp::co::current_ctx()->local<type>(#name); \
+#define CoLocal(name, type) []() -> type& {                      \
+    return cocpp::co::current_ctx()->local_storage<type>(#name); \
 }()
 
 ///// 模板实现
@@ -187,14 +176,14 @@ co::co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& f
     init__(config, std::forward<Func>(func), std::forward<Args>(args)...);
 }
 
-template <co_not_void Ret>
+template <CoIsNotVoid Ret>
 Ret co::wait()
 {
     // CO_O_DEBUG("start wait");
     return manager__->current_env()->wait_ctx(ctx__);
 }
 
-template <co_is_void Ret>
+template <CoIsVoid Ret>
 Ret co::wait()
 {
     // CO_O_DEBUG("start wait");

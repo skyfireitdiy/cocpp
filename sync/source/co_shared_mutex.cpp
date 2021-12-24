@@ -136,7 +136,7 @@ void co_shared_mutex::wake_up_waiters__()
     if (wait_deque__.front().type == lock_type::unique)
     {
         wake_front__(wait_deque__, std::function([](shared_lock_context& ctx) {
-                         ctx.ctx->leave_wait_rc_state();
+                         ctx.ctx->leave_wait_resource_state();
                      }));
         return;
     }
@@ -149,7 +149,7 @@ void co_shared_mutex::wake_up_waiters__()
     wait_deque__.erase(iter, wait_deque__.end());
     for (auto& c : new_owner)
     {
-        c.ctx->leave_wait_rc_state();
+        c.ctx->leave_wait_resource_state();
     }
 }
 

@@ -4,6 +4,6 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-using co_binary_semaphore = co_counting_semaphore<1>;
+using co_binary_semaphore = co_counting_semaphore<1>; // 二进制信号量
 
 CO_NAMESPACE_END

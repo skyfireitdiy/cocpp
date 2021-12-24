@@ -4,6 +4,7 @@ _Pragma("once");
 
 #include "co.h"
 #include "co_define.h"
+#include "co_shared_mutex.h"
 #include "co_timed_addition.h"
 
 CO_NAMESPACE_BEGIN
@@ -12,10 +13,12 @@ class co_shared_timed_mutex : public co_timed_addition<co_shared_mutex>
 {
 public:
     template <class Rep, class Period>
-    bool try_lock_shared_for(const std::chrono::duration<Rep, Period>& timeout_duration);
-    template <class Clock, class Duration>
-    bool try_lock_shared_until(const std::chrono::time_point<Clock, Duration>& timeout_time);
+    bool try_lock_shared_for(const std::chrono::duration<Rep, Period>& timeout_duration);     // 尝试加共享锁
+    template <class Clock, class Duration>                                                    //
+    bool try_lock_shared_until(const std::chrono::time_point<Clock, Duration>& timeout_time); // 尝试加共享锁
 };
+
+// 模板实现
 
 template <class Rep, class Period>
 bool co_shared_timed_mutex::try_lock_shared_for(const std::chrono::duration<Rep, Period>& timeout_duration)
