@@ -18,24 +18,20 @@ struct co_ctx_config
     bool        shared_stack { false };               // 共享栈
 };
 
-CO_NAMESPACE_END
-
 // 以下宏代码生成 with_xxx 的配置选项
-#define CO_GEN_CTX_CONFIG_OPTION(type, name, ns, ns_begin, ns_end)              \
-    ns_begin inline std::function<void(ns::co_ctx_config&)> with_##name(        \
-        type p##name)                                                           \
-    {                                                                           \
-        return [p##name](ns::co_ctx_config& config) { config.name = p##name; }; \
-    }                                                                           \
-    ns_end
+#define CO_GEN_CTX_CONFIG_OPTION(type, name)                                \
+    inline std::function<void(co_ctx_config&)> with_##name(type p##name)    \
+    {                                                                       \
+        return [p##name](co_ctx_config& config) { config.name = p##name; }; \
+    }
 
 #define CO_GEN_CTX_CONFIG_OPTION_HELPER(type, name) \
-    CO_GEN_CTX_CONFIG_OPTION(type, name, CO_NAMESPACE, CO_NAMESPACE_BEGIN, CO_NAMESPACE_END)
+    CO_GEN_CTX_CONFIG_OPTION(type, name)
 
-// 以下注释的两项配置由实现自动生成，不需要用户配置，所以将配置接口注释掉
-// CO_GEN_CTX_CONFIG_OPTION(std::function<void(std::any&)>, entry)
 CO_GEN_CTX_CONFIG_OPTION_HELPER(size_t, stack_size)
 CO_GEN_CTX_CONFIG_OPTION_HELPER(std::string, name)
 CO_GEN_CTX_CONFIG_OPTION_HELPER(size_t, priority)
 CO_GEN_CTX_CONFIG_OPTION_HELPER(co_env*, bind_env)
 CO_GEN_CTX_CONFIG_OPTION_HELPER(bool, shared_stack)
+
+CO_NAMESPACE_END
