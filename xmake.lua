@@ -1,6 +1,7 @@
 add_rules("mode.debug", "mode.release")
 
 set_languages("c++20")
+add_cxxflags("-Wall", "-Werror")
 
 add_includedirs("3rd/gtest_install/include", "3rd/mockcpp_install/include")
 add_linkdirs("3rd/gtest_install/lib", "3rd/mockcpp_install/lib")
@@ -14,14 +15,8 @@ add_includedirs("sync/include")
 add_includedirs("utils/include")
 add_includedirs("mem/include")
 
-if is_mode("debug") then
-    add_links("gcov")
-    add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
-end
-add_cxxflags("-Wall", "-Werror")
-
 target("cocpp")
-set_kind("shared")
+set_kind("static")
 add_files("comm/source/*.cpp")
 add_files("core/source/*.cpp")
 add_files("exception/source/*.cpp")
@@ -43,27 +38,32 @@ add_headerfiles("mem/include/*.h", {prefixdir = "cocpp"})
 
 target_end()
 
-target("test")
-set_kind("binary")
-add_includedirs("comm/include")
-add_includedirs("core/include")
-add_includedirs("exception/include")
-add_includedirs("interface/include")
-add_includedirs("scheduler/include")
-add_includedirs("sync/include")
-add_includedirs("utils/include")
-add_includedirs("mem/include")
-add_files("test/*.cpp")
-add_links("gtest", "pthread")
-add_deps("cocpp")
-if is_mode("debug") and is_plat("linux") then
-    after_build(function()
-        import("core.project.task")
-        task.run("test_cov")
-    end)
+if is_mode("debug") then
+    add_links("gcov")
+    add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
+
+    target("test")
+    set_kind("binary")
+    add_includedirs("comm/include")
+    add_includedirs("core/include")
+    add_includedirs("exception/include")
+    add_includedirs("interface/include")
+    add_includedirs("scheduler/include")
+    add_includedirs("sync/include")
+    add_includedirs("utils/include")
+    add_includedirs("mem/include")
+    add_files("test/*.cpp")
+    add_links("gtest", "pthread")
+    add_deps("cocpp")
+    if is_mode("debug") and is_plat("linux") then
+        after_build(function()
+            import("core.project.task")
+            task.run("test_cov")
+        end)
+    end
+    on_install(function(target) print("ignore install test") end)
+    target_end()
 end
-on_install(function(target) print("ignore install test") end)
-target_end()
 
 task("test_cov")
 on_run(function()

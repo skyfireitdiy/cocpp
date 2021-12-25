@@ -7,6 +7,7 @@
 #include "co_vos.h"
 
 #include <signal.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 #ifdef __GNUC__
@@ -148,7 +149,7 @@ void setup_switch_handler()
 
 void send_switch_from_outside_signal(co_env* env)
 {
-    ::tgkill(::getpid(), static_cast<pid_t>(env->schedule_thread_tid()), CO_SWITCH_SIGNAL);
+    ::syscall(SYS_tgkill, ::getpid(), static_cast<pid_t>(env->schedule_thread_tid()), CO_SWITCH_SIGNAL);
 }
 
 static void save_context_to_ctx(sigcontext_64* context, co_ctx* ctx)
