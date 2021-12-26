@@ -1,6 +1,6 @@
 #if 1
 
-#include "co.h"
+#include "cocpp/interface/co.h"
 #include <gtest/gtest.h>
 
 int main(int argc, char** argv)
@@ -11,8 +11,8 @@ int main(int argc, char** argv)
 
 #else
 
-#include "co.h"
-#include "co_this_co.h"
+#include "cocpp/interface/co.h"
+#include "cocpp/interface/co_this_co.h"
 #include <chrono>
 #include <cstdio>
 #include <thread>
