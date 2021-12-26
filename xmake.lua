@@ -9,7 +9,7 @@ target("cocpp")
 set_kind("static")
 add_cxxflags("-O0")
 add_files("source/**/*.cpp")
-add_headerfiles("./(**/*.h)")
+add_headerfiles("./include/(**/*.h)")
 target_end()
 
 -- 以下为test
