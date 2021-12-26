@@ -1,6 +1,8 @@
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
+#include "cocpp/utils/co_any.h"
+
 #include <cassert>
 #include <mutex>
 
@@ -21,7 +23,7 @@ const co_ctx_config& co_ctx::config() const
     return config__;
 }
 
-std::any& co_ctx::ret_ref()
+co_any& co_ctx::ret_ref()
 {
     return ret__;
 }
@@ -39,7 +41,7 @@ co_env* co_ctx::env() const
     return env__;
 }
 
-co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(std::any&)> entry)
+co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(co_any&)> entry)
     : stack__(stack)
     , config__(config)
     , entry__(entry)
@@ -47,7 +49,7 @@ co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(
     set_priority(config.priority);
 }
 
-std::function<void(std::any&)> co_ctx::entry() const
+std::function<void(co_any&)> co_ctx::entry() const
 {
     return entry__;
 }

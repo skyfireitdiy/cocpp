@@ -4,34 +4,36 @@ set_languages("c++20")
 add_cxxflags("-Wall", "-Werror")
 
 add_includedirs("include")
+
 target("cocpp")
 set_kind("static")
+add_cxxflags("-O0")
 add_files("source/**/*.cpp")
-add_links("pthread")
 add_headerfiles("./(**/*.h)")
 target_end()
 
-if is_mode("debug") then
-    add_links("gcov")
-    add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
+-- 以下为test
 
-    target("test")
-    set_kind("binary")
-    add_includedirs("3rd/gtest_install/include", "3rd/mockcpp_install/include")
-    add_linkdirs("3rd/gtest_install/lib", "3rd/mockcpp_install/lib")
-    add_includedirs("include")
-    add_files("test/*.cpp")
-    add_links("gtest", "pthread")
-    add_deps("cocpp")
-    if is_mode("debug") and is_plat("linux") then
-        after_build(function()
-            import("core.project.task")
-            task.run("test_cov")
-        end)
-    end
-    on_install(function(target) print("ignore install test") end)
-    target_end()
-end
+add_links("pthread")
+
+target("test")
+set_kind("binary")
+add_includedirs("3rd/gtest_install/include", "3rd/mockcpp_install/include")
+add_linkdirs("3rd/gtest_install/lib", "3rd/mockcpp_install/lib")
+add_includedirs("include")
+add_files("test/*.cpp")
+add_links("gtest")
+add_links("gcov")
+add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
+add_deps("cocpp")
+
+after_build(function()
+    import("core.project.task")
+    task.run("test_cov")
+end)
+
+on_install(function(target) print("ignore install test") end)
+target_end()
 
 task("test_cov")
 on_run(function()
@@ -45,3 +47,11 @@ on_run(function()
         "genhtml -o cover_report --legend --title 'lcov'  --prefix=./ final.info")
 end)
 task_end()
+
+-- 以下为example
+
+target("helloworld")
+set_kind("binary")
+add_files("example/helloworld.cpp")
+add_deps("cocpp")
+target_end()

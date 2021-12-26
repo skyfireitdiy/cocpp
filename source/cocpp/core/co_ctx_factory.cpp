@@ -2,12 +2,13 @@
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
+#include "cocpp/utils/co_any.h"
 
 #include <cassert>
 
 CO_NAMESPACE_BEGIN
 
-co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config, std::function<void(std::any&)> entry)
+co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config, std::function<void(co_any&)> entry)
 {
     auto ret = ctx_pool__.create_obj(config.shared_stack ? nullptr : co_stack_factory::instance()->create_stack(config.stack_size), config, entry);
     assert(ret != nullptr);

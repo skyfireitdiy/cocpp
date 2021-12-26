@@ -22,6 +22,7 @@
 #include "cocpp/sync/co_shared_mutex.h"
 #include "cocpp/sync/co_shared_timed_mutex.h"
 #include "cocpp/sync/co_timed_mutex.h"
+#include "cocpp/utils/co_any.h"
 
 using namespace cocpp;
 
@@ -715,4 +716,10 @@ TEST(co, zone_edge)
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(2), 1ULL);
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(3), 2ULL);
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(4), 2ULL);
+}
+
+TEST(co, co_any)
+{
+    co_any any(5);
+    // EXPECT_EQ(any.get<int>(), 5);
 }

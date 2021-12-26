@@ -1,5 +1,6 @@
 _Pragma("once");
 
+#include "cocpp/comm/co_event.h"
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_ctx_factory.h"
@@ -7,15 +8,15 @@ _Pragma("once");
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_return_value.h"
+#include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_noncopyable.h"
+
 #include <chrono>
 #include <functional>
 #include <initializer_list>
 #include <optional>
 #include <thread>
 #include <type_traits>
-
-#include "cocpp/comm/co_event.h"
 
 CO_NAMESPACE_BEGIN
 
@@ -140,16 +141,16 @@ public:
 template <typename Func, typename... Args>
 void co::init__(co_ctx_config config, Func&& func, Args&&... args)
 {
-    std::function<void(std::any&)> entry;
+    std::function<void(co_any&)> entry;
     if constexpr (std::is_same_v<std::invoke_result_t<std::decay_t<Func>, std::decay_t<Args>...>, void>)
     {
-        entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
+        entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](co_any& ret) mutable {
             std::forward<Func>(func)(std::forward<Args>(args)...);
         };
     }
     else
     {
-        entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](std::any& ret) mutable {
+        entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](co_any& ret) mutable {
             // CO_O_DEBUG("before run");
             ret = std::forward<Func>(func)(std::forward<Args>(args)...);
             // CO_O_DEBUG("after run");
