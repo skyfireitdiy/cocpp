@@ -1,13 +1,14 @@
 add_rules("mode.debug", "mode.release")
 
+if is_mode("release") then set_optimize("none") end
+
 set_languages("c++20")
-add_cxxflags("-Wall")
+add_cxxflags("-Wall", "-Werror")
 
 add_includedirs("include")
 
 target("cocpp")
 set_kind("static")
-add_cxxflags("-O0")
 add_cxxflags("-fauto-inc-dec")
 add_cxxflags("-fbranch-count-reg")
 add_cxxflags("-fcombine-stack-adjustments")
@@ -15,7 +16,6 @@ add_cxxflags("-fcompare-elim")
 add_cxxflags("-fcprop-registers")
 add_cxxflags("-fdce")
 add_cxxflags("-fdefer-pop")
-add_cxxflags("-fdelayed-branch")
 add_cxxflags("-fdse")
 add_cxxflags("-fforward-propagate")
 add_cxxflags("-fguess-branch-probability")
