@@ -4,6 +4,7 @@ _Pragma("once");
 #include "cocpp/sync/co_spinlock.h"
 
 #include <bitset>
+#include <mutex>
 
 CO_NAMESPACE_BEGIN
 

@@ -84,7 +84,7 @@ CO_NAMESPACE_END
 
 #define CoMemberMethodProxy(member, method)                                                          \
     template <typename... Args>                                                                      \
-    auto method(Args&&... args)->decltype((member)->method(std::forward<Args>(args)...))             \
+    decltype(auto) method(Args&&... args)                                                            \
     {                                                                                                \
         if constexpr (std::is_same_v<decltype((member)->method(std::forward<Args>(args)...)), void>) \
         {                                                                                            \
@@ -98,7 +98,7 @@ CO_NAMESPACE_END
 
 #define CoMemberMethodProxyStatic(member, method)                                                    \
     template <typename... Args>                                                                      \
-    static auto method(Args&&... args)->decltype((member)->method(std::forward<Args>(args)...))      \
+    static decltype(auto) method(Args&&... args)                                                     \
     {                                                                                                \
         if constexpr (std::is_same_v<decltype((member)->method(std::forward<Args>(args)...)), void>) \
         {                                                                                            \
@@ -112,7 +112,7 @@ CO_NAMESPACE_END
 
 #define CoMemberMethodProxyWithPrefix(member, method, prefix)                                        \
     template <typename... Args>                                                                      \
-    auto prefix##method(Args&&... args)->decltype((member)->method(std::forward<Args>(args)...))     \
+    decltype(auto) prefix##method(Args&&... args)                                                    \
     {                                                                                                \
         if constexpr (std::is_same_v<decltype((member)->method(std::forward<Args>(args)...)), void>) \
         {                                                                                            \
@@ -124,16 +124,16 @@ CO_NAMESPACE_END
         }                                                                                            \
     }
 
-#define CoMemberMethodProxyStaticWithPrefix(member, method, prefix)                                     \
-    template <typename... Args>                                                                         \
-    static auto prefix##method(Args&&... args)->decltype((member)->method(std::forward<Args>(args)...)) \
-    {                                                                                                   \
-        if constexpr (std::is_same_v<decltype((member)->method(std::forward<Args>(args)...)), void>)    \
-        {                                                                                               \
-            (member)->method(std::forward<Args>(args)...);                                              \
-        }                                                                                               \
-        else                                                                                            \
-        {                                                                                               \
-            return (member)->method(std::forward<Args>(args)...);                                       \
-        }                                                                                               \
+#define CoMemberMethodProxyStaticWithPrefix(member, method, prefix)                                  \
+    template <typename... Args>                                                                      \
+    static decltype(auto) prefix##method(Args&&... args)                                             \
+    {                                                                                                \
+        if constexpr (std::is_same_v<decltype((member)->method(std::forward<Args>(args)...)), void>) \
+        {                                                                                            \
+            (member)->method(std::forward<Args>(args)...);                                           \
+        }                                                                                            \
+        else                                                                                         \
+        {                                                                                            \
+            return (member)->method(std::forward<Args>(args)...);                                    \
+        }                                                                                            \
     }

@@ -229,9 +229,8 @@ void co_env::switch_normal_ctx__()
             return;
         }
     }
-
-    set_safepoint();
     unlock_schedule();
+    set_safepoint();
     switch_to(curr->regs(), next->regs());
     lock_schedule();
     switched_to().pub(curr);
@@ -239,8 +238,8 @@ void co_env::switch_normal_ctx__()
 
 void co_env::schedule_switch(bool safe_return)
 {
-    lock_schedule();
     reset_safepoint();
+    lock_schedule();
     if (shared_stack_switch_info__.need_switch)
     {
         switch_shared_stack_ctx__();
@@ -322,8 +321,8 @@ void co_env::switch_shared_stack_ctx__()
     // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
     // 切换到to
 
-    set_safepoint();
     unlock_schedule();
+    set_safepoint();
     switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
     lock_schedule();
     switched_to().pub(idle_ctx__);
@@ -482,19 +481,19 @@ bool co_env::is_blocked() const
 bool co_env::safepoint() const
 {
     std::lock_guard<co_spinlock> lock(safepoint_lock__);
-    return safepoint__;
+    return safepoint__.load() == 0;
 }
 
 void co_env::set_safepoint()
 {
     std::lock_guard<co_spinlock> lock(safepoint_lock__);
-    safepoint__ = true;
+    safepoint__.fetch_add(1);
 }
 
 void co_env::reset_safepoint()
 {
     std::lock_guard<co_spinlock> lock(safepoint_lock__);
-    safepoint__ = false;
+    safepoint__.fetch_sub(1);
 }
 
 bool co_env::need_sleep__()
@@ -616,6 +615,12 @@ void co_env::lock_schedule()
 void co_env::unlock_schedule()
 {
     schedule_lock__.unlock();
+}
+
+void co_env::set_state(const co_env_state& state)
+{
+    std::scoped_lock lock(sleep_lock());
+    co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying>::set_state(state);
 }
 
 CO_NAMESPACE_END

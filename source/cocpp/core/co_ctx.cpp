@@ -2,6 +2,7 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/utils/co_any.h"
+#include "cocpp/utils/co_state_manager.h"
 
 #include <cassert>
 #include <mutex>
@@ -96,6 +97,45 @@ void co_ctx::set_priority(int priority)
         priority_changed().pub(old_priority, priority__);
         lock.lock();
     }
+}
+
+void co_ctx::set_state(const co_state& state)
+{
+    // TODO 此处可以优化
+    std::scoped_lock lock(env_lock__);
+    if (env__ != nullptr)
+    {
+        std::scoped_lock lock(env__->sleep_lock());
+        co_state_manager<co_state, co_state::suspended, co_state::finished>::set_state(state);
+        return;
+    }
+    co_state_manager<co_state, co_state::suspended, co_state::finished>::set_state(state);
+}
+
+void co_ctx::set_flag(size_t flag)
+{
+    // TODO 此处可以优化
+    std::scoped_lock lock(env_lock__);
+    if (env__ != nullptr)
+    {
+        std::scoped_lock lock(env__->sleep_lock());
+        co_flag_manager<CO_CTX_FLAG_MAX>::set_flag(flag);
+        return;
+    }
+    co_flag_manager<CO_CTX_FLAG_MAX>::set_flag(flag);
+}
+
+void co_ctx::reset_flag(size_t flag)
+{
+    // TODO 此处可以优化
+    std::scoped_lock lock(env_lock__);
+    if (env__ != nullptr)
+    {
+        std::scoped_lock lock(env__->sleep_lock());
+        co_flag_manager<CO_CTX_FLAG_MAX>::reset_flag(flag);
+        return;
+    }
+    co_flag_manager<CO_CTX_FLAG_MAX>::reset_flag(flag);
 }
 
 bool co_ctx::can_schedule() const

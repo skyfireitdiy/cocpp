@@ -183,7 +183,7 @@ TEST(co, co_mutex_lock)
     int ret = 0;
 
     co c1([&]() {
-        for (int i = 0; i < 10000; ++i)
+        for (int i = 0; i < 100000; ++i)
         {
             std::lock_guard<co_mutex> lock(mu);
             ret += i;
@@ -201,7 +201,7 @@ TEST(co, co_mutex_lock)
         }
     });
     co c3([&]() {
-        for (int i = 0; i < 10000; ++i)
+        for (int i = 0; i < 100000; ++i)
         {
             std::lock_guard<co_mutex> lock(mu);
             ret -= i;

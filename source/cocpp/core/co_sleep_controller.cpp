@@ -23,4 +23,9 @@ co_sleep_controller::co_sleep_controller(std::function<bool()> checker)
 {
 }
 
+std::mutex& co_sleep_controller::sleep_lock()
+{
+    return mu__;
+}
+
 CO_NAMESPACE_END

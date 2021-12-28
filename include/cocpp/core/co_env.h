@@ -61,7 +61,7 @@ private:                                                                        
     co_stack*                       shared_stack__ { nullptr };                                    // 共享栈
     co_ctx* const                   idle_ctx__ { nullptr };                                        // 空闲协程
     co_tid                          schedule_thread_tid__ {};                                      // 调度线程tid
-    bool                            safepoint__ { false };                                         // 安全点
+    std::atomic<int>                safepoint__ { 0 };                                             // 安全点
     mutable co_spinlock             safepoint_lock__ { co_spinlock::lock_type::in_thread };        // 安全点锁
     std::vector<std::list<co_ctx*>> all_normal_ctx__ { CO_MAX_PRIORITY };                          // 所有普通协程
     mutable co_spinlock             mu_normal_ctx__ { co_spinlock::lock_type::in_thread };         // 普通协程锁
@@ -126,9 +126,11 @@ public:                                                                         
     co_ctx*                        take_one_movable_ctx();                                         // 拿走一个可移动的ctx
     void                           lock_schedule();                                                // 锁定调度
     void                           unlock_schedule();                                              // 解锁调度
+    void                           set_state(const co_env_state& state);                           //  设置状态，覆盖父类函数
 
     CoMemberMethodProxy(&sleep_controller__, sleep_if_need);
     CoMemberMethodProxy(&sleep_controller__, wake_up);
+    CoMemberMethodProxy(&sleep_controller__, sleep_lock);
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;

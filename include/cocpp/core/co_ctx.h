@@ -70,7 +70,10 @@ public:                                                                         
     std::function<void(co_any&)> entry() const;                                               // 获取入口函数
     static void                  real_entry(co_ctx* ctx);                                     // 协程入口函数（内部实际的入口）
     template <typename T>                                                                     //
-    T& local_storage(const std::string& name);                                                // 获取局部存储
+    T&   local_storage(const std::string& name);                                              // 获取局部存储
+    void set_state(const co_state& state);                                                    // 设置ctx状态，覆盖父类函数
+    void set_flag(size_t flag);                                                               // 设置标识，覆盖父类函数
+    void reset_flag(size_t flag);                                                             // 重置标识，覆盖父类函数
 
     friend class co_object_pool<co_ctx>;
 };
