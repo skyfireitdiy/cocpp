@@ -9,7 +9,7 @@ _Pragma("once");
 CO_NAMESPACE_BEGIN
 
 template <size_t MAX_FLAG_COUNT>
-class co_flag_manager
+class co_flag_manager final
 {
 private:
     std::bitset<MAX_FLAG_COUNT> flags__;

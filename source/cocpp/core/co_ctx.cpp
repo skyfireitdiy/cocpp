@@ -106,10 +106,10 @@ void co_ctx::set_state(const co_state& state)
     if (env__ != nullptr)
     {
         std::scoped_lock lock(env__->sleep_lock());
-        co_state_manager<co_state, co_state::suspended, co_state::finished>::set_state(state);
+        state_manager__.set_state(state);
         return;
     }
-    co_state_manager<co_state, co_state::suspended, co_state::finished>::set_state(state);
+    state_manager__.set_state(state);
 }
 
 void co_ctx::set_flag(size_t flag)
@@ -119,10 +119,10 @@ void co_ctx::set_flag(size_t flag)
     if (env__ != nullptr)
     {
         std::scoped_lock lock(env__->sleep_lock());
-        co_flag_manager<CO_CTX_FLAG_MAX>::set_flag(flag);
+        flag_manager__.set_flag(flag);
         return;
     }
-    co_flag_manager<CO_CTX_FLAG_MAX>::set_flag(flag);
+    flag_manager__.set_flag(flag);
 }
 
 void co_ctx::reset_flag(size_t flag)
@@ -132,10 +132,10 @@ void co_ctx::reset_flag(size_t flag)
     if (env__ != nullptr)
     {
         std::scoped_lock lock(env__->sleep_lock());
-        co_flag_manager<CO_CTX_FLAG_MAX>::reset_flag(flag);
+        flag_manager__.reset_flag(flag);
         return;
     }
-    co_flag_manager<CO_CTX_FLAG_MAX>::reset_flag(flag);
+    flag_manager__.reset_flag(flag);
 }
 
 bool co_ctx::can_schedule() const

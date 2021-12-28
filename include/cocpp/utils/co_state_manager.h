@@ -3,10 +3,12 @@ _Pragma("once");
 #include "cocpp/core/co_define.h"
 #include "cocpp/sync/co_spinlock.h"
 
+#include <mutex>
+
 CO_NAMESPACE_BEGIN
 
 template <typename T, T InitState, T FinalState>
-class co_state_manager
+class co_state_manager final
 {
 private:
     mutable co_spinlock mu_state__ { co_spinlock::lock_type::in_thread };

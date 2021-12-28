@@ -620,7 +620,7 @@ void co_env::unlock_schedule()
 void co_env::set_state(const co_env_state& state)
 {
     std::scoped_lock lock(sleep_lock());
-    co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying>::set_state(state);
+    state_manager__.set_state(state);
 }
 
 CO_NAMESPACE_END
