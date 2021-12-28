@@ -6,7 +6,7 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-class co_defer final : public cocpp::co_noncopyable
+class co_defer final : private cocpp::co_noncopyable
 {
 private:
     std::function<void()> defer_func__;
