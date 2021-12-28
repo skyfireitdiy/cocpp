@@ -219,9 +219,8 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 
 void co_env::switch_normal_ctx__()
 {
-    std::unique_lock<co_spinlock> lock(schedule_lock__);
-    co_ctx*                       curr = nullptr;
-    co_ctx*                       next = nullptr;
+    co_ctx* curr = nullptr;
+    co_ctx* next = nullptr;
     {
         remove_detached_ctx__();
 
@@ -232,32 +231,29 @@ void co_env::switch_normal_ctx__()
     }
 
     set_safepoint();
-    lock.unlock();
+    unlock_schedule();
     switch_to(curr->regs(), next->regs());
-    lock.lock();
+    lock_schedule();
     switched_to().pub(curr);
 }
 
 void co_env::schedule_switch(bool safe_return)
 {
-    std::unique_lock<co_spinlock> lock(schedule_lock__);
+    lock_schedule();
     reset_safepoint();
     if (shared_stack_switch_info__.need_switch)
     {
-        lock.unlock();
         switch_shared_stack_ctx__();
-        lock.lock();
     }
     else
     {
-        lock.unlock();
         switch_normal_ctx__();
-        lock.lock();
     }
     if (!safe_return)
     {
         reset_safepoint();
     }
+    unlock_schedule();
 }
 
 void co_env::remove_ctx(co_ctx* ctx)
@@ -306,7 +302,6 @@ void co_env::start_schedule()
 
 void co_env::switch_shared_stack_ctx__()
 {
-    std::unique_lock<co_spinlock> lock(schedule_lock__);
     shared_stack_switch_info__.need_switch = false;
 
     // CO_O_DEBUG("switch from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
@@ -328,10 +323,9 @@ void co_env::switch_shared_stack_ctx__()
     // 切换到to
 
     set_safepoint();
-    lock.unlock();
+    unlock_schedule();
     switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
-    lock.lock();
-
+    lock_schedule();
     switched_to().pub(idle_ctx__);
 }
 
