@@ -101,7 +101,6 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     std::unique_lock<co_mutex> lock(mu__);
     if (closed__)
     {
-        // CO_O_DEBUG("closed");
         return false;
     }
     if constexpr (MaxSize > 0) // 当MaxSize < 0，是无限长度的chan
@@ -111,7 +110,6 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
             full_cond__.wait(lock, [this] { return closed__ || data__.size() < MaxSize; });
             if (closed__)
             {
-                // CO_O_DEBUG("closed");
                 return false;
             }
         }
@@ -119,16 +117,13 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     else if constexpr (MaxSize == 0) // 无缓冲chan
     {
         lock.unlock();
-        // CO_O_DEBUG("acquire read");
         read_sem__.acquire();
         lock.lock();
     }
-    // CO_O_DEBUG("push value");
     data__.push_back(value);
     if constexpr (MaxSize == 0)
     {
         lock.unlock();
-        // CO_O_DEBUG("release write");
         write_sem__.release();
         lock.lock();
     }
@@ -151,13 +146,11 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
         {
             if (closed__)
             {
-                // CO_O_DEBUG("closed");
                 return ret;
             }
             empty_cond__.wait(lock, [this] { return closed__ || !data__.empty(); });
             if (data__.empty())
             {
-                // CO_O_DEBUG("closed");
                 return ret;
             }
         }
@@ -169,9 +162,7 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
             return ret;
         }
         lock.unlock();
-        // CO_O_DEBUG("release read");
         read_sem__.release();
-        // CO_O_DEBUG("acquire write");
         write_sem__.acquire();
         lock.lock();
         if (data__.empty())
@@ -179,7 +170,6 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
             return ret;
         }
     }
-    // CO_O_DEBUG("pop value");
     ret = data__.front();
     data__.pop_front();
     if constexpr (MaxSize != 0)
@@ -193,7 +183,6 @@ template <typename ValueType, int MaxSize>
 void co_chan<ValueType, MaxSize>::close()
 {
     std::lock_guard<co_mutex> lock(mu__);
-    // CO_O_DEBUG("close chan");
     closed__ = true;
     if constexpr (MaxSize == 0)
     {

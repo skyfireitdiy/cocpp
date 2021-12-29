@@ -90,7 +90,6 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     std::scoped_lock lck(env_set__.normal_lock, env_set__.mu_normal_env_count);
     env_set__.normal_set.insert(env);
     ++env_set__.normal_env_count;
-    // CO_O_DEBUG("create env : %p", env);
 
     env_created().pub(env);
     return env;
@@ -179,7 +178,6 @@ void co_manager::remove_env__(co_env* env)
     env_set__.normal_set.erase(env);
 
     std::lock_guard<std::recursive_mutex> lck(env_set__.expired_lock);
-    // CO_O_DEBUG("push to clean up: %p", env);
     env_set__.expired_set.insert(env);
     env_set__.cond_expired_env.notify_one();
 
@@ -195,7 +193,6 @@ void co_manager::create_env_from_this_thread__()
 
     env_set__.normal_set.insert(current_env__);
     ++env_set__.normal_env_count;
-    // CO_O_DEBUG("create env from this thread : %p", current_env__);
 
     env_from_this_thread_created().pub(current_env__);
 }
@@ -212,7 +209,6 @@ co_env* co_manager::current_env()
 void co_manager::set_clean_up__()
 {
     std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock, clean_up_lock__);
-    // CO_O_DEBUG("set clean up!!!");
     clean_up__       = true;
     auto backup_data = env_set__.normal_set;
     for (auto& env : backup_data)
@@ -221,10 +217,8 @@ void co_manager::set_clean_up__()
         {
             // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
             remove_env__(env);
-            // CO_O_DEBUG("push to clean up: %p", env);
             continue;
         }
-        // CO_O_DEBUG("call stop_schedule on %p", env);
         env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
     }
     env_set__.cond_expired_env.notify_one();
@@ -239,21 +233,17 @@ void co_manager::clean_env_routine__()
     while (!clean_up__ || env_set__.normal_env_count != 0)
     {
         clean_lock.unlock();
-        // CO_O_DEBUG("wait to wake up ...");
         env_set__.cond_expired_env.wait(lck);
 
         clean_lock.lock();
-        // CO_O_DEBUG("wake up clean, exist_env_count: %d, expire count: %lu", (int)env_set__.normal_env_count, env_set__.expired_set.size());
         std::lock_guard<co_spinlock> lock(env_set__.mu_normal_env_count);
         for (auto& p : env_set__.expired_set)
         {
-            // CO_O_DEBUG("clean up an env: %p", p);
             factory_set__.env_factory->destroy_env(p);
             --env_set__.normal_env_count;
         }
         env_set__.expired_set.clear();
     }
-    // CO_O_DEBUG("clean up env finished\n");
 
     env_routine_cleaned().pub();
 }
@@ -318,7 +308,6 @@ void co_manager::redistribute_ctx__()
             // 设置阻塞状态，后续的add_ctx不会将ctx加入到此env
             env->set_state(co_env_state::blocked);
 
-            // CO_O_DEBUG("env %p is blocked, redistribute ctx", env);
             merge_list(moved_ctx_list, env->take_all_movable_ctx()); // 将阻塞的env中可移动的ctx收集起来
         }
         env->reset_scheduled_flag();
@@ -470,17 +459,14 @@ void co_manager::steal_ctx_routine__()
             {
                 break;
             }
-            // CO_O_DEBUG("take ctx from env: %p", *iter);
             (*iter)->lock_schedule();
             auto ctx = (*iter)->take_one_movable_ctx();
             (*iter)->unlock_schedule();
             if (ctx != nullptr)
             {
                 env->lock_schedule();
-                // CO_O_DEBUG("add ctx to env: %p", env);
                 env->move_ctx_to_here(ctx);
                 env->unlock_schedule();
-                // CO_O_DEBUG("steal ctx %p from %p to %p", ctx, *iter, env);
                 break;
             }
         }

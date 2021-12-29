@@ -1,7 +1,7 @@
 #include "cocpp/sync/co_sync_helper.h"
 #include "cocpp/core/co_ctx.h"
-#include "cocpp/sync/co_spinlock.h"
 #include "cocpp/interface/co_this_co.h"
+#include "cocpp/sync/co_spinlock.h"
 
 CO_NAMESPACE_BEGIN
 

@@ -20,14 +20,12 @@ co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config, std::function<v
     {
         ret->set_flag(CO_CTX_FLAG_SHARED_STACK);
     }
-    // CO_O_DEBUG("create ctx: %s %p", ret->config().name.c_str(), ret);
     return ret;
 }
 
 void co_ctx_factory::destroy_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
-    // CO_O_DEBUG("destory ctx: %s %p", ctx->config().name.c_str(), ctx);
     auto stack = ctx->stack();
     ctx_pool__.destroy_obj(ctx);
     co_stack_factory::instance()->destroy_stack(stack);

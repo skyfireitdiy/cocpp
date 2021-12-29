@@ -151,9 +151,7 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
     else
     {
         entry = [... args = std::forward<Args>(args), func = std::forward<Func>(func)](co_any& ret) mutable {
-            // CO_O_DEBUG("before run");
             ret = std::forward<Func>(func)(std::forward<Args>(args)...);
-            // CO_O_DEBUG("after run");
         };
     }
 
@@ -180,14 +178,12 @@ co::co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& f
 template <CoIsNotVoid Ret>
 Ret co::wait()
 {
-    // CO_O_DEBUG("start wait");
     return manager__->current_env()->wait_ctx(ctx__);
 }
 
 template <CoIsVoid Ret>
 Ret co::wait()
 {
-    // CO_O_DEBUG("start wait");
     manager__->current_env()->wait_ctx(ctx__);
 }
 

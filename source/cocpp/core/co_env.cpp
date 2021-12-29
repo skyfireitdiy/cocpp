@@ -50,7 +50,6 @@ void co_env::add_ctx(co_ctx* ctx)
 
     move_ctx_to_here(ctx);
 
-    // CO_O_DEBUG("add ctx wake up env: %p", this);
     ctx_added().pub(ctx);
 }
 
@@ -111,7 +110,6 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
     while (ctx->state() != co_state::finished)
     {
         schedule_switch(false);
-        // CO_O_DEBUG("ctx %s %p state: %d", ctx->config().name.c_str(), ctx, ctx->state());
     }
     wait_ctx_finished().pub(ctx);
     return ctx->ret_ref();
@@ -164,7 +162,6 @@ void co_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
     {
         curr->set_state(co_state::suspended);
     }
-    // CO_O_DEBUG("from %p to %p", curr, next);
     next->set_state(co_state::running);
 }
 
@@ -260,7 +257,6 @@ void co_env::remove_ctx(co_ctx* ctx)
 {
     {
         std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
-        // CO_O_DEBUG("remove ctx %s %p , state: %d", ctx->config().name.c_str(), ctx, (int)ctx->state());
         // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
         all_normal_ctx__[ctx->priority()].remove(ctx);
     }
@@ -280,7 +276,6 @@ co_ctx* co_env::current_ctx() const
 
 void co_env::stop_schedule()
 {
-    // CO_O_DEBUG("set env to destorying, %p", this);
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
         set_state(co_env_state::destorying);
@@ -288,7 +283,6 @@ void co_env::stop_schedule()
 
     wake_up();
 
-    // CO_O_DEBUG("%p : stop schedule wake up idle co", this);
     schedule_stopped().pub();
 }
 
@@ -304,22 +298,17 @@ void co_env::switch_shared_stack_ctx__()
 {
     shared_stack_switch_info__.need_switch = false;
 
-    // CO_O_DEBUG("switch from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
-
     if (shared_stack_switch_info__.from->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
-        // CO_O_DEBUG("save ctx %p stack", shared_stack_switch_context__.from);
         save_shared_stack__(shared_stack_switch_info__.from);
         // 保存栈完成后退出切换状态
         shared_stack_switch_info__.from->reset_flag(CO_CTX_FLAG_SWITCHING);
     }
     if (shared_stack_switch_info__.to->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
-        // CO_O_DEBUG("restore ctx %p stack", shared_stack_switch_context__.from);
         restore_shared_stack__(shared_stack_switch_info__.to);
     }
 
-    // CO_O_DEBUG("from idle %p to %p", idle_ctx__, shared_stack_switch_context__.to);
     // 切换到to
 
     unlock_schedule();
@@ -338,7 +327,6 @@ void co_env::start_schedule_routine__()
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
     {
-        // CO_O_DEBUG("dont need switch shared stack");
         schedule_switch(false);
 
         // 切换回来检测是否需要执行共享栈切换
@@ -353,14 +341,11 @@ void co_env::start_schedule_routine__()
         sleep_if_need();
 
         // 切回idle之后，睡眠等待
-        // CO_O_DEBUG("idle co start wait add ctx or destroying ... %p", this);
         if (state() == co_env_state::destorying)
         {
             break;
         }
     }
-
-    // CO_O_DEBUG("stop schedule, prepare to cleanup");
 
     remove_all_ctx__();
     task_finished().pub();
@@ -404,8 +389,7 @@ void co_env::save_shared_stack__(co_ctx* ctx)
 {
 
     auto stack_size = get_valid_stack_size__(ctx);
-    // CO_O_DEBUG("ctx %p valid stack size is %lu", ctx, stack_size);
-    auto tmp_stack = stack_factory__->create_stack(stack_size);
+    auto tmp_stack  = stack_factory__->create_stack(stack_size);
     memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
     ctx->set_stack(tmp_stack);
     shared_stack_saved().pub(ctx);
@@ -423,7 +407,6 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
     }
     else
     {
-        // CO_O_DEBUG("ctx %p  stack is nullptr", ctx);
     }
     // 设置为共享栈
     ctx->set_stack(shared_stack__);
