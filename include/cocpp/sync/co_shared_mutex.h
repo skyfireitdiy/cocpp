@@ -36,13 +36,13 @@ private:
     std::deque<shared_lock_context>                              wait_deque__;        // 等待队列
     std::unordered_set<shared_lock_context, lock_context_hasher> owners__;            // 持有者
     void                                                         wake_up_waiters__(); // 唤醒等待队列
-public:                                                                               //
-    void lock();                                                                      // 加锁
-    void unlock();                                                                    // 解锁
-    bool try_lock();                                                                  // 尝试加锁
-    void lock_shared();                                                               // 加共享锁
-    void unlock_shared();                                                             // 解共享锁
-    bool try_lock_shared();                                                           // 尝试加共享锁
+public:
+    void lock();            // 加锁
+    void unlock();          // 解锁
+    bool try_lock();        // 尝试加锁
+    void lock_shared();     // 加共享锁
+    void unlock_shared();   // 解共享锁
+    bool try_lock_shared(); // 尝试加共享锁
 };
 
 CO_NAMESPACE_END

@@ -93,7 +93,7 @@ void co_ctx::set_priority(int priority)
     }
     if (old_priority != priority__ && !test_flag(CO_CTX_FLAG_IDLE))
     {
-        lock.unlock();
+        lock.unlock(); // 在priority_changed 事件处理中，可能会修改priority__，所以需要解锁
         priority_changed().pub(old_priority, priority__);
         lock.lock();
     }
@@ -107,9 +107,11 @@ void co_ctx::set_state(const co_state& state)
     {
         std::scoped_lock lock(env__->sleep_lock());
         state_manager__.set_state(state);
+        state_set().pub(state);
         return;
     }
     state_manager__.set_state(state);
+    state_set().pub(state);
 }
 
 void co_ctx::set_flag(size_t flag)
@@ -120,9 +122,11 @@ void co_ctx::set_flag(size_t flag)
     {
         std::scoped_lock lock(env__->sleep_lock());
         flag_manager__.set_flag(flag);
+        flag_set().pub(flag);
         return;
     }
     flag_manager__.set_flag(flag);
+    flag_set().pub(flag);
 }
 
 void co_ctx::reset_flag(size_t flag)
@@ -133,9 +137,11 @@ void co_ctx::reset_flag(size_t flag)
     {
         std::scoped_lock lock(env__->sleep_lock());
         flag_manager__.reset_flag(flag);
+        flag_reset().pub(flag);
         return;
     }
     flag_manager__.reset_flag(flag);
+    flag_reset().pub(flag);
 }
 
 bool co_ctx::can_schedule() const
@@ -190,6 +196,7 @@ void co_ctx::enter_wait_resource_state(int rc_type, void* rc)
     set_flag(CO_CTX_FLAG_WAITING);
     std::lock_guard<co_spinlock> env_lock(env_lock__);
     env__->ctx_enter_wait_state(this);
+    wait_resource_state_entered().pub(rc_type, rc);
 }
 
 void co_ctx::leave_wait_resource_state()
@@ -198,6 +205,7 @@ void co_ctx::leave_wait_resource_state()
     std::lock_guard<co_spinlock> lock(env_lock__);
     env__->ctx_leave_wait_state(this);
     env__->wake_up();
+    wait_resource_state_leaved().pub();
 }
 
 CO_NAMESPACE_END

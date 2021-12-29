@@ -17,9 +17,9 @@ public:
     };
 
 private:
-    const lock_type   lock_type__;                       // 锁类型
-    std::atomic<bool> locked__ { false };                // 是否锁定
-public:                                                  //
+    const lock_type   lock_type__;        // 锁类型
+    std::atomic<bool> locked__ { false }; // 是否锁定
+public:
     co_spinlock(lock_type lt = lock_type::in_coroutine); // 构造
     void lock();                                         // 加锁
     bool try_lock();                                     // 尝试加锁

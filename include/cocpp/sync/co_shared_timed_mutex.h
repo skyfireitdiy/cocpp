@@ -13,8 +13,8 @@ class co_shared_timed_mutex : public co_timed_addition<co_shared_mutex>
 {
 public:
     template <class Rep, class Period>
-    bool try_lock_shared_for(const std::chrono::duration<Rep, Period>& timeout_duration);     // 尝试加共享锁
-    template <class Clock, class Duration>                                                    //
+    bool try_lock_shared_for(const std::chrono::duration<Rep, Period>& timeout_duration); // 尝试加共享锁
+    template <class Clock, class Duration>
     bool try_lock_shared_until(const std::chrono::time_point<Clock, Duration>& timeout_time); // 尝试加共享锁
 };
 

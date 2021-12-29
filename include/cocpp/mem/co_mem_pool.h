@@ -20,12 +20,12 @@ private:
     const size_t                      zone_count__;                                 // zone数量
     const size_t                      max_cap__;                                    // 最大容量
     std::vector<std::deque<co_byte*>> mem_pool__;                                   // 内存池
-public:                                                                             //
-    co_mem_pool(size_t min_zone, size_t zone_count, size_t max_cap);                // 构造函数
-    co_byte* alloc_mem(size_t size);                                                // 分配内存
-    void     free_mem(co_byte* ptr, size_t size);                                   // 释放内存
-    void     free_pool();                                                           // 释放内存池
-    ~co_mem_pool();                                                                 // 析构函数
+public:
+    co_mem_pool(size_t min_zone, size_t zone_count, size_t max_cap); // 构造函数
+    co_byte* alloc_mem(size_t size);                                 // 分配内存
+    void     free_mem(co_byte* ptr, size_t size);                    // 释放内存
+    void     free_pool();                                            // 释放内存池
+    ~co_mem_pool();                                                  // 析构函数
 };
 
 CO_NAMESPACE_END

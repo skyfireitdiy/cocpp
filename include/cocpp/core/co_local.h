@@ -15,8 +15,8 @@ class co_local : public co_local_base
 {
 private:
     T local_data__; // 局部数据
-public:             //
-    T& get();       // 获取局部数据
+public:
+    T& get(); // 获取局部数据
 };
 
 // 模板实现

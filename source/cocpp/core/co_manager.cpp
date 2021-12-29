@@ -72,7 +72,7 @@ void co_manager::subscribe_env_event__(co_env* env)
 void co_manager::subscribe_ctx_event__(co_ctx* ctx)
 {
     ctx->priority_changed().sub([ctx](int old, int new_) {
-        ctx->env()->change_priority(old, ctx);
+        ctx->env()->handle_priority_changed(old, ctx);
     });
 }
 

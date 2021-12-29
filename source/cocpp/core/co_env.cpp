@@ -25,7 +25,7 @@ co_env::co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
     , shared_stack__(shared_stack)
     , idle_ctx__(idle_ctx)
 {
-    reset_safepoint();
+    sub_safepoint();
     idle_ctx__->set_env(this);
     if (create_new_thread)
     {
@@ -70,6 +70,7 @@ void co_env::move_ctx_to_here(co_ctx* ctx)
     set_state(co_env_state::busy);
 
     wake_up();
+    ctx_received().pub(ctx);
 }
 
 std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
@@ -230,7 +231,7 @@ void co_env::switch_normal_ctx__()
         }
     }
     unlock_schedule();
-    set_safepoint();
+    add_safepoint();
     switch_to(curr->regs(), next->regs());
     lock_schedule();
     switched_to().pub(curr);
@@ -238,7 +239,7 @@ void co_env::switch_normal_ctx__()
 
 void co_env::schedule_switch(bool safe_return)
 {
-    reset_safepoint();
+    sub_safepoint();
     lock_schedule();
     if (shared_stack_switch_info__.need_switch)
     {
@@ -250,7 +251,7 @@ void co_env::schedule_switch(bool safe_return)
     }
     if (!safe_return)
     {
-        reset_safepoint();
+        sub_safepoint();
     }
     unlock_schedule();
 }
@@ -322,7 +323,7 @@ void co_env::switch_shared_stack_ctx__()
     // 切换到to
 
     unlock_schedule();
-    set_safepoint();
+    add_safepoint();
     switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
     lock_schedule();
     switched_to().pub(idle_ctx__);
@@ -330,7 +331,7 @@ void co_env::switch_shared_stack_ctx__()
 
 void co_env::start_schedule_routine__()
 {
-    reset_safepoint();
+    sub_safepoint();
     schedule_thread_tid__ = gettid();
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
@@ -441,7 +442,7 @@ bool co_env::can_schedule_ctx() const
     return s != co_env_state::blocked && s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
 }
 
-void co_env::change_priority(int old, co_ctx* ctx)
+void co_env::handle_priority_changed(int old, co_ctx* ctx)
 {
     std::lock_guard<co_spinlock> lock(mu_normal_ctx__);
     for (auto iter = all_normal_ctx__[old].begin(); iter != all_normal_ctx__[old].end(); ++iter)
@@ -484,16 +485,18 @@ bool co_env::safepoint() const
     return safepoint__.load() == 0;
 }
 
-void co_env::set_safepoint()
+void co_env::add_safepoint()
 {
     std::lock_guard<co_spinlock> lock(safepoint_lock__);
     safepoint__.fetch_add(1);
+    safepoint_added().pub(safepoint__.load());
 }
 
-void co_env::reset_safepoint()
+void co_env::sub_safepoint()
 {
     std::lock_guard<co_spinlock> lock(safepoint_lock__);
     safepoint__.fetch_sub(1);
+    safepoint_subbed().pub(safepoint__.load());
 }
 
 bool co_env::need_sleep__()
@@ -577,6 +580,7 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
             }
         }
     }
+    all_moveable_ctx_taken().pub(ret);
     return ret;
 }
 
@@ -591,10 +595,12 @@ co_ctx* co_env::take_one_movable_ctx()
             if (ctx->can_move())
             {
                 all_normal_ctx__[i].remove(ctx);
+                one_moveable_ctx_taken().pub(ctx);
                 return ctx;
             }
         }
     }
+    one_moveable_ctx_taken().pub(nullptr);
     return nullptr;
 }
 
@@ -610,11 +616,13 @@ void co_env::update_min_priority__(int priority)
 void co_env::lock_schedule()
 {
     schedule_lock__.lock();
+    schedule_locked().pub();
 }
 
 void co_env::unlock_schedule()
 {
     schedule_lock__.unlock();
+    schedule_unlocked().pub();
 }
 
 void co_env::set_state(const co_env_state& state)
