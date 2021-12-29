@@ -53,8 +53,6 @@ class co_env final : private co_noncopyable
     RegCoEvent(all_moveable_ctx_taken, std::list<co_ctx*>);                // 全部可移动ctx被拿走
     RegCoEvent(one_moveable_ctx_taken, co_ctx*);                           // 一个可移动ctx被拿走
     RegCoEvent(this_thread_converted_to_schedule_thread, std::thread::id); // 当前线程转换为调度线程
-    RegCoEvent(safepoint_added, int);                                      // 安全点计数增加
-    RegCoEvent(safepoint_subbed, int);                                     // 安全点计数减少
 
 private:                                                                                                                                     //
     co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;                                          // 标志管理器
@@ -66,8 +64,6 @@ private:                                                                        
     co_stack*                                                                       shared_stack__ { nullptr };                              // 共享栈
     co_ctx* const                                                                   idle_ctx__ { nullptr };                                  // 空闲协程
     co_tid                                                                          schedule_thread_tid__ {};                                // 调度线程tid
-    std::atomic<int>                                                                safepoint__ { 0 };                                       // 安全点
-    mutable co_spinlock                                                             safepoint_lock__ { co_spinlock::lock_type::in_thread };  // 安全点锁
     std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY };                    // 所有普通协程
     mutable co_spinlock                                                             mu_normal_ctx__ { co_spinlock::lock_type::in_thread };   // 普通协程锁
     std::unordered_set<co_ctx*>                                                     blocked_ctx__;                                           // 被阻塞的协程
@@ -108,7 +104,7 @@ public:
     std::optional<co_return_value> wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout); // 等待ctx
     co_return_value                wait_ctx(co_ctx* ctx);                                          // 等待ctx
     int                            workload() const;                                               // 工作量
-    void                           schedule_switch(bool safe_return);                              // 调度切换
+    void                           schedule_switch();                                              // 调度切换
     void                           remove_ctx(co_ctx* ctx);                                        // 删除ctx
     co_ctx*                        current_ctx() const;                                            // 当前ctx
     void                           stop_schedule();                                                // 停止调度
@@ -120,9 +116,6 @@ public:
     bool                           can_schedule_ctx() const;                                       // 是否可以调度ctx
     bool                           is_blocked() const;                                             // 是否被阻塞
     bool                           prepare_to_switch(co_ctx*& from, co_ctx*& to);                  // 准备切换
-    void                           add_safepoint();                                                // 设置安全点
-    void                           sub_safepoint();                                                // 重置安全点
-    bool                           safepoint() const;                                              // 安全点
     void                           handle_priority_changed(int old, co_ctx* ctx);                  // 改变优先级
     void                           ctx_leave_wait_state(co_ctx* ctx);                              // ctx离开等待状态
     void                           ctx_enter_wait_state(co_ctx* ctx);                              // ctx进入等待状态

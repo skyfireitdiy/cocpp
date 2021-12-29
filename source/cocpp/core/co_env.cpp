@@ -4,6 +4,7 @@
 #include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env_factory.h"
+#include "cocpp/core/co_interrupt_closer.h"
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
@@ -25,7 +26,6 @@ co_env::co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
     , shared_stack__(shared_stack)
     , idle_ctx__(idle_ctx)
 {
-    sub_safepoint();
     idle_ctx__->set_env(this);
     if (create_new_thread)
     {
@@ -91,7 +91,7 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
             wait_ctx_timeout().pub(ctx);
             return ret;
         }
-        schedule_switch(false);
+        schedule_switch();
     }
     wait_ctx_finished().pub(ctx);
     return ctx->ret_ref();
@@ -109,7 +109,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
     while (ctx->state() != co_state::finished)
     {
-        schedule_switch(false);
+        schedule_switch();
     }
     wait_ctx_finished().pub(ctx);
     return ctx->ret_ref();
@@ -228,16 +228,15 @@ void co_env::switch_normal_ctx__()
         }
     }
     unlock_schedule();
-    add_safepoint();
     switch_to(curr->regs(), next->regs());
     lock_schedule();
     switched_to().pub(curr);
 }
 
-void co_env::schedule_switch(bool safe_return)
+void co_env::schedule_switch()
 {
-    sub_safepoint();
     lock_schedule();
+    co_interrupt_closer interrupt_closer;
     if (shared_stack_switch_info__.need_switch)
     {
         switch_shared_stack_ctx__();
@@ -245,10 +244,6 @@ void co_env::schedule_switch(bool safe_return)
     else
     {
         switch_normal_ctx__();
-    }
-    if (!safe_return)
-    {
-        sub_safepoint();
     }
     unlock_schedule();
 }
@@ -312,7 +307,6 @@ void co_env::switch_shared_stack_ctx__()
     // 切换到to
 
     unlock_schedule();
-    add_safepoint();
     switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
     lock_schedule();
     switched_to().pub(idle_ctx__);
@@ -320,14 +314,14 @@ void co_env::switch_shared_stack_ctx__()
 
 void co_env::start_schedule_routine__()
 {
-    sub_safepoint();
+    co_interrupt_closer interrupt_closer;
     schedule_thread_tid__ = gettid();
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
     {
-        schedule_switch(false);
+        schedule_switch();
 
         // 切换回来检测是否需要执行共享栈切换
         if (shared_stack_switch_info__.need_switch)
@@ -460,26 +454,6 @@ bool co_env::can_schedule__() const
 bool co_env::is_blocked() const
 {
     return state() == co_env_state::busy && !test_flag(CO_ENV_FLAG_SCHEDULED);
-}
-
-bool co_env::safepoint() const
-{
-    std::lock_guard<co_spinlock> lock(safepoint_lock__);
-    return safepoint__.load() == 0;
-}
-
-void co_env::add_safepoint()
-{
-    std::lock_guard<co_spinlock> lock(safepoint_lock__);
-    safepoint__.fetch_add(1);
-    safepoint_added().pub(safepoint__.load());
-}
-
-void co_env::sub_safepoint()
-{
-    std::lock_guard<co_spinlock> lock(safepoint_lock__);
-    safepoint__.fetch_sub(1);
-    safepoint_subbed().pub(safepoint__.load());
 }
 
 bool co_env::need_sleep__()
