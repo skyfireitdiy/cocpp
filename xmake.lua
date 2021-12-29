@@ -2,6 +2,11 @@ add_rules("mode.debug", "mode.release")
 
 if is_mode("release") then set_optimize("none") end
 
+if is_mode("debug") then
+    add_links("gcov")
+    add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
+end
+
 set_languages("c++20")
 add_cxxflags("-Wall", "-Werror")
 
@@ -136,14 +141,13 @@ add_linkdirs("3rd/gtest_install/lib", "3rd/mockcpp_install/lib")
 add_includedirs("include")
 add_files("test/*.cpp")
 add_links("gtest")
-add_links("gcov")
-add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
 add_deps("cocpp")
-
-after_build(function()
-    import("core.project.task")
-    task.run("test_cov")
-end)
+if is_mode("debug") then
+    after_build(function()
+        import("core.project.task")
+        task.run("test_cov")
+    end)
+end
 
 on_install(function(target) print("ignore install test") end)
 target_end()

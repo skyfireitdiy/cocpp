@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
+#include "cocpp/sync/co_spinlock.h"
 #include "cocpp/utils/co_noncopyable.h"
 
 #include <memory>
@@ -10,8 +11,9 @@ CO_NAMESPACE_BEGIN
 class co_any final //: private co_noncopyable
 {
 private:
-    struct base_type
+    class base_type
     {
+    public:
         virtual ~base_type() = default;
     };
 
@@ -19,9 +21,10 @@ private:
     class real_type : public base_type
     {
         T value__;
-        real_type(const T& value);
 
-        friend class co_any;
+    public:
+        real_type(const T& value);
+        T& get();
     };
 
     std::shared_ptr<base_type> data__ { nullptr };
@@ -39,6 +42,12 @@ public:
 };
 
 // 模板实现
+
+template <typename T>
+T& co_any::real_type<T>::get()
+{
+    return value__;
+}
 
 template <typename T>
 co_any::real_type<T>::real_type(const T& value)
@@ -67,7 +76,7 @@ T& co_any::get()
     {
         throw std::bad_cast();
     }
-    return ptr->value__;
+    return ptr->get();
 }
 
 CO_NAMESPACE_END
