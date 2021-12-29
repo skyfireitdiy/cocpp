@@ -166,7 +166,7 @@ void switch_from_outside(sigcontext_64* context)
 {
     auto env = co::current_env();
 
-    if (!env->safepoint())
+    if (!env->safepoint() || !co_spinlock::can_interrupt())
     {
         return;
     }
