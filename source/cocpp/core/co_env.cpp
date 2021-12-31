@@ -1,9 +1,7 @@
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_ctx_config.h"
-#include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
-#include "cocpp/core/co_env_factory.h"
 #include "cocpp/core/co_interrupt_closer.h"
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
@@ -255,7 +253,7 @@ void co_env::remove_ctx(co_ctx* ctx)
         // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
         all_normal_ctx__[ctx->priority()].remove(ctx);
     }
-    ctx_factory__->destroy_ctx(ctx);
+    co::destroy_ctx(ctx);
     ctx_removed().pub(ctx);
 }
 
@@ -383,7 +381,7 @@ void co_env::save_shared_stack__(co_ctx* ctx)
 {
 
     auto stack_size = get_valid_stack_size__(ctx);
-    auto tmp_stack  = stack_factory__->create_stack(stack_size);
+    auto tmp_stack  = co::create_stack(stack_size);
     memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
     ctx->set_stack(tmp_stack);
     shared_stack_saved().pub(ctx);
@@ -397,7 +395,7 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
     {
         memcpy(shared_stack__->stack_top() - ctx->stack()->stack_size(), ctx->stack()->stack(), ctx->stack()->stack_size());
         // 销毁原stack
-        stack_factory__->destroy_stack(ctx->stack());
+        co::destroy_stack(ctx->stack());
     }
     else
     {

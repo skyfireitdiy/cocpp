@@ -107,6 +107,11 @@ public:
     const std::chrono::high_resolution_clock::duration& timing_duration() const; // 获取定时器时间
     ~co_manager();                                                               // 析构函数
 
+    CoMemberMethodProxy(factory_set__.ctx_factory, create_ctx);
+    CoMemberMethodProxy(factory_set__.ctx_factory, destroy_ctx);
+    CoMemberMethodProxy(factory_set__.stack_factory, create_stack);
+    CoMemberMethodProxy(factory_set__.stack_factory, destroy_stack);
+
     friend class co_singleton_static<co_manager>;
 };
 

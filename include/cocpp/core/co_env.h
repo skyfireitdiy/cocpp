@@ -25,7 +25,6 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-class co_manager;
 class co_ctx;
 
 class co_env final : private co_noncopyable
@@ -59,8 +58,6 @@ private:                                                                        
     co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying> state_manager__;                                         // 状态管理器
     std::future<void>                                                               worker__;                                                // 工作线程
     co_sleep_controller                                                             sleep_controller__;                                      // 睡眠控制器
-    co_ctx_factory* const                                                           ctx_factory__ { co_ctx_factory::instance() };            // 协程工厂
-    co_stack_factory* const                                                         stack_factory__ { co_stack_factory::instance() };        // 栈工厂
     co_stack*                                                                       shared_stack__ { nullptr };                              // 共享栈
     co_ctx* const                                                                   idle_ctx__ { nullptr };                                  // 空闲协程
     co_tid                                                                          schedule_thread_tid__ {};                                // 调度线程tid

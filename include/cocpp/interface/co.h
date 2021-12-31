@@ -47,6 +47,10 @@ public:
     CoMemberMethodProxyStatic(manager__, set_max_schedule_thread_count);
     CoMemberMethodProxyStatic(manager__, set_timer_tick_duration);
     CoMemberMethodProxyStatic(manager__, timing_duration);
+    CoMemberMethodProxyStatic(manager__, create_ctx);
+    CoMemberMethodProxyStatic(manager__, destroy_ctx);
+    CoMemberMethodProxyStatic(manager__, create_stack);
+    CoMemberMethodProxyStatic(manager__, destroy_stack);
 
     CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), workload, current_env_);
     CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), state, current_env_);
