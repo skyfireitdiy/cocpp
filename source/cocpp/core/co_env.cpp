@@ -218,8 +218,6 @@ void co_env::switch_normal_ctx__()
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
     {
-        remove_detached_ctx__();
-
         if (!prepare_to_switch(curr, next))
         {
             return;
@@ -235,6 +233,7 @@ void co_env::schedule_switch()
 {
     lock_schedule();
     co_interrupt_closer interrupt_closer;
+    remove_detached_ctx__();
     if (shared_stack_switch_info__.need_switch)
     {
         switch_shared_stack_ctx__();
@@ -328,7 +327,6 @@ void co_env::start_schedule_routine__()
         }
 
         set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
-        remove_detached_ctx__();       // 切换回来之后，将完成的ctx删除
 
         sleep_if_need();
 
