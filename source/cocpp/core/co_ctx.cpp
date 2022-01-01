@@ -73,6 +73,10 @@ size_t co_ctx::priority() const
 
 void co_ctx::set_priority(int priority)
 {
+    if (test_flag(CO_CTX_FLAG_IDLE))
+    {
+        return;
+    }
     std::unique_lock<co_spinlock> lock(priority_lock__);
     int                           old_priority = priority__;
     if (priority >= CO_MAX_PRIORITY)
@@ -91,7 +95,7 @@ void co_ctx::set_priority(int priority)
             return;
         }
     }
-    if (old_priority != priority__ && !test_flag(CO_CTX_FLAG_IDLE))
+    if (old_priority != priority__)
     {
         lock.unlock(); // 在priority_changed 事件处理中，可能会修改priority__，所以需要解锁
         priority_changed().pub(old_priority, priority__);
