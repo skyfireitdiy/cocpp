@@ -191,13 +191,6 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 
         // CO_DEBUG("prepare from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
 
-        // 设置正在切换状态，防止被转移到其他env上，因为to已经是running状态了，所以不用担心他
-        if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK))
-        {
-            // CO_DEBUG("set ctx %p CO_CTX_FLAG_SWITCHING flag", curr);
-            curr->set_flag(CO_CTX_FLAG_SWITCHING);
-        }
-
         if (curr == idle_ctx__)
         {
             return false;
@@ -293,8 +286,6 @@ void co_env::switch_shared_stack_ctx__()
     if (shared_stack_switch_info__.from->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
         save_shared_stack__(shared_stack_switch_info__.from);
-        // 保存栈完成后退出切换状态
-        shared_stack_switch_info__.from->reset_flag(CO_CTX_FLAG_SWITCHING);
     }
     if (shared_stack_switch_info__.to->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
@@ -519,7 +510,7 @@ void co_env::ctx_enter_wait_state(co_ctx* ctx)
 
 std::list<co_ctx*> co_env::take_all_movable_ctx()
 {
-    std::scoped_lock   lock(mu_normal_ctx__, mu_min_priority__);
+    std::scoped_lock   lock(mu_normal_ctx__, mu_min_priority__, schedule_lock__);
     std::list<co_ctx*> ret;
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
@@ -539,7 +530,7 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
 
 co_ctx* co_env::take_one_movable_ctx()
 {
-    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__, schedule_lock__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         auto backup = all_normal_ctx__[i];

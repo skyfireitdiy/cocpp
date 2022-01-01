@@ -35,7 +35,6 @@ constexpr int CO_CTX_FLAG_LOCKED       = 1; // 被co对象持有，暂时不能�
 constexpr int CO_CTX_FLAG_BIND         = 2; // 绑定env，不可移动
 constexpr int CO_CTX_FLAG_IDLE         = 3; // idle ctx
 constexpr int CO_CTX_FLAG_SHARED_STACK = 4; // 共享栈
-constexpr int CO_CTX_FLAG_SWITCHING    = 5; // 正在切换
 constexpr int CO_CTX_FLAG_MAX          = 8; // 最大标志位
 
 constexpr int CO_ENV_FLAG_NO_SCHE_THREAD    = 0; // 没有调度线程

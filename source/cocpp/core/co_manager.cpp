@@ -459,14 +459,10 @@ void co_manager::steal_ctx_routine__()
             {
                 break;
             }
-            (*iter)->lock_schedule();
             auto ctx = (*iter)->take_one_movable_ctx();
-            (*iter)->unlock_schedule();
             if (ctx != nullptr)
             {
-                env->lock_schedule();
                 env->move_ctx_to_here(ctx);
-                env->unlock_schedule();
                 break;
             }
         }
