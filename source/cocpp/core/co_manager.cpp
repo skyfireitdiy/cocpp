@@ -283,6 +283,7 @@ void co_manager::force_schedule__()
             // 强行外部调度
             send_switch_from_outside_signal(env);
         }
+        env->reset_scheduled_flag();
     }
 }
 
