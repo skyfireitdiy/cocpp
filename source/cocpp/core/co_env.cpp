@@ -324,12 +324,6 @@ void co_env::start_schedule_routine__()
         set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
 
         sleep_if_need();
-
-        // 切回idle之后，睡眠等待
-        if (state() == co_env_state::destorying)
-        {
-            break;
-        }
     }
 
     remove_all_ctx__();
