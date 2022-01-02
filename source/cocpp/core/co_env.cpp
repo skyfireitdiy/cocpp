@@ -6,6 +6,7 @@
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
+#include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/utils/co_defer.h"
 
@@ -42,7 +43,10 @@ co_env::co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
 void co_env::add_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
-    assert(state() != co_env_state::created && state() != co_env_state::destorying);
+    if (state() != co_env_state::created && state() != co_env_state::destorying)
+    {
+        throw co_error("env state error");
+    }
     init_ctx(shared_stack__, ctx); // 初始化ctx
     ctx_initted().pub(ctx);
 
@@ -335,6 +339,10 @@ void co_env::start_schedule_routine__()
 
 void co_env::schedule_in_this_thread()
 {
+    if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
+    {
+        throw co_error("schedule_in_this_thread: already started");
+    }
     this_thread_converted_to_schedule_thread().pub(std::this_thread::get_id());
     start_schedule_routine__();
 }
