@@ -43,7 +43,7 @@ co_env::co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
 void co_env::add_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
-    if (state() != co_env_state::created && state() != co_env_state::destorying)
+    if (state() == co_env_state::created || state() == co_env_state::destorying)
     {
         throw co_error("env state error");
     }
