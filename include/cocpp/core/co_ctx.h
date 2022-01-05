@@ -40,7 +40,7 @@ private:                                                                        
     co_ctx_wait_data                                                    wait_data__ {};                                        // 等待数据
     co_stack*                                                           stack__ { nullptr };                                   // 当前栈空间
     co_ctx_config                                                       config__ {};                                           // 协程配置
-    co_any                                                              ret__;                                                 // 协程返回值，会被传递给 config 中的 entry
+    co_any                                                              ret__;                                                 // 协程返回值
     co_env*                                                             env__ { nullptr };                                     // 协程当前对应的运行环境
     mutable co_spinlock                                                 env_lock__ { co_spinlock::lock_type::in_thread };      // 运行环境锁
     int                                                                 priority__ { CO_IDLE_CTX_PRIORITY };                   // 优先级
