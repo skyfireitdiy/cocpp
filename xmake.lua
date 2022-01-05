@@ -8,7 +8,7 @@ if is_mode("debug") then
 end
 
 set_languages("c++20")
-add_cxxflags("-Wall", "-Werror")
+add_cxxflags("-Wall", "-Werror", "-fconcepts")
 
 add_includedirs("include")
 
