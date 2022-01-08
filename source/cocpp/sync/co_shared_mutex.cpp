@@ -19,10 +19,12 @@ void co_shared_mutex::lock()
 
     spinlock__.lock();
     CoDefer([this] { spinlock__.unlock(); });
-    if (!owners__.empty())
+    while (!owners__.empty())
     {
         ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_deque__, context);
-        lock_yield__(spinlock__, [this] { return !owners__.empty(); });
+        spinlock__.unlock();
+        this_co::yield();
+        spinlock__.lock();
     }
 
     owners__.insert(context);
@@ -77,11 +79,13 @@ void co_shared_mutex::lock_shared()
 
     spinlock__.lock();
     CoDefer([this] { spinlock__.unlock(); });
-    if (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
+    while (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
         ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_deque__, context);
 
-        lock_yield__(spinlock__, [this] { return !owners__.empty() && (*owners__.begin()).type == lock_type::unique; });
+        spinlock__.unlock();
+        this_co::yield();
+        spinlock__.lock();
     }
 
     owners__.insert(context);

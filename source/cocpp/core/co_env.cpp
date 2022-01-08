@@ -178,15 +178,22 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
     set_flag(CO_ENV_FLAG_SCHEDULED);
 
     update_ctx_state__(curr, next);
-    if (curr == next)
-    {
-        return false;
-    }
     if (next != idle_ctx__)
     {
         set_state(co_env_state::busy);
     }
+    else
+    {
+        if (!next->can_schedule())
+        {
+            sleep_if_need();
+        }
+    }
 
+    if (curr == next)
+    {
+        return false;
+    }
     if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK) || next->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
         shared_stack_switch_info__.from        = curr;
@@ -214,12 +221,12 @@ void co_env::switch_normal_ctx__()
 {
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
+
+    if (!prepare_to_switch(curr, next))
     {
-        if (!prepare_to_switch(curr, next))
-        {
-            return;
-        }
+        return;
     }
+
     unlock_schedule();
     switch_to(curr->regs(), next->regs());
     lock_schedule();

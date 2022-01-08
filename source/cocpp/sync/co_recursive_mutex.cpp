@@ -13,10 +13,12 @@ void co_recursive_mutex::lock()
     auto ctx = co::current_ctx();
     spinlock__.lock();
     CoDefer([this] { spinlock__.unlock(); });
-    if (owner__ != ctx && owner__ != nullptr)
+    while (owner__ != ctx && owner__ != nullptr)
     {
         ctx_enter_wait_state__(ctx, CO_RC_TYPE_RECURSIVE_MUTEX, this, wait_deque__);
-        lock_yield__(spinlock__, [this, ctx] { return owner__ != ctx && owner__ != nullptr; });
+        spinlock__.unlock();
+        this_co::yield();
+        spinlock__.lock();
     }
 
     owner__ = ctx;

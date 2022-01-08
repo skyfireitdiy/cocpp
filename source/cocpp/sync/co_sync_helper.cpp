@@ -5,15 +5,6 @@
 
 CO_NAMESPACE_BEGIN
 
-void lock_yield__(co_spinlock& lk, std::function<bool()> checker)
-{
-    do
-    {
-        lk.unlock();
-        this_co::yield();
-        lk.lock();
-    } while (checker());
-}
 
 void ctx_enter_wait_state__(co_ctx* ctx, int rc_type, void* rc, std::deque<co_ctx*>& wait_deque)
 {
