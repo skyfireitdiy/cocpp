@@ -8,17 +8,11 @@ CO_NAMESPACE_BEGIN
 void co_spinlock::lock()
 {
     std::atomic_thread_fence(std::memory_order_acquire);
-    bool lk = false;
-    while (!locked__.compare_exchange_strong(lk, true))
+    std::function<void()> yield = lock_type__ == lock_type::in_coroutine ? this_co::yield : std::this_thread::yield;
+    bool                  lk    = false;
+    while (!locked__.compare_exchange_weak(lk, true))
     {
-        if (lock_type__ == lock_type::in_coroutine)
-        {
-            this_co::yield();
-        }
-        else
-        {
-            std::this_thread::yield();
-        }
+        yield();
         lk = false;
     }
     std::atomic_thread_fence(std::memory_order_release);
@@ -28,7 +22,7 @@ bool co_spinlock::try_lock()
 {
     std::atomic_thread_fence(std::memory_order_acquire);
     bool lk  = false;
-    auto ret = locked__.compare_exchange_strong(lk, true);
+    auto ret = locked__.compare_exchange_weak(lk, true);
     std::atomic_thread_fence(std::memory_order_release);
     return ret;
 }
@@ -36,17 +30,11 @@ bool co_spinlock::try_lock()
 void co_spinlock::unlock()
 {
     std::atomic_thread_fence(std::memory_order_acquire);
-    bool lk = true;
-    while (!locked__.compare_exchange_strong(lk, false))
+    std::function<void()> yield = lock_type__ == lock_type::in_coroutine ? this_co::yield : std::this_thread::yield;
+    bool                  lk    = true;
+    while (!locked__.compare_exchange_weak(lk, false))
     {
-        if (lock_type__ == lock_type::in_coroutine)
-        {
-            this_co::yield();
-        }
-        else
-        {
-            std::this_thread::yield();
-        }
+        yield();
         lk = true;
     }
     std::atomic_thread_fence(std::memory_order_release);
