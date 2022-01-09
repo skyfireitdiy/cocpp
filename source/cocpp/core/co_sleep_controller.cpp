@@ -12,7 +12,7 @@ void co_sleep_controller::wake_up()
 void co_sleep_controller::sleep_if_need()
 {
     std::unique_lock<std::mutex> lock(mu__);
-    if (checker__())
+    while (checker__())
     {
         cond__.wait(lock);
     }
@@ -21,7 +21,7 @@ void co_sleep_controller::sleep_if_need()
 void co_sleep_controller::sleep_if_need(std::function<bool()> checker)
 {
     std::unique_lock<std::mutex> lock(mu__);
-    if (checker())
+    while (checker())
     {
         cond__.wait(lock);
     }
