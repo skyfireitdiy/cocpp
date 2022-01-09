@@ -38,7 +38,7 @@ void co_counting_semaphore<LeastMaxValue>::acquire()
 {
     std::unique_lock<co_mutex> lock(mu__);
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
-    if (desired__ == 0)
+    while (desired__ == 0)
     {
         empty_cond__.wait(lock, [this] { return desired__ > 0; });
     }
@@ -51,7 +51,7 @@ void co_counting_semaphore<LeastMaxValue>::release_one__()
 {
     std::unique_lock<co_mutex> lock(mu__);
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
-    if (desired__ == LeastMaxValue)
+    while (desired__ == LeastMaxValue)
     {
         full_cond__.wait(lock, [this] { return desired__ < LeastMaxValue; });
     }
