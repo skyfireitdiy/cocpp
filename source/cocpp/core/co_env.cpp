@@ -184,10 +184,7 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
     }
     else
     {
-        if (!next->can_schedule())
-        {
-            sleep_if_need();
-        }
+        sleep_if_need([next] { return next->test_flag(CO_CTX_FLAG_WAITING); });
     }
 
     if (curr == next)
@@ -504,6 +501,10 @@ std::list<co_ctx*> co_env::all_scheduleable_ctx__() const
 
 void co_env::ctx_leave_wait_state(co_ctx* ctx)
 {
+    if (ctx == idle_ctx__)
+    {
+        return;
+    }
     std::scoped_lock lock(mu_normal_ctx__, mu_blocked_ctx__);
     blocked_ctx__.erase(ctx);
     all_normal_ctx__[ctx->priority()].push_back(ctx);
@@ -512,6 +513,10 @@ void co_env::ctx_leave_wait_state(co_ctx* ctx)
 
 void co_env::ctx_enter_wait_state(co_ctx* ctx)
 {
+    if (ctx == idle_ctx__)
+    {
+        return;
+    }
     std::scoped_lock lock(mu_normal_ctx__, mu_blocked_ctx__);
     all_normal_ctx__[ctx->priority()].remove(ctx);
     blocked_ctx__.insert(ctx);

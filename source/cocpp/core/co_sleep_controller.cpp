@@ -18,6 +18,15 @@ void co_sleep_controller::sleep_if_need()
     }
 }
 
+void co_sleep_controller::sleep_if_need(std::function<bool()> checker)
+{
+    std::unique_lock<std::mutex> lock(mu__);
+    if (checker())
+    {
+        cond__.wait(lock);
+    }
+}
+
 co_sleep_controller::co_sleep_controller(std::function<bool()> checker)
     : checker__(checker)
 {
