@@ -193,10 +193,12 @@ co_id co_ctx::id() const
 
 void co_ctx::enter_wait_resource_state(int rc_type, void* rc)
 {
-    std::lock_guard<co_spinlock> lock(wait_data__.mu);
-    wait_data__.type     = rc_type;
-    wait_data__.resource = rc;
-    set_flag(CO_CTX_FLAG_WAITING);
+    {
+        std::scoped_lock lock(wait_data__.mu);
+        wait_data__.type     = rc_type;
+        wait_data__.resource = rc;
+        set_flag(CO_CTX_FLAG_WAITING);
+    }
     std::lock_guard<co_spinlock> env_lock(env_lock__);
     env__->ctx_enter_wait_state(this);
     wait_resource_state_entered().pub(rc_type, rc);
@@ -204,7 +206,10 @@ void co_ctx::enter_wait_resource_state(int rc_type, void* rc)
 
 void co_ctx::leave_wait_resource_state()
 {
-    reset_flag(CO_CTX_FLAG_WAITING);
+    {
+        std::scoped_lock lock(wait_data__.mu);
+        reset_flag(CO_CTX_FLAG_WAITING);
+    }
     std::lock_guard<co_spinlock> lock(env_lock__);
     env__->ctx_leave_wait_state(this);
     env__->wake_up();
