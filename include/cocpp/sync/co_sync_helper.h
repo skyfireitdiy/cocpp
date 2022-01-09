@@ -11,15 +11,6 @@ CO_NAMESPACE_BEGIN
 class co_ctx;
 class co_spinlock;
 
-void ctx_enter_wait_state__(co_ctx* ctx, int rc_type, void* rc, std::deque<co_ctx*>& wait_list); // 将ctx放入等待队列
-
-template <typename ContextType>
-void ctx_enter_wait_state__(co_ctx* ctx, int rc_type, void* rc, std::deque<ContextType>& wait_list, const ContextType& data)
-{
-    ctx->enter_wait_resource_state(rc_type, rc);
-    wait_list.push_back(data);
-}
-
 void wake_front__(std::deque<co_ctx*>& wait_list);
 
 template <typename ContextType>

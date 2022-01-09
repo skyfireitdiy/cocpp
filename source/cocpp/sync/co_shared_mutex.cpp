@@ -21,7 +21,8 @@ void co_shared_mutex::lock()
     CoDefer([this] { spinlock__.unlock(); });
     while (!owners__.empty())
     {
-        ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_deque__, context);
+        wait_deque__.push_back(context);
+        ctx->enter_wait_resource_state(CO_RC_TYPE_SHARED_MUTEX, this);
         spinlock__.unlock();
         this_co::yield();
         spinlock__.lock();
@@ -81,7 +82,8 @@ void co_shared_mutex::lock_shared()
     CoDefer([this] { spinlock__.unlock(); });
     while (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
-        ctx_enter_wait_state__(ctx, CO_RC_TYPE_SHARED_MUTEX, this, wait_deque__, context);
+        wait_deque__.push_back(context);
+        ctx->enter_wait_resource_state(CO_RC_TYPE_SHARED_MUTEX, this);
 
         spinlock__.unlock();
         this_co::yield();

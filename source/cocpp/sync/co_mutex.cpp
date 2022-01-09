@@ -15,7 +15,9 @@ void co_mutex::lock()
     std::scoped_lock lock(spinlock__);
     while (owner__ != nullptr)
     {
-        ctx_enter_wait_state__(ctx, CO_RC_TYPE_MUTEX, this, wait_deque__);
+        wait_deque__.push_back(ctx);
+        ctx->enter_wait_resource_state(CO_RC_TYPE_MUTEX, this);
+
         spinlock__.unlock();
         this_co::yield();
         spinlock__.lock();
@@ -47,7 +49,14 @@ void co_mutex::unlock()
 
     owner__ = nullptr;
 
-    wake_front__(wait_deque__);
+    if (wait_deque__.empty())
+    {
+        return;
+    }
+
+    auto obj = wait_deque__.front();
+    wait_deque__.pop_front();
+    obj->leave_wait_resource_state();
 }
 
 CO_NAMESPACE_END

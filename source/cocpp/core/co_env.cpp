@@ -176,20 +176,22 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
     assert(next != nullptr);
 
     set_flag(CO_ENV_FLAG_SCHEDULED);
-
-    update_ctx_state__(curr, next);
     if (next != idle_ctx__)
     {
         set_state(co_env_state::busy);
     }
     else
     {
-        sleep_if_need([next] { return next->test_flag(CO_CTX_FLAG_WAITING); });
+        sleep_if_need([this] { return idle_ctx__->test_flag(CO_CTX_FLAG_WAITING); });
     }
 
     if (curr == next)
     {
         return false;
+    }
+    else
+    {
+        update_ctx_state__(curr, next);
     }
     if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK) || next->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
