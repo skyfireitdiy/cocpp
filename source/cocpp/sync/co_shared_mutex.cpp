@@ -3,7 +3,6 @@
 #include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/interface/co_this_co.h"
-#include "cocpp/sync/co_sync_helper.h"
 
 #include <cassert>
 
@@ -17,18 +16,23 @@ void co_shared_mutex::lock()
         .ctx  = ctx
     };
 
-    spinlock__.lock();
-    CoDefer([this] { spinlock__.unlock(); });
-    while (!owners__.empty())
+    std::scoped_lock lock(spinlock__);
+
+    if (owners__.empty())
     {
-        wait_deque__.push_back(context);
+        owners__.insert(context);
+        return;
+    }
+
+    wait_deque__.push_back(context);
+
+    while (!owners__.contains(context))
+    {
         ctx->enter_wait_resource_state(CO_RC_TYPE_SHARED_MUTEX, this);
         spinlock__.unlock();
         this_co::yield();
         spinlock__.lock();
     }
-
-    owners__.insert(context);
 }
 
 bool co_shared_mutex::try_lock()
@@ -39,8 +43,7 @@ bool co_shared_mutex::try_lock()
         .ctx  = ctx
     };
 
-    spinlock__.lock();
-    CoDefer([this] { spinlock__.unlock(); });
+    std::scoped_lock lock(spinlock__);
     while (!owners__.empty())
     {
         return false;
@@ -57,8 +60,7 @@ void co_shared_mutex::unlock()
         .ctx  = ctx
     };
 
-    spinlock__.lock();
-    CoDefer([this] { spinlock__.unlock(); });
+    std::scoped_lock lock(spinlock__);
 
     if (!owners__.contains(context))
     {
@@ -78,19 +80,23 @@ void co_shared_mutex::lock_shared()
         .ctx  = ctx
     };
 
-    spinlock__.lock();
-    CoDefer([this] { spinlock__.unlock(); });
-    while (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
-    {
-        wait_deque__.push_back(context);
-        ctx->enter_wait_resource_state(CO_RC_TYPE_SHARED_MUTEX, this);
+    std::scoped_lock lock(spinlock__);
 
+    if (owners__.empty() || owners__.begin()->type == lock_type::shared)
+    {
+        owners__.insert(context);
+        return;
+    }
+
+    wait_deque__.push_back(context);
+
+    while (!owners__.contains(context))
+    {
+        ctx->enter_wait_resource_state(CO_RC_TYPE_SHARED_MUTEX, this);
         spinlock__.unlock();
         this_co::yield();
         spinlock__.lock();
     }
-
-    owners__.insert(context);
 }
 
 bool co_shared_mutex::try_lock_shared()
@@ -101,8 +107,7 @@ bool co_shared_mutex::try_lock_shared()
         .ctx  = ctx
     };
 
-    spinlock__.lock();
-    CoDefer([this] { spinlock__.unlock(); });
+    std::scoped_lock lock(spinlock__);
     if (!owners__.empty() && (*owners__.begin()).type == lock_type::unique)
     {
         return false;
@@ -119,8 +124,7 @@ void co_shared_mutex::unlock_shared()
         .ctx  = ctx
     };
 
-    spinlock__.lock();
-    CoDefer([this] { spinlock__.unlock(); });
+    std::scoped_lock lock(spinlock__);
 
     if (!owners__.contains(context))
     {
@@ -139,21 +143,26 @@ void co_shared_mutex::wake_up_waiters__()
         return;
     }
 
+    if (!owners__.empty())
+    {
+        return;
+    }
+
     if (wait_deque__.front().type == lock_type::unique)
     {
-        wake_front__(wait_deque__, std::function([](shared_lock_context& ctx) {
-                         ctx.ctx->leave_wait_resource_state();
-                     }));
+        auto obj = wait_deque__.front();
+        owners__.insert(obj);
+        wait_deque__.pop_front();
+        obj.ctx->leave_wait_resource_state();
         return;
     }
 
     auto iter = std::remove_if(wait_deque__.begin(), wait_deque__.end(), [](auto& c) {
         return c.type == lock_type::shared;
     });
-
-    std::deque<shared_lock_context> new_owner { iter, wait_deque__.end() };
+    owners__.insert(iter, wait_deque__.end());
     wait_deque__.erase(iter, wait_deque__.end());
-    for (auto& c : new_owner)
+    for (auto& c : owners__)
     {
         c.ctx->leave_wait_resource_state();
     }

@@ -3,7 +3,6 @@
 #include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/interface/co_this_co.h"
-#include "cocpp/sync/co_sync_helper.h"
 #include "cocpp/utils/co_defer.h"
 #include <mutex>
 
@@ -13,11 +12,18 @@ void co_mutex::lock()
 {
     auto             ctx = co::current_ctx();
     std::scoped_lock lock(spinlock__);
-    while (owner__ != nullptr)
-    {
-        wait_deque__.push_back(ctx);
-        ctx->enter_wait_resource_state(CO_RC_TYPE_MUTEX, this);
 
+    if (owner__ == nullptr)
+    {
+        owner__ = ctx;
+        return;
+    }
+
+    wait_deque__.push_back(ctx);
+
+    while (owner__ != ctx)
+    {
+        ctx->enter_wait_resource_state(CO_RC_TYPE_MUTEX, this);
         spinlock__.unlock();
         this_co::yield();
         spinlock__.lock();
@@ -47,15 +53,15 @@ void co_mutex::unlock()
         throw co_error("ctx is not owner[", ctx, "]");
     }
 
-    owner__ = nullptr;
-
     if (wait_deque__.empty())
     {
+        owner__ = nullptr;
         return;
     }
 
     auto obj = wait_deque__.front();
     wait_deque__.pop_front();
+    owner__ = obj;
     obj->leave_wait_resource_state();
 }
 
