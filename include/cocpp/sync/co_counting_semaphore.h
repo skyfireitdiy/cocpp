@@ -40,7 +40,7 @@ void co_counting_semaphore<LeastMaxValue>::acquire()
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
     while (desired__ == 0)
     {
-        empty_cond__.wait(lock, [this] { return desired__ > 0; });
+        empty_cond__.wait(lock);
     }
     --desired__;
     full_cond__.notify_one();
@@ -53,7 +53,7 @@ void co_counting_semaphore<LeastMaxValue>::release_one__()
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
     while (desired__ == LeastMaxValue)
     {
-        full_cond__.wait(lock, [this] { return desired__ < LeastMaxValue; });
+        full_cond__.wait(lock);
     }
     ++desired__;
     empty_cond__.notify_one();
