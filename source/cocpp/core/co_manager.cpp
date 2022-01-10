@@ -15,7 +15,7 @@ CO_NAMESPACE_BEGIN
 
 co_env* co_manager::get_best_env__()
 {
-    std::lock_guard<std::recursive_mutex> lck(env_set__.normal_lock);
+    std::scoped_lock lck(env_set__.normal_lock);
     if (env_set__.normal_set.empty())
     {
         return create_env(true);
@@ -145,7 +145,7 @@ void co_manager::free_mem__()
     pass_tick_count = (pass_tick_count + 1) % TICKS_COUNT_OF_FREE_MEM;
     if (pass_tick_count == 0)
     {
-        std::lock_guard<co_spinlock> lck(need_free_mem_cb_lock__);
+        std::scoped_lock lck(need_free_mem_cb_lock__);
         if (need_free_mem_cb__())
         {
             factory_set__.env_factory->free_obj_pool();
@@ -177,7 +177,7 @@ void co_manager::remove_env__(co_env* env)
     std::scoped_lock lock(env_set__.normal_lock, env_set__.expired_lock);
     env_set__.normal_set.erase(env);
 
-    std::lock_guard<std::recursive_mutex> lck(env_set__.expired_lock);
+    std::scoped_lock lck(env_set__.expired_lock);
     env_set__.expired_set.insert(env);
     env_set__.cond_expired_env.notify_one();
 
@@ -228,15 +228,15 @@ void co_manager::set_clean_up__()
 
 void co_manager::clean_env_routine__()
 {
-    std::unique_lock<std::recursive_mutex> lck(env_set__.expired_lock);
-    std::unique_lock<co_spinlock>          clean_lock(clean_up_lock__);
+    std::unique_lock lck(env_set__.expired_lock);
+    std::unique_lock clean_lock(clean_up_lock__);
     while (!clean_up__ || env_set__.normal_env_count != 0)
     {
         clean_lock.unlock();
         env_set__.cond_expired_env.wait(lck);
 
         clean_lock.lock();
-        std::lock_guard<co_spinlock> lock(env_set__.mu_normal_env_count);
+        std::scoped_lock lock(env_set__.mu_normal_env_count);
         for (auto& p : env_set__.expired_set)
         {
             factory_set__.env_factory->destroy_env(p);
@@ -324,7 +324,7 @@ void co_manager::redistribute_ctx__()
 
 void co_manager::destroy_redundant_env__()
 {
-    std::lock_guard<std::recursive_mutex> lock(env_set__.normal_lock);
+    std::scoped_lock lock(env_set__.normal_lock);
     // 然后删除多余的处于idle状态的env
     size_t               can_schedule_env_count = 0;
     std::vector<co_env*> idle_env_list;
@@ -354,7 +354,7 @@ void co_manager::destroy_redundant_env__()
 
 void co_manager::timer_routine__()
 {
-    std::unique_lock<co_spinlock> lck(clean_up_lock__);
+    std::unique_lock lck(clean_up_lock__);
     while (!clean_up__)
     {
         lck.unlock();
@@ -368,7 +368,7 @@ void co_manager::timer_routine__()
 void co_manager::set_timer_tick_duration(
     const std::chrono::high_resolution_clock::duration& duration)
 {
-    std::lock_guard<co_spinlock> lock(mu_timer_duration__);
+    std::scoped_lock lock(mu_timer_duration__);
     if (duration < std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
     {
         timer_duration__ = std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS);
@@ -382,7 +382,7 @@ void co_manager::set_timer_tick_duration(
 
 const std::chrono::high_resolution_clock::duration& co_manager::timing_duration() const
 {
-    std::lock_guard<co_spinlock> lock(mu_timer_duration__);
+    std::scoped_lock lock(mu_timer_duration__);
     return timer_duration__;
 }
 
@@ -434,7 +434,7 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, std::fu
 
 void co_manager::set_if_free_mem_callback(std::function<bool()> cb)
 {
-    std::lock_guard<co_spinlock> lck(need_free_mem_cb_lock__);
+    std::scoped_lock lck(need_free_mem_cb_lock__);
     need_free_mem_cb__ = cb;
 }
 

@@ -19,6 +19,7 @@ _Pragma("once");
 #include <condition_variable>
 #include <future>
 #include <list>
+#include <mutex>
 #include <optional>
 #include <shared_mutex>
 #include <thread>
@@ -53,23 +54,23 @@ class co_env final : private co_noncopyable
     RegCoEvent(one_moveable_ctx_taken, co_ctx*);                           // 一个可移动ctx被拿走
     RegCoEvent(this_thread_converted_to_schedule_thread, std::thread::id); // 当前线程转换为调度线程
 
-private:                                                                                                                                     //
-    co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;                                          // 标志管理器
-    co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying> state_manager__;                                         // 状态管理器
-    std::future<void>                                                               worker__;                                                // 工作线程
-    co_sleep_controller                                                             sleep_controller__;                                      // 睡眠控制器
-    co_stack*                                                                       shared_stack__ { nullptr };                              // 共享栈
-    co_ctx* const                                                                   idle_ctx__ { nullptr };                                  // 空闲协程
-    co_tid                                                                          schedule_thread_tid__ {};                                // 调度线程tid
-    std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY };                    // 所有普通协程
-    mutable co_spinlock                                                             mu_normal_ctx__ { co_spinlock::lock_type::in_thread };   // 普通协程锁
-    std::unordered_set<co_ctx*>                                                     blocked_ctx__;                                           // 被阻塞的协程
-    mutable co_spinlock                                                             mu_blocked_ctx__ { co_spinlock::lock_type::in_thread };  // 阻塞协程锁
-    co_ctx*                                                                         curr_ctx__ { nullptr };                                  // 当前协程
-    mutable co_spinlock                                                             mu_curr_ctx__ { co_spinlock::lock_type::in_thread };     // 当前协程锁
-    int                                                                             min_priority__ = 0;                                      // 最小优先级
-    mutable co_spinlock                                                             mu_min_priority__ { co_spinlock::lock_type::in_thread }; // 最小优先级锁
-    co_spinlock                                                                     schedule_lock__ { co_spinlock::lock_type::in_thread };   // 调度锁
+private:                                                                                                                  //
+    co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;                       // 标志管理器
+    co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying> state_manager__;                      // 状态管理器
+    std::future<void>                                                               worker__;                             // 工作线程
+    co_sleep_controller                                                             sleep_controller__;                   // 睡眠控制器
+    co_stack*                                                                       shared_stack__ { nullptr };           // 共享栈
+    co_ctx* const                                                                   idle_ctx__ { nullptr };               // 空闲协程
+    co_tid                                                                          schedule_thread_tid__ {};             // 调度线程tid
+    std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY }; // 所有普通协程
+    mutable std::mutex                                                              mu_normal_ctx__;                      // 普通协程锁
+    std::unordered_set<co_ctx*>                                                     blocked_ctx__;                        // 被阻塞的协程
+    mutable std::mutex                                                              mu_blocked_ctx__;                     // 阻塞协程锁
+    co_ctx*                                                                         curr_ctx__ { nullptr };               // 当前协程
+    mutable std::mutex                                                              mu_curr_ctx__;                        // 当前协程锁
+    int                                                                             min_priority__ = 0;                   // 最小优先级
+    mutable std::mutex                                                              mu_min_priority__;                    // 最小优先级锁
+    std::mutex                                                                      schedule_lock__;                      // 调度锁
 
     co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread); // 构造函数
     void               start_schedule_routine__();                            // 启动调度线程

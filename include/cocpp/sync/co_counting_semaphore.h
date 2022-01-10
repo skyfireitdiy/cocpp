@@ -36,7 +36,7 @@ public:
 template <std::ptrdiff_t LeastMaxValue>
 void co_counting_semaphore<LeastMaxValue>::acquire()
 {
-    std::unique_lock<co_mutex> lock(mu__);
+    std::unique_lock lock(mu__);
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
     while (desired__ == 0)
     {
@@ -49,7 +49,7 @@ void co_counting_semaphore<LeastMaxValue>::acquire()
 template <std::ptrdiff_t LeastMaxValue>
 void co_counting_semaphore<LeastMaxValue>::release_one__()
 {
-    std::unique_lock<co_mutex> lock(mu__);
+    std::unique_lock lock(mu__);
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
     while (desired__ == LeastMaxValue)
     {
@@ -71,7 +71,7 @@ void co_counting_semaphore<LeastMaxValue>::release(std::ptrdiff_t update)
 template <std::ptrdiff_t LeastMaxValue>
 bool co_counting_semaphore<LeastMaxValue>::try_acquire() noexcept
 {
-    std::unique_lock<co_mutex> lock(mu__);
+    std::unique_lock lock(mu__);
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
     if (desired__ == 0)
     {

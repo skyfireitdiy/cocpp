@@ -14,6 +14,7 @@ _Pragma("once");
 #include <atomic>
 #include <bitset>
 #include <memory>
+#include <mutex>
 
 CO_NAMESPACE_BEGIN
 
@@ -34,23 +35,23 @@ class co_ctx final : private co_noncopyable
     RegCoEvent(wait_resource_state_entered, int, void*); // 等待资源状态进入
     RegCoEvent(wait_resource_state_leaved);              // 等待资源状态离开
 
-private:                                                                                                                       //
-    co_flag_manager<CO_CTX_FLAG_MAX>                                    flag_manager__;                                        // flag 管理
-    co_state_manager<co_state, co_state::suspended, co_state::finished> state_manager__;                                       // 状态管理
-    co_ctx_wait_data                                                    wait_data__ {};                                        // 等待数据
-    co_stack*                                                           stack__ { nullptr };                                   // 当前栈空间
-    co_ctx_config                                                       config__ {};                                           // 协程配置
-    co_any                                                              ret__;                                                 // 协程返回值
-    co_env*                                                             env__ { nullptr };                                     // 协程当前对应的运行环境
-    mutable co_spinlock                                                 env_lock__ { co_spinlock::lock_type::in_thread };      // 运行环境锁
-    int                                                                 priority__ { CO_IDLE_CTX_PRIORITY };                   // 优先级
-    mutable co_spinlock                                                 priority_lock__ { co_spinlock::lock_type::in_thread }; // 优先级锁
-    std::unordered_map<std::string, std::shared_ptr<co_local_base>>     locals__;                                              // 协程局部存储
-    std::function<void(co_any&)>                                        entry__;                                               // 协程入口函数
-#ifdef __GNUC__                                                                                                                //
-#ifdef __x86_64__                                                                                                              //
-    co_byte* regs__[32] {};                                                                                                    // 协程寄存器
-#else                                                                                                                          //
+private:                                                                                                     //
+    co_flag_manager<CO_CTX_FLAG_MAX>                                    flag_manager__;                      // flag 管理
+    co_state_manager<co_state, co_state::suspended, co_state::finished> state_manager__;                     // 状态管理
+    co_ctx_wait_data                                                    wait_data__ {};                      // 等待数据
+    co_stack*                                                           stack__ { nullptr };                 // 当前栈空间
+    co_ctx_config                                                       config__ {};                         // 协程配置
+    co_any                                                              ret__;                               // 协程返回值
+    co_env*                                                             env__ { nullptr };                   // 协程当前对应的运行环境
+    mutable std::mutex                                                  env_lock__;                          // 运行环境锁
+    int                                                                 priority__ { CO_IDLE_CTX_PRIORITY }; // 优先级
+    mutable std::mutex                                                  priority_lock__;                     // 优先级锁
+    std::unordered_map<std::string, std::shared_ptr<co_local_base>>     locals__;                            // 协程局部存储
+    std::function<void(co_any&)>                                        entry__;                             // 协程入口函数
+#ifdef __GNUC__                                                                                              //
+#ifdef __x86_64__                                                                                            //
+    co_byte* regs__[32] {};                                                                                  // 协程寄存器
+#else                                                                                                        //
 #error only supported x86_64
 #endif
 #endif

@@ -13,22 +13,22 @@ class co_flag_manager final
 {
 private:
     std::bitset<MAX_FLAG_COUNT> flags__;
-    mutable co_spinlock         mu__ { co_spinlock::lock_type::in_thread };
+    mutable std::mutex          mu__;
 
 public:
     void set_flag(size_t flag)
     {
-        std::lock_guard<co_spinlock> lock(mu__);
+        std::scoped_lock lock(mu__);
         flags__.set(flag);
     }
     void reset_flag(size_t flag)
     {
-        std::lock_guard<co_spinlock> lock(mu__);
+        std::scoped_lock lock(mu__);
         flags__.reset(flag);
     }
     bool test_flag(size_t flag) const
     {
-        std::lock_guard<co_spinlock> lock(mu__);
+        std::scoped_lock lock(mu__);
         return flags__.test(flag);
     }
 };

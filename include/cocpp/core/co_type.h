@@ -39,22 +39,22 @@ enum class co_env_state : unsigned char
 
 struct co_ctx_wait_data
 {
-    co_spinlock mu { co_spinlock::lock_type::in_thread }; // 互斥锁
-    int         type;                                     // 等待类型
-    void*       resource;                                 // 等待资源
+    std::mutex mu;       // 互斥锁
+    int        type;     // 等待类型
+    void*      resource; // 等待资源
 };
 
 struct co_env_set
 {
-    std::unordered_set<co_env*> normal_set;                                                // 普通线程环境
-    std::recursive_mutex        normal_lock;                                               // 普通线程环境互斥锁
-    std::unordered_set<co_env*> expired_set;                                               // 过期线程环境
-    std::recursive_mutex        expired_lock;                                              // 过期线程环境互斥锁
-    std::condition_variable_any cond_expired_env;                                          // 过期线程环境条件变量
-    unsigned int                normal_env_count;                                          // 普通线程环境数量
-    co_spinlock                 mu_normal_env_count { co_spinlock::lock_type::in_thread }; // 普通线程环境数量互斥锁
-    unsigned int                base_env_count;                                            // 基础线程环境数量
-    unsigned int                max_env_count;                                             // 最大线程环境数量
+    std::unordered_set<co_env*> normal_set;          // 普通线程环境
+    std::recursive_mutex        normal_lock;         // 普通线程环境互斥锁
+    std::unordered_set<co_env*> expired_set;         // 过期线程环境
+    std::recursive_mutex        expired_lock;        // 过期线程环境互斥锁
+    std::condition_variable_any cond_expired_env;    // 过期线程环境条件变量
+    unsigned int                normal_env_count;    // 普通线程环境数量
+    std::mutex                  mu_normal_env_count; // 普通线程环境数量互斥锁
+    unsigned int                base_env_count;      // 基础线程环境数量
+    unsigned int                max_env_count;       // 最大线程环境数量
 };
 
 struct co_factory_set

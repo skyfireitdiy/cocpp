@@ -14,7 +14,7 @@ void add_value()
     printf("add co id: %lld\n", cocpp::this_co::id());
     for (long long i = 0; i < 10000000; ++i)
     {
-        std::lock_guard<cocpp::co_mutex> lck(mu);
+        std::scoped_lock lck(mu);
         value += i;
     }
 }
@@ -24,7 +24,7 @@ void sub_value()
     printf("sub co id: %lld\n", cocpp::this_co::id());
     for (long long i = 0; i < 10000000; ++i)
     {
-        std::lock_guard<cocpp::co_mutex> lck(mu);
+        std::scoped_lock lck(mu);
         value -= i;
     }
 }

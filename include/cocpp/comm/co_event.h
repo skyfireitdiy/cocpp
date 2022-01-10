@@ -8,6 +8,7 @@ _Pragma("once");
 #include <functional>
 #include <list>
 #include <map>
+#include <mutex>
 #include <utility>
 
 CO_NAMESPACE_BEGIN
@@ -18,7 +19,7 @@ class co_event final : private co_noncopyable
 private:
     // FIXME: 此处如果使用unordered_map，则会有低概率的崩溃问题，原因未知
     std::map<int, std::function<void(Args... args)>> cb_list__;
-    mutable co_spinlock                              mu_cb_list__ { co_spinlock::lock_type::in_thread };
+    mutable std::mutex                               mu_cb_list__;
     co_event_handler                                 current_handler__ { 0 };
 
 public:
@@ -32,7 +33,7 @@ public:
 template <typename... Args>
 co_event_handler co_event<Args...>::sub(std::function<void(Args... args)> cb)
 {
-    std::lock_guard<co_spinlock> lck(mu_cb_list__);
+    std::scoped_lock lck(mu_cb_list__);
     cb_list__[current_handler__] = cb;
     return ++current_handler__;
 }
@@ -40,14 +41,14 @@ co_event_handler co_event<Args...>::sub(std::function<void(Args... args)> cb)
 template <typename... Args>
 void co_event<Args...>::unsub(co_event_handler h)
 {
-    std::lock_guard<co_spinlock> lck(mu_cb_list__);
+    std::scoped_lock lck(mu_cb_list__);
     cb_list__.erase(h);
 }
 
 template <typename... Args>
 void co_event<Args...>::pub(Args... args) const
 {
-    std::lock_guard<co_spinlock> lck(mu_cb_list__);
+    std::scoped_lock lck(mu_cb_list__);
     for (auto& [_, cb] : cb_list__)
     {
         cb(args...);

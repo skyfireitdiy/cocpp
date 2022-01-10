@@ -60,7 +60,7 @@ co_byte* co_mem_pool::alloc_mem(size_t size)
         return reinterpret_cast<co_byte*>(std::aligned_alloc(sizeof(void*), align_size__(size)));
     }
 
-    std::lock_guard<co_spinlock> lock(mu__);
+    std::scoped_lock lock(mu__);
     if (mem_pool__[zone_index].empty())
     {
         return reinterpret_cast<co_byte*>(std::aligned_alloc(sizeof(void*), 1 << (zone_index + min_zone__)));
@@ -78,7 +78,7 @@ void co_mem_pool::free_mem(co_byte* ptr, size_t size)
         std::free(ptr);
         return;
     }
-    std::lock_guard<co_spinlock> lock(mu__);
+    std::scoped_lock lock(mu__);
     if (mem_pool__[zone_index].size() > max_cap__)
     {
         std::free(ptr);
@@ -91,7 +91,7 @@ void co_mem_pool::free_mem(co_byte* ptr, size_t size)
 
 void co_mem_pool::free_pool()
 {
-    std::lock_guard<co_spinlock> lock(mu__);
+    std::scoped_lock lock(mu__);
     for (auto& zone : mem_pool__)
     {
         for (auto& mem : zone)

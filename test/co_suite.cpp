@@ -167,7 +167,7 @@ TEST(co, co_mutex_try_lock)
     co_mutex mu;
 
     co c1([&]() {
-        std::lock_guard<co_mutex> lock(mu);
+        std::scoped_lock lock(mu);
         this_co::sleep_for(std::chrono::seconds(1));
     });
 
@@ -185,7 +185,7 @@ TEST(co, co_mutex_lock)
     co c1([&]() {
         for (int i = 0; i < 100000; ++i)
         {
-            std::lock_guard<co_mutex> lock(mu);
+            std::scoped_lock lock(mu);
             ret += i;
             this_co::yield();
         }
@@ -194,7 +194,7 @@ TEST(co, co_mutex_lock)
         for (int i = 0; i < 1000; ++i)
         {
             {
-                std::lock_guard<co_mutex> lock(mu);
+                std::scoped_lock lock(mu);
                 ret += i;
             }
             this_co::yield();
@@ -203,14 +203,14 @@ TEST(co, co_mutex_lock)
     co c3([&]() {
         for (int i = 0; i < 100000; ++i)
         {
-            std::lock_guard<co_mutex> lock(mu);
+            std::scoped_lock lock(mu);
             ret -= i;
             this_co::yield();
         }
     });
     for (int i = 0; i < 1000; ++i)
     {
-        std::lock_guard<co_mutex> lock(mu);
+        std::scoped_lock lock(mu);
         ret -= i;
         this_co::yield();
     }
@@ -377,7 +377,7 @@ TEST(co, co_condition_variable_notify_one)
     int                   n = 100;
 
     co c1([&] {
-        std::unique_lock<co_mutex> lck(mu);
+        std::unique_lock lck(mu);
         cond.wait(lck);
         n -= 5;
     });
@@ -396,12 +396,12 @@ TEST(co, co_condition_variable_notify_all)
     int                   n = 100;
 
     co c1([&] {
-        std::unique_lock<co_mutex> lck(mu);
+        std::unique_lock lck(mu);
         cond.wait(lck);
         n -= 5;
     });
     co c2([&] {
-        std::unique_lock<co_mutex> lck(mu);
+        std::unique_lock lck(mu);
         cond.wait(lck);
         n -= 10;
     });
@@ -427,7 +427,7 @@ TEST(co, co_condition_variable_notify_at_co_exit)
     });
     c1.detach();
     EXPECT_EQ(n, 100);
-    std::unique_lock<co_mutex> lck(mu);
+    std::unique_lock lck(mu);
     cond.wait(lck);
     EXPECT_EQ(n, 50);
 }

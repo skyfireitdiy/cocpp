@@ -11,8 +11,8 @@ template <typename T, T InitState, T FinalState>
 class co_state_manager final
 {
 private:
-    mutable co_spinlock mu_state__ { co_spinlock::lock_type::in_thread };
-    T                   state__ { InitState };
+    mutable std::mutex mu_state__;
+    T                  state__ { InitState };
 
 public:
     void set_state(const T& state);
@@ -23,7 +23,7 @@ public:
 template <typename T, T InitState, T FinalState>
 void co_state_manager<T, InitState, FinalState>::set_state(const T& state)
 {
-    std::lock_guard<co_spinlock> lock(mu_state__);
+    std::scoped_lock lock(mu_state__);
     if (state__ != FinalState)
     {
         state__ = state;
@@ -33,7 +33,7 @@ void co_state_manager<T, InitState, FinalState>::set_state(const T& state)
 template <typename T, T InitState, T FinalState>
 T co_state_manager<T, InitState, FinalState>::state() const
 {
-    std::lock_guard<co_spinlock> lock(mu_state__);
+    std::scoped_lock lock(mu_state__);
     return state__;
 }
 

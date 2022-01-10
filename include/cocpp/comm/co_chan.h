@@ -98,7 +98,7 @@ co_chan<ValueType, MaxSize>& operator>>(co_chan<ValueType, MaxSize>& ch, ValueTy
 template <typename ValueType, int MaxSize>
 bool co_chan<ValueType, MaxSize>::push(ValueType value)
 {
-    std::unique_lock<co_mutex> lock(mu__);
+    std::unique_lock lock(mu__);
     if (closed__)
     {
         return false;
@@ -137,8 +137,8 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
 template <typename ValueType, int MaxSize>
 std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
 {
-    std::optional<ValueType>   ret;
-    std::unique_lock<co_mutex> lock(mu__);
+    std::optional<ValueType> ret;
+    std::unique_lock         lock(mu__);
 
     if constexpr (MaxSize != 0)
     {
@@ -182,7 +182,7 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
 template <typename ValueType, int MaxSize>
 void co_chan<ValueType, MaxSize>::close()
 {
-    std::lock_guard<co_mutex> lock(mu__);
+    std::scoped_lock lock(mu__);
     closed__ = true;
     if constexpr (MaxSize == 0)
     {
@@ -198,7 +198,7 @@ void co_chan<ValueType, MaxSize>::close()
 template <typename ValueType, int MaxSize>
 bool co_chan<ValueType, MaxSize>::closed() const
 {
-    std::lock_guard<co_mutex> lock(mu__);
+    std::scoped_lock lock(mu__);
     return closed__;
 }
 

@@ -31,14 +31,14 @@ co_any& co_ctx::ret_ref()
 
 void co_ctx::set_env(co_env* env)
 {
-    std::lock_guard<co_spinlock> lock(env_lock__);
+    std::scoped_lock lock(env_lock__);
     env__ = env;
     env_set().pub(env__);
 }
 
 co_env* co_ctx::env() const
 {
-    std::lock_guard<co_spinlock> lock(env_lock__);
+    std::scoped_lock lock(env_lock__);
     return env__;
 }
 
@@ -77,8 +77,8 @@ void co_ctx::set_priority(int priority)
     {
         return;
     }
-    std::unique_lock<co_spinlock> lock(priority_lock__);
-    int                           old_priority = priority__;
+    std::unique_lock lock(priority_lock__);
+    int              old_priority = priority__;
     if (priority >= CO_MAX_PRIORITY)
     {
         priority = CO_MAX_PRIORITY - 1;
@@ -89,7 +89,7 @@ void co_ctx::set_priority(int priority)
     }
     priority__ = priority;
     {
-        std::lock_guard<co_spinlock> lock(env_lock__);
+        std::scoped_lock lock(env_lock__);
         if (env__ == nullptr) // 首次调用的时候env为空
         {
             return;
@@ -199,7 +199,7 @@ void co_ctx::enter_wait_resource_state(int rc_type, void* rc)
         wait_data__.resource = rc;
         set_flag(CO_CTX_FLAG_WAITING);
     }
-    std::lock_guard<co_spinlock> env_lock(env_lock__);
+    std::scoped_lock env_lock(env_lock__);
     env__->ctx_enter_wait_state(this);
     wait_resource_state_entered().pub(rc_type, rc);
 }
@@ -210,7 +210,7 @@ void co_ctx::leave_wait_resource_state()
         std::scoped_lock lock(wait_data__.mu);
         reset_flag(CO_CTX_FLAG_WAITING);
     }
-    std::lock_guard<co_spinlock> lock(env_lock__);
+    std::scoped_lock lock(env_lock__);
     env__->ctx_leave_wait_state(this);
     env__->wake_up();
     wait_resource_state_leaved().pub();
