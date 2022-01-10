@@ -173,9 +173,13 @@ bool co_shared_mutex::shared_lock_context::operator==(const co_shared_mutex::sha
     return ctx == other.ctx && type == other.type;
 }
 
-std::size_t co_shared_mutex::lock_context_hasher::operator()(const shared_lock_context& other) const
+bool co_shared_mutex::shared_lock_context::operator<(const co_shared_mutex::shared_lock_context& other) const
 {
-    return std::hash<co_ctx*> {}(other.ctx) ^ (std::hash<lock_type> {}(other.type) << 1);
+    if (type == other.type)
+    {
+        return ctx < other.ctx;
+    }
+    return type == lock_type::unique;
 }
 
 CO_NAMESPACE_END

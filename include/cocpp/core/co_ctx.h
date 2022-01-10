@@ -46,7 +46,7 @@ private:                                                                        
     mutable std::mutex                                                  env_lock__;                          // 运行环境锁
     int                                                                 priority__ { CO_IDLE_CTX_PRIORITY }; // 优先级
     mutable std::mutex                                                  priority_lock__;                     // 优先级锁
-    std::unordered_map<std::string, std::shared_ptr<co_local_base>>     locals__;                            // 协程局部存储
+    std::map<std::string, std::shared_ptr<co_local_base>>     locals__;                            // 协程局部存储
     std::function<void(co_any&)>                                        entry__;                             // 协程入口函数
 #ifdef __GNUC__                                                                                              //
 #ifdef __x86_64__                                                                                            //

@@ -17,7 +17,6 @@ template <typename... Args>
 class co_event final : private co_noncopyable
 {
 private:
-    // FIXME: 此处如果使用unordered_map，则会有低概率的崩溃问题，原因未知
     std::map<int, std::function<void(Args... args)>> cb_list__;
     mutable std::mutex                               mu_cb_list__;
     co_event_handler                                 current_handler__ { 0 };

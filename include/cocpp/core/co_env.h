@@ -21,6 +21,7 @@ _Pragma("once");
 #include <list>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <shared_mutex>
 #include <thread>
 
@@ -64,7 +65,7 @@ private:                                                                        
     co_tid                                                                          schedule_thread_tid__ {};             // 调度线程tid
     std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY }; // 所有普通协程
     mutable std::mutex                                                              mu_normal_ctx__;                      // 普通协程锁
-    std::unordered_set<co_ctx*>                                                     blocked_ctx__;                        // 被阻塞的协程
+    std::set<co_ctx*>                                                               blocked_ctx__;                        // 被阻塞的协程
     mutable std::mutex                                                              mu_blocked_ctx__;                     // 阻塞协程锁
     co_ctx*                                                                         curr_ctx__ { nullptr };               // 当前协程
     mutable std::mutex                                                              mu_curr_ctx__;                        // 当前协程锁
