@@ -133,6 +133,11 @@ void co_shared_mutex::wake_up_waiters__()
         return;
     }
 
+    if (!owners__.empty())
+    {
+        return;
+    }
+
     if (wait_deque__.front().type == lock_type::unique)
     {
         wake_front__(wait_deque__, std::function([](shared_lock_context& ctx) {
