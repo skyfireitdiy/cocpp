@@ -16,22 +16,22 @@ class co_shared_mutex : private co_noncopyable
 private:
     enum class lock_type
     {
-        unique, // 唯一锁
-        shared  // 共享锁
+        unique,   // 唯一锁
+        shared,   // 共享锁
+        unlocked, // 未锁
     };
 
     struct shared_lock_context
     {
-        lock_type type;                                               // 锁类型
-        co_ctx*   ctx;                                                // 当前锁的持有者
-        bool      operator==(const shared_lock_context& other) const; // 比较
-        bool      operator<(const shared_lock_context& other) const;  // 小于
+        lock_type type; // 锁类型
+        co_ctx*   ctx;  // 当前锁的持有者
     };
 
-    co_spinlock                     spinlock__;          // 互斥锁
-    std::deque<shared_lock_context> wait_deque__;        // 等待队列
-    std::set<shared_lock_context>   owners__;            // 持有者
-    void                            wake_up_waiters__(); // 唤醒等待队列
+    co_spinlock                     spinlock__;                          // 互斥锁
+    lock_type                       lock_type__ { lock_type::unlocked }; // 锁类型
+    std::deque<shared_lock_context> wait_deque__;                        // 等待队列
+    std::set<co_ctx*>               owners__;                            // 持有者
+    void                            wake_up_waiters__();                 // 唤醒等待队列
 public:
     void lock();            // 加锁
     void unlock();          // 解锁
