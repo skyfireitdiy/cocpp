@@ -34,7 +34,7 @@ co_event_handler co_event<Args...>::sub(std::function<void(Args... args)> cb)
 {
     std::lock_guard<co_spinlock> lck(mu_cb_list__);
     cb_list__[current_handler__] = cb;
-    return ++current_handler__;
+    return current_handler__++;
 }
 
 template <typename... Args>
