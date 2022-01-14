@@ -79,9 +79,7 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
     // 反转优先级，防止高优先级ctx永久等待低优先级ctx
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());
-    CoDefer([this, old_priority] {
-        current_ctx()->set_priority(old_priority);
-    });
+    CoDefer(current_ctx()->set_priority(old_priority));
 
     std::optional<co_return_value> ret;
 
@@ -105,9 +103,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());
 
-    CoDefer([this, old_priority] {
-        current_ctx()->set_priority(old_priority);
-    });
+    CoDefer(current_ctx()->set_priority(old_priority));
 
     while (ctx->state() != co_state::finished)
     {
