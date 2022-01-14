@@ -35,6 +35,11 @@ co_env* co_manager::get_best_env__()
         {
             continue;
         }
+        // 独占的env不参与调度
+        if (env->test_flag(CO_ENV_FLAG_EXCLUSIVE))
+        {
+            continue;
+        }
         // 统计可用于调度的env数量
         ++can_schedule_env_count;
         if (env->workload() < min_workload)
@@ -445,7 +450,8 @@ void co_manager::steal_ctx_routine__()
     idle_env_list.reserve(env_set__.normal_set.size());
     for (auto& env : env_set__.normal_set)
     {
-        if (env->state() == co_env_state::idle)
+        // 空闲非独占的env可以去其他的env中偷取ctx
+        if (env->state() == co_env_state::idle && !env->test_flag(CO_ENV_FLAG_EXCLUSIVE))
         {
             idle_env_list.push_back(env);
         }

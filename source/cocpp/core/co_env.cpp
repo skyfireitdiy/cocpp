@@ -580,4 +580,14 @@ void co_env::set_state(const co_env_state& state)
     state_manager__.set_state(state);
 }
 
+void co_env::set_exclusive()
+{
+    set_flag(CO_ENV_FLAG_EXCLUSIVE);
+}
+
+bool co_env::exclusive() const
+{
+    return test_flag(CO_ENV_FLAG_EXCLUSIVE);
+}
+
 CO_NAMESPACE_END

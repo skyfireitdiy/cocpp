@@ -41,6 +41,7 @@ constexpr int CO_ENV_FLAG_NO_SCHE_THREAD    = 0; // 没有调度线程
 constexpr int CO_ENV_FLAG_COVERTED          = 1; // 从正常线程转换来的调度线程
 constexpr int CO_ENV_FLAG_SCHEDULED         = 2; // 被调度过
 constexpr int CO_ENV_FLAG_DONT_AUTO_DESTORY = 3; // 禁止被自动清理线程选中
+constexpr int CO_ENV_FLAG_EXCLUSIVE         = 4; // 排他性调度
 constexpr int CO_ENV_FLAG_MAX               = 8; // 最大FLAG值
 
 constexpr int CO_IDLE_CTX_PRIORITY = 99;  // idle ctx优先级

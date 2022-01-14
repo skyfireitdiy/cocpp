@@ -121,6 +121,8 @@ public:
     void                           lock_schedule();                                                // 锁定调度
     void                           unlock_schedule();                                              // 解锁调度
     void                           set_state(const co_env_state& state);                           //  设置状态，覆盖父类函数
+    void                           set_exclusive();                                                // 设置为独占模式
+    bool                           exclusive() const;                                              // 是否为独占模式
 
     CoConstMemberMethodProxy(&state_manager__, state);       // 获取状态
     CoConstMemberMethodProxy(&flag_manager__, test_flag);    // 测试标志
