@@ -11,8 +11,8 @@ template <typename T, T InitState, T FinalState>
 class co_state_manager final
 {
 private:
-    mutable std::mutex mu_state__;
-    T                  state__ { InitState };
+    mutable std::recursive_mutex mu_state__;
+    T                            state__ { InitState };
 
 public:
     void set_state(const T& state);

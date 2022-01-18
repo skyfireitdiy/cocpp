@@ -15,12 +15,5 @@ co_byte* get_rsp(co_ctx* ctx);                                // 获取ctx的rsp
 co_tid   gettid();                                            // 获取当前线程id
 void     setup_switch_handler();                              // 设置切换上下文的处理函数
 void     send_switch_from_outside_signal(co_env* env);        // 发送切换上下文的信号
-bool     can_interrupt();                                     // 是否可中断
-void     lock_interrupt();                                    // 加锁中断
-void     unlock_interrupt();                                  // 解锁中断
-void     increate_interrupt_lock_count();                     // 增加中断次数
-void     decreate_interrupt_lock_count();                     // 减少中断次数
-void     increate_interrupt_lock_count_with_lock();           // 增加中断次数（加锁）
-void     decreate_interrupt_lock_count_with_lock();           // 减少中断次数（加锁）
 
 CO_NAMESPACE_END

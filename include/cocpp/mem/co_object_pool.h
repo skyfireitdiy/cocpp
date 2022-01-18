@@ -14,9 +14,9 @@ template <typename ObjectType>
 class co_object_pool final : private co_noncopyable
 {
 private:
-    std::deque<void*> pool__;    // 内存池
-    std::mutex        mu__;      // 互斥锁
-    size_t            max_cap__; // 最大容量
+    std::deque<void*>    pool__;    // 内存池
+    std::recursive_mutex mu__;      // 互斥锁
+    size_t               max_cap__; // 最大容量
 public:
     co_object_pool(size_t max_cap); // 构造函数
     template <typename... ConstructParam>

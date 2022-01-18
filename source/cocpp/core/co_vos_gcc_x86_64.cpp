@@ -1,7 +1,6 @@
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
-#include "cocpp/core/co_interrupt_closer.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
 #include "cocpp/interface/co.h"
@@ -17,10 +16,8 @@
 
 CO_NAMESPACE_BEGIN
 
-static void                 switch_signal_handler(int signo);
-static constexpr int        CO_SWITCH_SIGNAL = 10;
-static thread_local int     interrupt_lock_count__;    // 当前中断锁的深度
-static std::recursive_mutex mu_interrupt_lock_count__; // 中断锁的互斥锁
+static void          switch_signal_handler(int signo);
+static constexpr int CO_SWITCH_SIGNAL = 10;
 
 struct sigcontext_64
 {
@@ -174,25 +171,15 @@ void switch_from_outside(sigcontext_64* context)
 {
     auto env = co::current_env();
 
-    lock_interrupt();
-    if (!can_interrupt())
-    {
-        unlock_interrupt();
-        return;
-    }
-
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
 
     if (!env->prepare_to_switch(curr, next))
     {
-        unlock_interrupt();
         return;
     }
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);
-    unlock_interrupt();
-    // 能调用到此处，说明当前一定是在安全点内
 }
 
 static void switch_signal_handler(int signo)
@@ -204,43 +191,6 @@ static void switch_signal_handler(int signo)
                    :
                    : "memory", "rax");
     switch_from_outside(context);
-}
-
-bool can_interrupt()
-{
-    return interrupt_lock_count__ == 0;
-}
-
-void lock_interrupt()
-{
-    mu_interrupt_lock_count__.lock();
-}
-
-void unlock_interrupt()
-{
-    mu_interrupt_lock_count__.unlock();
-}
-
-void increate_interrupt_lock_count()
-{
-    ++interrupt_lock_count__;
-}
-
-void decreate_interrupt_lock_count()
-{
-    --interrupt_lock_count__;
-}
-
-void increate_interrupt_lock_count_with_lock()
-{
-    std::scoped_lock lock(mu_interrupt_lock_count__);
-    ++interrupt_lock_count__;
-}
-
-void decreate_interrupt_lock_count_with_lock()
-{
-    std::scoped_lock lock(mu_interrupt_lock_count__);
-    --interrupt_lock_count__;
 }
 
 CO_NAMESPACE_END

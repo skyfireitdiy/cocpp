@@ -18,7 +18,7 @@ class co_event final : private co_noncopyable
 {
 private:
     std::map<int, std::function<void(Args... args)>> cb_list__;
-    mutable std::mutex                               mu_cb_list__;
+    mutable std::recursive_mutex                     mu_cb_list__;
     co_event_handler                                 current_handler__ { 0 };
 
 public:

@@ -2,7 +2,6 @@
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_define.h"
-#include "cocpp/core/co_interrupt_closer.h"
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
@@ -223,9 +222,7 @@ void co_env::switch_normal_ctx__()
     }
 
     unlock_schedule();
-    decreate_interrupt_lock_count_with_lock();
     switch_to(curr->regs(), next->regs());
-    increate_interrupt_lock_count_with_lock();
     lock_schedule();
     switched_to().pub(curr);
 }
@@ -233,7 +230,6 @@ void co_env::switch_normal_ctx__()
 void co_env::schedule_switch()
 {
     lock_schedule();
-    co_interrupt_closer interrupt_closer;
     remove_detached_ctx__();
     if (shared_stack_switch_info__.need_switch)
     {
@@ -303,25 +299,20 @@ void co_env::switch_shared_stack_ctx__()
     // 切换到to
 
     unlock_schedule();
-    decreate_interrupt_lock_count_with_lock();
     switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
-    increate_interrupt_lock_count_with_lock();
     lock_schedule();
     switched_to().pub(idle_ctx__);
 }
 
 void co_env::start_schedule_routine__()
 {
-    co_interrupt_closer interrupt_closer;
     schedule_thread_tid__ = gettid();
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
     {
-        decreate_interrupt_lock_count_with_lock();
         schedule_switch();
-        increate_interrupt_lock_count_with_lock();
 
         // 切换回来检测是否需要执行共享栈切换
         if (shared_stack_switch_info__.need_switch)
