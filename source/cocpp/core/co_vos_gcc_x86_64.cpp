@@ -148,7 +148,11 @@ co_tid gettid()
 
 void setup_switch_handler()
 {
-    ::signal(CO_SWITCH_SIGNAL, switch_signal_handler);
+    struct sigaction sa;
+    sa.sa_handler = switch_signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(CO_SWITCH_SIGNAL, &sa, nullptr);
 }
 
 void send_switch_from_outside_signal(co_env* env)
