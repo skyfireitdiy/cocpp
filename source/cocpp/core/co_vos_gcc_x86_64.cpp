@@ -227,6 +227,18 @@ void decreate_interrupt_lock_count()
     --interrupt_lock_count__;
 }
 
+void increate_interrupt_lock_count_with_lock()
+{
+    std::scoped_lock lock(mu_interrupt_lock_count__);
+    ++interrupt_lock_count__;
+}
+
+void decreate_interrupt_lock_count_with_lock()
+{
+    std::scoped_lock lock(mu_interrupt_lock_count__);
+    --interrupt_lock_count__;
+}
+
 CO_NAMESPACE_END
 
 #endif
