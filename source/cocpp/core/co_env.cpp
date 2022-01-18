@@ -223,7 +223,9 @@ void co_env::switch_normal_ctx__()
     }
 
     unlock_schedule();
+    decreate_interrupt_lock_count_with_lock();
     switch_to(curr->regs(), next->regs());
+    increate_interrupt_lock_count_with_lock();
     lock_schedule();
     switched_to().pub(curr);
 }
@@ -301,7 +303,9 @@ void co_env::switch_shared_stack_ctx__()
     // 切换到to
 
     unlock_schedule();
+    decreate_interrupt_lock_count_with_lock();
     switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
+    increate_interrupt_lock_count_with_lock();
     lock_schedule();
     switched_to().pub(idle_ctx__);
 }
@@ -315,7 +319,9 @@ void co_env::start_schedule_routine__()
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
     {
+        decreate_interrupt_lock_count_with_lock();
         schedule_switch();
+        increate_interrupt_lock_count_with_lock();
 
         // 切换回来检测是否需要执行共享栈切换
         if (shared_stack_switch_info__.need_switch)
@@ -444,7 +450,7 @@ bool co_env::can_schedule__() const
 
 bool co_env::is_blocked() const
 {
-    return state() == co_env_state::busy && !test_flag(CO_ENV_FLAG_SCHEDULED);
+    return (state() == co_env_state::busy || state() == co_env_state::blocked) && !test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
 bool co_env::need_sleep__()

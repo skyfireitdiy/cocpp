@@ -20,5 +20,7 @@ void     lock_interrupt();                                    // 加锁中断
 void     unlock_interrupt();                                  // 解锁中断
 void     increate_interrupt_lock_count();                     // 增加中断次数
 void     decreate_interrupt_lock_count();                     // 减少中断次数
+void     increate_interrupt_lock_count_with_lock();           // 增加中断次数（加锁）
+void     decreate_interrupt_lock_count_with_lock();           // 减少中断次数（加锁）
 
 CO_NAMESPACE_END
