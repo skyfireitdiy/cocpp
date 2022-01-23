@@ -559,6 +559,19 @@ void co_env::update_min_priority__(int priority)
     }
 }
 
+bool co_env::has_ctx() const
+{
+    std::scoped_lock lock(mu_normal_ctx__);
+    for (auto& lst : all_normal_ctx__)
+    {
+        if (!lst.empty())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void co_env::lock_schedule()
 {
     schedule_lock__.lock();

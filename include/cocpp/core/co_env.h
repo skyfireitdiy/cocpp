@@ -123,6 +123,7 @@ public:
     void                           set_state(const co_env_state& state);                           //  设置状态，覆盖父类函数
     void                           set_exclusive();                                                // 设置为独占模式
     bool                           exclusive() const;                                              // 是否为独占模式
+    bool                           has_ctx() const;                                                // 是否有ctx
 
     CoConstMemberMethodProxy(&state_manager__, state);       // 获取状态
     CoConstMemberMethodProxy(&flag_manager__, test_flag);    // 测试标志
