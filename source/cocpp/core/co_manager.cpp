@@ -181,8 +181,6 @@ void co_manager::remove_env__(co_env* env)
 {
     std::scoped_lock lock(env_set__.normal_lock, env_set__.expired_lock);
     env_set__.normal_set.erase(env);
-
-    std::scoped_lock lck(env_set__.expired_lock);
     env_set__.expired_set.insert(env);
     env_set__.cond_expired_env.notify_one();
 
