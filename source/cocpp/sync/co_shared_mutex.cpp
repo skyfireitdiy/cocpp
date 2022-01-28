@@ -3,6 +3,7 @@
 #include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/interface/co_this_co.h"
+#include "cocpp/utils/co_utils.h"
 
 #include <algorithm>
 #include <cassert>
@@ -19,6 +20,23 @@ void co_shared_mutex::lock()
     {
         lock_type__ = lock_type::unique;
         owners__.insert(ctx);
+        return;
+    }
+
+    using namespace std::chrono_literals;
+    if (co_timed_call(10ms, [this, ctx] {
+            if (owners__.empty())
+            {
+                lock_type__ = lock_type::unique;
+                owners__.insert(ctx);
+                return true;
+            }
+            spinlock__.unlock();
+            this_co::yield();
+            spinlock__.lock();
+            return false;
+        }))
+    {
         return;
     }
 
@@ -73,6 +91,23 @@ void co_shared_mutex::lock_shared()
     {
         lock_type__ = lock_type::shared;
         owners__.insert(ctx);
+        return;
+    }
+
+    using namespace std::chrono_literals;
+    if (co_timed_call(10ms, [this, ctx] {
+            if (lock_type__ == lock_type::shared || lock_type__ == lock_type::unlocked)
+            {
+                lock_type__ = lock_type::shared;
+                owners__.insert(ctx);
+                return true;
+            }
+            spinlock__.unlock();
+            this_co::yield();
+            spinlock__.lock();
+            return false;
+        }))
+    {
         return;
     }
 

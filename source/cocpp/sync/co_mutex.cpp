@@ -4,6 +4,8 @@
 #include "cocpp/interface/co.h"
 #include "cocpp/interface/co_this_co.h"
 #include "cocpp/utils/co_defer.h"
+#include "cocpp/utils/co_utils.h"
+#include <chrono>
 #include <mutex>
 
 CO_NAMESPACE_BEGIN
@@ -16,6 +18,36 @@ void co_mutex::lock()
     if (owner__ == nullptr)
     {
         owner__ = ctx;
+        return;
+    }
+
+    using namespace std::chrono_literals;
+    auto deadline = std::chrono::steady_clock::now() + 10ms;
+    while (std::chrono::steady_clock::now() < deadline)
+    {
+        spinlock__.unlock();
+        this_co::yield();
+        spinlock__.lock();
+        if (owner__ == nullptr)
+        {
+            owner__ = ctx;
+            return;
+        }
+    }
+
+    using namespace std::chrono_literals;
+    if (co_timed_call(10ms, [this, ctx] {
+            if (owner__ == nullptr)
+            {
+                owner__ = ctx;
+                return true;
+            }
+            spinlock__.unlock();
+            this_co::yield();
+            spinlock__.lock();
+            return false;
+        }))
+    {
         return;
     }
 
