@@ -23,7 +23,7 @@ void sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time); // �
 template <class Rep, class Period>
 void this_co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
 {
-    return sleep_until(std::chrono::high_resolution_clock::now() + sleep_duration);
+    return sleep_until(std::chrono::steady_clock::now() + sleep_duration);
 }
 
 template <class Clock, class Duration>
@@ -32,7 +32,7 @@ void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_ti
     do
     {
         co::current_env()->schedule_switch();
-    } while (std::chrono::high_resolution_clock::now() < abs_time);
+    } while (std::chrono::steady_clock::now() < abs_time);
 }
 
 CO_NAMESPACE_END

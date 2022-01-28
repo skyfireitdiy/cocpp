@@ -369,7 +369,7 @@ void co_manager::timer_routine__()
 }
 
 void co_manager::set_timer_tick_duration(
-    const std::chrono::high_resolution_clock::duration& duration)
+    const std::chrono::steady_clock::duration& duration)
 {
     std::scoped_lock lock(mu_timer_duration__);
     if (duration < std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
@@ -383,7 +383,7 @@ void co_manager::set_timer_tick_duration(
     timing_duration_set().pub();
 }
 
-const std::chrono::high_resolution_clock::duration& co_manager::timing_duration() const
+const std::chrono::steady_clock::duration& co_manager::timing_duration() const
 {
     std::scoped_lock lock(mu_timer_duration__);
     return timer_duration__;

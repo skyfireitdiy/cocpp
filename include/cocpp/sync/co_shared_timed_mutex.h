@@ -23,7 +23,7 @@ public:
 template <class Rep, class Period>
 bool co_shared_timed_mutex::try_lock_shared_for(const std::chrono::duration<Rep, Period>& timeout_duration)
 {
-    return try_lock_shared_until(std::chrono::high_resolution_clock::now() + timeout_duration);
+    return try_lock_shared_until(std::chrono::steady_clock::now() + timeout_duration);
 }
 
 template <class Clock, class Duration>
@@ -36,7 +36,7 @@ bool co_shared_timed_mutex::try_lock_shared_until(const std::chrono::time_point<
             return true;
         }
         co::current_env()->schedule_switch();
-    } while (std::chrono::high_resolution_clock::now() < timeout_time);
+    } while (std::chrono::steady_clock::now() < timeout_time);
     return false;
 }
 
