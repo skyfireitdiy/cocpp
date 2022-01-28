@@ -9,7 +9,7 @@ void co_spinlock::lock()
 {
     while (locked__.test_and_set(std::memory_order_acquire))
     {
-        std::this_thread::yield();
+        this_co::yield();
     }
 }
 
