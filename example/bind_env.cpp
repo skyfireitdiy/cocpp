@@ -8,9 +8,11 @@
 #include <thread>
 #include <unistd.h>
 
+using namespace std::chrono_literals;
+
 void print_thread_id()
 {
-    cocpp::this_co::sleep_for(std::chrono::seconds(1));
+    cocpp::this_co::sleep_for(1s);
     printf("thread id: %d\n", ::gettid());
 }
 

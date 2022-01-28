@@ -20,13 +20,15 @@ int main(int argc, char** argv)
 using namespace cocpp;
 using namespace std;
 
+using namespace std::chrono_literals;
+
 int main()
 {
     auto env = co::create_env(true);
     auto f   = [](int n) {
         while (true)
         {
-            this_thread::sleep_for(chrono::seconds(1));
+            this_thread::sleep_for(1s);
             printf("this thread: %d, this is %s(0x%llx), I have %d\n", ::gettid(), this_co::name().c_str(), this_co::id(), n);
         }
     };

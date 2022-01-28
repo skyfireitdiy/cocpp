@@ -28,7 +28,7 @@ class co_env_factory;
 class co_ctx_factory;
 class co_stack_factory;
 class co_scheduler_factory;
-
+using namespace std::chrono_literals;
 class co_manager final : public co_singleton_static<co_manager>
 {
     RegCoEvent(best_env_got, co_env*);
@@ -67,7 +67,7 @@ private:
     std::recursive_mutex                clean_up_lock__;                                     // 清理协程调度环境锁
     std::list<std::future<void>>        background_task__;                                   // 后台任务队列
     mutable std::recursive_mutex        mu_timer_duration__;                                 // 定时器时间锁
-    std::chrono::steady_clock::duration timer_duration__ { std::chrono::milliseconds(10) };  // 定时器时间
+    std::chrono::steady_clock::duration timer_duration__ { 10ms };                           // 定时器时间
     size_t                              default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE; // 默认共享堆栈大小
     std::function<bool()>               need_free_mem_cb__ { [] { return false; } };         // 需要释放内存回调
     std::recursive_mutex                need_free_mem_cb_lock__;                             // 需要释放内存回调锁
