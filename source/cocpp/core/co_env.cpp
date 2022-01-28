@@ -2,7 +2,6 @@
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_define.h"
-#include "cocpp/core/co_interrupt_closer.h"
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
@@ -231,7 +230,6 @@ void co_env::switch_normal_ctx__()
 void co_env::schedule_switch()
 {
     lock_schedule();
-    co_interrupt_closer interrupt_closer;
     remove_detached_ctx__();
     if (shared_stack_switch_info__.need_switch)
     {
@@ -308,7 +306,6 @@ void co_env::switch_shared_stack_ctx__()
 
 void co_env::start_schedule_routine__()
 {
-    co_interrupt_closer interrupt_closer;
     schedule_thread_tid__ = gettid();
     schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
@@ -444,7 +441,7 @@ bool co_env::can_schedule__() const
 
 bool co_env::is_blocked() const
 {
-    return state() == co_env_state::busy && !test_flag(CO_ENV_FLAG_SCHEDULED);
+    return (state() == co_env_state::busy || state() == co_env_state::blocked) && !test_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
 bool co_env::need_sleep__()
@@ -560,6 +557,19 @@ void co_env::update_min_priority__(int priority)
     {
         min_priority__ = priority;
     }
+}
+
+bool co_env::has_ctx() const
+{
+    std::scoped_lock lock(mu_normal_ctx__);
+    for (auto& lst : all_normal_ctx__)
+    {
+        if (!lst.empty())
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void co_env::lock_schedule()

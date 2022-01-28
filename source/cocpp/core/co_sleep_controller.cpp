@@ -32,7 +32,7 @@ co_sleep_controller::co_sleep_controller(std::function<bool()> checker)
 {
 }
 
-std::mutex& co_sleep_controller::sleep_lock()
+std::recursive_mutex& co_sleep_controller::sleep_lock()
 {
     return mu__;
 }

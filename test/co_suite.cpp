@@ -2,6 +2,7 @@
 #include <chrono>
 #include <gtest/gtest.h>
 #include <unistd.h>
+#include <vector>
 #define private public
 #include "cocpp/comm/co_chan.h"
 #include "cocpp/core/co_ctx_config.h"
@@ -716,6 +717,29 @@ TEST(co, zone_edge)
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(2), 1ULL);
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(3), 2ULL);
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(4), 2ULL);
+}
+
+TEST(stl, vector)
+{
+    std::vector<std::string> v1;
+    std::vector<std::string> v2;
+    co                       c1([&] {
+        for (auto i = 0; i < 1000000; ++i)
+        {
+            v1.push_back(std::to_string(i));
+            this_co::yield();
+        }
+    });
+    co                       c2([&] {
+        for (auto i = 0; i < 1000000; ++i)
+        {
+            v2.push_back(std::to_string(i));
+            this_co::yield();
+        }
+    });
+    c1.wait<void>();
+    c2.wait<void>();
+    EXPECT_EQ(v1, v2);
 }
 
 TEST(co, co_any)

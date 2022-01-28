@@ -23,9 +23,10 @@ void stop()
 
 int main()
 {
-    cocpp::co co_deadloop(&deadloop);
+    auto      env = cocpp::co::create_env(true);
+    cocpp::co co_deadloop({ cocpp::with_bind_env(env) }, &deadloop);
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    cocpp::co co_stop(&stop);
+    cocpp::co co_stop({ cocpp::with_bind_env(env) }, &stop);
 
     co_deadloop.wait<void>();
     co_stop.wait<void>();

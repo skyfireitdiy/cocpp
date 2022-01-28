@@ -7,35 +7,20 @@ CO_NAMESPACE_BEGIN
 
 void co_spinlock::lock()
 {
-    std::atomic_thread_fence(std::memory_order_acquire);
-    bool lk = false;
-    while (!locked__.compare_exchange_weak(lk, true))
+    while (locked__.test_and_set(std::memory_order_acquire))
     {
-        this_co::yield();
-        lk = false;
+        std::this_thread::yield();
     }
-    std::atomic_thread_fence(std::memory_order_release);
 }
 
 bool co_spinlock::try_lock()
 {
-    std::atomic_thread_fence(std::memory_order_acquire);
-    bool lk  = false;
-    auto ret = locked__.compare_exchange_weak(lk, true);
-    std::atomic_thread_fence(std::memory_order_release);
-    return ret;
+    return !locked__.test_and_set(std::memory_order_acquire);
 }
 
 void co_spinlock::unlock()
 {
-    std::atomic_thread_fence(std::memory_order_acquire);
-    bool lk = true;
-    while (!locked__.compare_exchange_weak(lk, false))
-    {
-        this_co::yield();
-        lk = true;
-    }
-    std::atomic_thread_fence(std::memory_order_release);
+    locked__.clear(std::memory_order_release);
 }
 
 CO_NAMESPACE_END

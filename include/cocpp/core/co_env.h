@@ -64,12 +64,12 @@ private:                                                                        
     co_ctx* const                                                                   idle_ctx__ { nullptr };               // 空闲协程
     co_tid                                                                          schedule_thread_tid__ {};             // 调度线程tid
     std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY }; // 所有普通协程
-    mutable std::mutex                                                              mu_normal_ctx__;                      // 普通协程锁
+    mutable std::recursive_mutex                                                    mu_normal_ctx__;                      // 普通协程锁
     co_ctx*                                                                         curr_ctx__ { nullptr };               // 当前协程
-    mutable std::mutex                                                              mu_curr_ctx__;                        // 当前协程锁
+    mutable std::recursive_mutex                                                    mu_curr_ctx__;                        // 当前协程锁
     int                                                                             min_priority__ = 0;                   // 最小优先级
-    mutable std::mutex                                                              mu_min_priority__;                    // 最小优先级锁
-    std::mutex                                                                      schedule_lock__;                      // 调度锁
+    mutable std::recursive_mutex                                                    mu_min_priority__;                    // 最小优先级锁
+    std::recursive_mutex                                                            schedule_lock__;                      // 调度锁
 
     co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread); // 构造函数
     void               start_schedule_routine__();                            // 启动调度线程
@@ -123,6 +123,7 @@ public:
     void                           set_state(const co_env_state& state);                           //  设置状态，覆盖父类函数
     void                           set_exclusive();                                                // 设置为独占模式
     bool                           exclusive() const;                                              // 是否为独占模式
+    bool                           has_ctx() const;                                                // 是否有ctx
 
     CoConstMemberMethodProxy(&state_manager__, state);       // 获取状态
     CoConstMemberMethodProxy(&flag_manager__, test_flag);    // 测试标志

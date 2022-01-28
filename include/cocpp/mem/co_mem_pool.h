@@ -16,7 +16,7 @@ private:
     static unsigned long long         align_2_zone_edge__(unsigned long long size); // 对齐到zone边界
     static unsigned long long         align_size__(unsigned long long size);        // 对齐到8字节
     size_t                            get_zone_index__(size_t size) const;          // 获取zone的索引
-    std::mutex                        mu__;                                         // 互斥锁
+    std::recursive_mutex              mu__;                                         // 互斥锁
     const size_t                      min_zone__;                                   // 最小zone
     const size_t                      zone_count__;                                 // zone数量
     const size_t                      max_cap__;                                    // 最大容量
