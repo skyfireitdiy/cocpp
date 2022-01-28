@@ -82,10 +82,10 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
 
     std::optional<co_return_value> ret;
 
-    auto now = std::chrono::high_resolution_clock::now();
+    auto now = std::chrono::steady_clock::now();
     while (ctx->state() != co_state::finished)
     {
-        if (std::chrono::high_resolution_clock::now() - now > timeout)
+        if (std::chrono::steady_clock::now() - now > timeout)
         {
             wait_ctx_timeout().pub(ctx);
             return ret;

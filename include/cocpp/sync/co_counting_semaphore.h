@@ -86,7 +86,7 @@ template <std::ptrdiff_t LeastMaxValue>
 template <class Rep, class Period>
 bool co_counting_semaphore<LeastMaxValue>::try_acquire_for(const std::chrono::duration<Rep, Period>& rel_time)
 {
-    return try_acquire_until(std::chrono::high_resolution_clock::now() + rel_time);
+    return try_acquire_until(std::chrono::steady_clock::now() + rel_time);
 }
 
 template <std::ptrdiff_t LeastMaxValue>
@@ -100,7 +100,7 @@ bool co_counting_semaphore<LeastMaxValue>::try_acquire_until(const std::chrono::
             return true;
         }
         co::current_env()->schedule_switch();
-    } while (std::chrono::high_resolution_clock::now() < abs_time);
+    } while (std::chrono::steady_clock::now() < abs_time);
     return false;
 }
 

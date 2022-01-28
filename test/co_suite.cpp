@@ -470,7 +470,7 @@ TEST(co, co_counting_semaphore_normal)
         sem.acquire();
         sem.acquire();
         EXPECT_FALSE(sem.try_acquire());
-        EXPECT_FALSE(sem.try_acquire_until(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(50)));
+        EXPECT_FALSE(sem.try_acquire_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(50)));
     });
     sem.release(10);
     c1.wait<void>();
@@ -745,5 +745,5 @@ TEST(stl, vector)
 TEST(co, co_any)
 {
     co_any any(5);
-    // EXPECT_EQ(any.get<int>(), 5);
+    EXPECT_EQ(any.get<int>(), 5);
 }
