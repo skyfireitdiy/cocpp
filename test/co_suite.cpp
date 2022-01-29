@@ -477,7 +477,7 @@ TEST(co, co_counting_semaphore_normal)
     c1.wait<void>();
 }
 
-TEST(co, co_chan_buffered)
+TEST(chan, buffered_order)
 {
     co_chan<int, 5> ch;
     ch.push(1);
@@ -485,21 +485,28 @@ TEST(co, co_chan_buffered)
     ch.push(3);
     ch.push(4);
     ch.push(5);
+    ch.close();
+    EXPECT_EQ(ch.pop(), 1);
+    EXPECT_EQ(ch.pop(), 2);
+    EXPECT_EQ(ch.pop(), 3);
+    EXPECT_EQ(ch.pop(), 4);
+    EXPECT_EQ(ch.pop(), 5);
+    EXPECT_FALSE(ch.pop());
 }
 
-TEST(co, co_chan_buffered2)
+TEST(chan, buffered)
 {
-    co_chan<int, 2> ch;
+    co_chan<int, 10> ch;
 
     co  c1([&] {
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 10000; ++i)
         {
             ch.push(i);
         }
         ch.close();
     });
     int t;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 10000; ++i)
     {
         t = ch.pop().value();
         EXPECT_EQ(t, i);
@@ -508,28 +515,48 @@ TEST(co, co_chan_buffered2)
     c1.wait<void>();
 }
 
-TEST(co, co_chan_no_buffered)
+TEST(chan, no_limited)
+{
+    co_chan<int, -1> ch;
+
+    co  c1([&] {
+        for (int i = 0; i < 10000; ++i)
+        {
+            ch.push(i);
+        }
+        ch.close();
+    });
+    int t;
+    for (int i = 0; i < 10000; ++i)
+    {
+        t = ch.pop().value();
+        EXPECT_EQ(t, i);
+    }
+    EXPECT_FALSE(ch.pop());
+    c1.wait<void>();
+}
+
+TEST(chan, no_buf)
 {
     co_chan<int, 0> ch;
-
-    co  c1([&] {
-        for (int i = 0; i < 10; ++i)
+    co              c1([&] {
+        for (int i = 0; i < 10000; ++i)
         {
-            ch.push(i);
+            ch << i;
         }
         ch.close();
     });
-    int t;
-    for (int i = 0; i < 10; ++i)
+
+    for (int i = 0; i < 10000; ++i)
     {
-        t = ch.pop().value();
+        int t = ch.pop().value();
         EXPECT_EQ(t, i);
     }
     EXPECT_FALSE(ch.pop());
     c1.wait<void>();
 }
 
-TEST(co, co_chan_no_buffered_iterator)
+TEST(chan, no_buffered_iterator)
 {
     co_chan<int, 0> ch;
 
@@ -552,7 +579,7 @@ TEST(co, co_chan_no_buffered_iterator)
     EXPECT_EQ(push, pop);
 }
 
-TEST(co, co_chan_buffered_empty_iterator)
+TEST(chan, chan_buffered_empty_iterator)
 {
     co_chan<int, 10> ch;
     std::vector<int> pop;
@@ -567,7 +594,7 @@ TEST(co, co_chan_buffered_empty_iterator)
     EXPECT_EQ(pop, push);
 }
 
-TEST(co, co_chan_no_buffered_operator_less)
+TEST(chan, no_buffered_operator_less)
 {
     co_chan<int, 0> ch;
 
@@ -599,7 +626,7 @@ TEST(co, co_chan_no_buffered_operator_less)
     EXPECT_EQ(push, pop);
 }
 
-TEST(co, co_chan_no_buffered_operator_shift)
+TEST(chan, no_buffered_operator_shift)
 {
     co_chan<int, 0> ch;
 
@@ -725,14 +752,14 @@ TEST(stl, vector)
     std::vector<std::string> v1;
     std::vector<std::string> v2;
     co                       c1([&] {
-        for (auto i = 0; i < 1000000; ++i)
+        for (auto i = 0; i < 10000; ++i)
         {
             v1.push_back(std::to_string(i));
             this_co::yield();
         }
     });
     co                       c2([&] {
-        for (auto i = 0; i < 1000000; ++i)
+        for (auto i = 0; i < 10000; ++i)
         {
             v2.push_back(std::to_string(i));
             this_co::yield();
