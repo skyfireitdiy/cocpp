@@ -61,6 +61,8 @@ private:                                                                        
     std::future<void>                                                               worker__;                             // 工作线程
     co_sleep_controller                                                             sleep_controller__;                   // 睡眠控制器
     co_stack*                                                                       shared_stack__ { nullptr };           // 共享栈
+    size_t                                                                          shared_stack_size__ { 0 };            // 共享栈大小
+    std::once_flag                                                                  shared_stack_once_flag__;             // 共享栈初始化标志
     co_ctx* const                                                                   idle_ctx__ { nullptr };               // 空闲协程
     co_tid                                                                          schedule_thread_tid__ {};             // 调度线程tid
     std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY }; // 所有普通协程
@@ -71,23 +73,24 @@ private:                                                                        
     mutable std::recursive_mutex                                                    mu_min_priority__;                    // 最小优先级锁
     std::recursive_mutex                                                            schedule_lock__;                      // 调度锁
 
-    co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread); // 构造函数
-    void               start_schedule_routine__();                            // 启动调度线程
-    void               remove_detached_ctx__();                               // 删除已经detach的ctx
-    void               remove_all_ctx__();                                    // 删除所有ctx
-    co_ctx*            next_ctx__();                                          // 下一个ctx
-    void               save_shared_stack__(co_ctx* ctx);                      // 保存共享栈
-    void               restore_shared_stack__(co_ctx* ctx);                   // 恢复共享栈
-    void               switch_shared_stack_ctx__();                           // 切换共享栈上的ctx
-    void               switch_normal_ctx__();                                 // 切换普通ctx
-    bool               need_sleep__();                                        // 是否需要睡眠
-    co_ctx*            choose_ctx_from_normal_list__();                       // 从普通协程列表中选择ctx
-    std::list<co_ctx*> all_ctx__();                                           // 所有ctx
-    std::list<co_ctx*> all_scheduleable_ctx__() const;                        // 所有可调度ctx
-    bool               can_schedule__() const;                                // 是否可以调度
-    void               update_min_priority__(int priority);                   // 更新最小优先级
-    static size_t      get_valid_stack_size__(co_ctx* ctx);                   // 获取有效栈大小
-    static void        update_ctx_state__(co_ctx* curr, co_ctx* next);        // 更新ctx状态
+    co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_thread); // 构造函数
+    void               start_schedule_routine__();                              // 启动调度线程
+    void               remove_detached_ctx__();                                 // 删除已经detach的ctx
+    void               remove_all_ctx__();                                      // 删除所有ctx
+    co_ctx*            next_ctx__();                                            // 下一个ctx
+    void               save_shared_stack__(co_ctx* ctx);                        // 保存共享栈
+    void               restore_shared_stack__(co_ctx* ctx);                     // 恢复共享栈
+    void               switch_shared_stack_ctx__();                             // 切换共享栈上的ctx
+    void               switch_normal_ctx__();                                   // 切换普通ctx
+    bool               need_sleep__();                                          // 是否需要睡眠
+    co_ctx*            choose_ctx_from_normal_list__();                         // 从普通协程列表中选择ctx
+    std::list<co_ctx*> all_ctx__();                                             // 所有ctx
+    std::list<co_ctx*> all_scheduleable_ctx__() const;                          // 所有可调度ctx
+    bool               can_schedule__() const;                                  // 是否可以调度
+    void               update_min_priority__(int priority);                     // 更新最小优先级
+    void               create_shared_stack__();                                 // 创建共享栈
+    static size_t      get_valid_stack_size__(co_ctx* ctx);                     // 获取有效栈大小
+    static void        update_ctx_state__(co_ctx* curr, co_ctx* next);          // 更新ctx状态
     struct
     {                                  //
         co_ctx* from { nullptr };      // 从哪个ctx切换
