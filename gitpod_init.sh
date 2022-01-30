@@ -28,4 +28,6 @@ fish -c "abbr -a -U -- ga 'git add -u'"
 fish -c "abbr -a -U -- gc 'git commit'"
 fish -c "abbr -a -U -- gl 'git lg'"
 fish -c "abbr -a -U -- gco 'git checkout'"
+fish -c "abbr -a -U -- gb 'git branch'"
+
 
