@@ -56,10 +56,9 @@ void co_env::add_ctx(co_ctx* ctx)
     if (ctx->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
         std::call_once(shared_stack_once_flag__, [this] { create_shared_stack__(); });
-        ctx->set_stack(shared_stack__);
     }
 
-    init_ctx(ctx); // 初始化ctx
+    init_ctx(shared_stack__, ctx); // 初始化ctx
     ctx_initted().pub(ctx);
 
     move_ctx_to_here(ctx);

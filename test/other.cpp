@@ -30,19 +30,19 @@ using namespace std::chrono_literals;
 
 TEST(stl, vector)
 {
-    std::vector<std::string> v1;
-    std::vector<std::string> v2;
+    std::vector<int> v1;
+    std::vector<int> v2;
     co                       c1([&] {
         for (auto i = 0; i < 10000; ++i)
         {
-            v1.push_back(std::to_string(i));
+            v1.push_back(i);
             this_co::yield();
         }
     });
     co                       c2([&] {
         for (auto i = 0; i < 10000; ++i)
         {
-            v2.push_back(std::to_string(i));
+            v2.push_back(i);
             this_co::yield();
         }
     });
