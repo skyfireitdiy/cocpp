@@ -19,9 +19,9 @@ CO_NAMESPACE_BEGIN
 
 thread_local co_env* current_env__ = nullptr;
 
-co_env::co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
+co_env::co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_thread)
     : sleep_controller__([this] { return need_sleep__(); })
-    , shared_stack__(shared_stack)
+    , shared_stack_size__(shared_stack_size)
     , idle_ctx__(idle_ctx)
 {
     idle_ctx__->set_env(this);
@@ -39,6 +39,11 @@ co_env::co_env(co_stack* shared_stack, co_ctx* idle_ctx, bool create_new_thread)
     }
 }
 
+void co_env::create_shared_stack__()
+{
+    shared_stack__ = co_stack_factory::instance()->create_stack(shared_stack_size__);
+}
+
 void co_env::add_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
@@ -46,7 +51,15 @@ void co_env::add_ctx(co_ctx* ctx)
     {
         throw co_error("env state error");
     }
-    init_ctx(shared_stack__, ctx); // 初始化ctx
+
+    auto is_shared_stack = ctx->test_flag(CO_CTX_FLAG_SHARED_STACK);
+
+    if (is_shared_stack)
+    {
+        std::call_once(shared_stack_once_flag__, [this] { create_shared_stack__(); });
+    }
+
+    init_ctx(is_shared_stack ? shared_stack__ : ctx->stack(), ctx); // 初始化ctx
     ctx_initted().pub(ctx);
 
     move_ctx_to_here(ctx);

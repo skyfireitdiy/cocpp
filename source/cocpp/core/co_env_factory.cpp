@@ -9,9 +9,8 @@ CO_NAMESPACE_BEGIN
 
 co_env* co_env_factory::create_env(size_t stack_size)
 {
-    auto idle_ctx     = create_idle_ctx__();
-    auto shared_stack = stack_factory__->create_stack(stack_size);
-    auto ret          = env_pool__.create_obj(shared_stack, idle_ctx, true);
+    auto idle_ctx = create_idle_ctx__();
+    auto ret      = env_pool__.create_obj(stack_size, idle_ctx, true);
     assert(ret != nullptr);
     idle_ctx->set_state(co_state::running);
     return ret;
@@ -30,14 +29,16 @@ void co_env_factory::destroy_env(co_env* env)
     auto shared_stack = env->shared_stack__;
     env_pool__.destroy_obj(env);
     co_ctx_factory::instance()->destroy_ctx(idle_ctx);
-    stack_factory__->destroy_stack(shared_stack);
+    if (shared_stack != nullptr)
+    {
+        stack_factory__->destroy_stack(shared_stack);
+    }
 }
 
 co_env* co_env_factory::create_env_from_this_thread(size_t stack_size)
 {
-    auto idle_ctx     = create_idle_ctx__();
-    auto shared_stack = stack_factory__->create_stack(stack_size);
-    auto ret          = env_pool__.create_obj(shared_stack, idle_ctx, false);
+    auto idle_ctx = create_idle_ctx__();
+    auto ret      = env_pool__.create_obj(stack_size, idle_ctx, false);
     idle_ctx->set_state(co_state::running);
     return ret;
 }

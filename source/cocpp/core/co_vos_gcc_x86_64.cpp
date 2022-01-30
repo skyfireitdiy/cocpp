@@ -122,16 +122,9 @@ void switch_to(co_byte** curr, co_byte** next)
                        : "memory");
 }
 
-void init_ctx(co_stack* shared_stack, co_ctx* ctx)
+void init_ctx(co_stack* stack, co_ctx* ctx)
 {
-    auto      context = get_sigcontext_64(ctx);
-    co_stack* stack   = ctx->stack();
-    if (ctx->test_flag(CO_CTX_FLAG_SHARED_STACK))
-    {
-        stack = shared_stack;
-    }
-    auto config = ctx->config();
-
+    auto context = get_sigcontext_64(ctx);
     CO_SETREG(context, sp, stack->stack_top());
     CO_SETREG(context, bp, stack->stack_top());
     CO_SETREG(context, ip, &co_ctx::real_entry);
