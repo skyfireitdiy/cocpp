@@ -25,7 +25,6 @@ co_env::co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_threa
     , idle_ctx__(idle_ctx)
 {
     idle_ctx__->set_env(this);
-    create_shared_stack__();
     if (create_new_thread)
     {
         // 此处设置状态是防止 add_ctx 前调度线程还未准备好，状态断言失败
@@ -53,12 +52,14 @@ void co_env::add_ctx(co_ctx* ctx)
         throw co_error("env state error");
     }
 
-    if (ctx->test_flag(CO_CTX_FLAG_SHARED_STACK))
+    auto is_shared_stack = ctx->test_flag(CO_CTX_FLAG_SHARED_STACK);
+
+    if (is_shared_stack)
     {
         std::call_once(shared_stack_once_flag__, [this] { create_shared_stack__(); });
     }
 
-    init_ctx(shared_stack__, ctx); // 初始化ctx
+    init_ctx(is_shared_stack ? shared_stack__ : ctx->stack(), ctx); // 初始化ctx
     ctx_initted().pub(ctx);
 
     move_ctx_to_here(ctx);
