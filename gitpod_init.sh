@@ -2,7 +2,7 @@
 
 # install software
 sudo apt update -y
-sudo apt install -y lcov clangd clang llvm
+sudo apt install -y lcov clangd clang llvm bear
 bash <(curl -fsSL https://xmake.io/shget.text)
 
 # set git
