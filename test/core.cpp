@@ -28,7 +28,7 @@
 using namespace cocpp;
 using namespace std::chrono_literals;
 
-TEST(corere, name)
+TEST(core, name)
 {
     co c1({ with_name("test1") }, []() {
         EXPECT_EQ(this_co::name(), "test1");
@@ -36,7 +36,7 @@ TEST(corere, name)
     c1.wait<void>();
 }
 
-TEST(corere, id)
+TEST(core, id)
 {
     auto f = []() {
         for (int i = 0; i < 10; ++i)
@@ -51,7 +51,7 @@ TEST(corere, id)
     c2.wait<void>();
 }
 
-TEST(corere, thread_convert)
+TEST(core, thread_convert)
 {
     std::thread th([]() {
         printf("new thread: %u\n", gettid());
@@ -66,7 +66,7 @@ TEST(corere, thread_convert)
     th.detach();
 }
 
-TEST(corere, detach)
+TEST(core, detach)
 {
     co c1([]() {
         for (int i = 0; i < 100; ++i)
@@ -78,7 +78,7 @@ TEST(corere, detach)
     c1.detach();
 }
 
-TEST(corere, ref)
+TEST(core, ref)
 {
     int t = 20;
     co  c1([](int& n) { n += 10; }, std::ref(t));
@@ -86,13 +86,13 @@ TEST(corere, ref)
     EXPECT_EQ(t, 30);
 }
 
-TEST(corere, return_value)
+TEST(core, return_value)
 {
     co c1([](int n) { return n + 10; }, 25);
     EXPECT_EQ(c1.wait<int>(), 35);
 }
 
-TEST(corere, wait_timeout)
+TEST(core, wait_timeout)
 {
     co   c1([]() {
         this_co::sleep_for(1s);
@@ -103,7 +103,7 @@ TEST(corere, wait_timeout)
     EXPECT_TRUE(ret);
 }
 
-TEST(corere, priority)
+TEST(core, priority)
 {
     std::vector<int> arr;
 
@@ -137,7 +137,7 @@ TEST(corere, priority)
     EXPECT_EQ(arr, expect);
 }
 
-TEST(corere, this_co_id)
+TEST(core, this_co_id)
 {
     co_id id;
     co    c1([&id]() {
@@ -147,7 +147,7 @@ TEST(corere, this_co_id)
     EXPECT_EQ(c1.id(), id);
 }
 
-TEST(corere, get_id_name_after_detach)
+TEST(core, get_id_name_after_detach)
 {
     co c1([]() {
     });
@@ -157,7 +157,7 @@ TEST(corere, get_id_name_after_detach)
     EXPECT_EQ(c1.name(), "");
 }
 
-TEST(corere, other_co_name)
+TEST(core, other_co_name)
 {
     co c1({ with_name("zhangsan") }, []() {});
     c1.wait<void>();
