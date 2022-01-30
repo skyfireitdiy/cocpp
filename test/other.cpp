@@ -32,14 +32,14 @@ TEST(stl, vector)
 {
     std::vector<int> v1;
     std::vector<int> v2;
-    co                       c1([&] {
+    co               c1([&] {
         for (auto i = 0; i < 10000; ++i)
         {
             v1.push_back(i);
             this_co::yield();
         }
     });
-    co                       c2([&] {
+    co               c2([&] {
         for (auto i = 0; i < 10000; ++i)
         {
             v2.push_back(i);
