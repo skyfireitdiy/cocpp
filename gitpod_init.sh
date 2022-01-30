@@ -3,6 +3,7 @@
 # install software
 sudo apt update -y
 sudo apt install -y lcov clangd clang llvm
+bash <(curl -fsSL https://xmake.io/shget.text)
 
 # set git
 git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
