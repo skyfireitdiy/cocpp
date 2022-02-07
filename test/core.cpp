@@ -33,7 +33,7 @@ TEST(core, name)
     co c1({ with_name("test1") }, []() {
         EXPECT_EQ(this_co::name(), "test1");
     });
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(core, id)
@@ -47,8 +47,8 @@ TEST(core, id)
     };
     co c1({ with_name("test1") }, f);
     co c2({ with_name("test1") }, f);
-    c1.wait<void>();
-    c2.wait<void>();
+    c1.join();
+    c2.join();
 }
 
 TEST(core, thread_convert)
@@ -62,7 +62,7 @@ TEST(core, thread_convert)
         printf("new co %llu in thread %u\n", this_co::id(), gettid());
     });
 
-    c1.wait<void>();
+    c1.join();
     th.detach();
 }
 
@@ -82,7 +82,7 @@ TEST(core, ref)
 {
     int t = 20;
     co  c1([](int& n) { n += 10; }, std::ref(t));
-    c1.wait<void>();
+    c1.join();
     EXPECT_EQ(t, 30);
 }
 
@@ -130,8 +130,8 @@ TEST(core, priority)
             this_co::yield();
         },
         std::ref(arr));
-    c1.wait<void>();
-    c2.wait<void>();
+    c1.join();
+    c2.join();
 
     std::vector<int> expect { 100, 200, 300, 400, 500, 600 };
     EXPECT_EQ(arr, expect);
@@ -143,15 +143,15 @@ TEST(core, this_co_id)
     co    c1([&id]() {
         id = this_co::id();
     });
-    c1.wait<void>();
-    EXPECT_EQ(c1.id(), id);
+    c1.join();
+    EXPECT_EQ(c1.id(), co_id());
 }
 
 TEST(core, get_id_name_after_detach)
 {
     co c1([]() {
     });
-    c1.wait<void>();
+    c1.join();
     c1.detach();
     EXPECT_EQ(c1.id(), 0ULL);
     EXPECT_EQ(c1.name(), "");
@@ -160,8 +160,8 @@ TEST(core, get_id_name_after_detach)
 TEST(core, other_co_name)
 {
     co c1({ with_name("zhangsan") }, []() {});
-    c1.wait<void>();
-    EXPECT_EQ(c1.name(), "zhangsan");
+    c1.join();
+    EXPECT_EQ(c1.name(), "");
 }
 
 TEST(core, co_wait_priority)
@@ -173,10 +173,10 @@ TEST(core, co_wait_priority)
     });
 
     co c2({ with_priority(0), with_bind_env(env) }, [&] {
-        c1.wait<void>();
+        c1.join();
     });
 
-    c2.wait<void>();
+    c2.join();
 }
 
 TEST(core, co_shared_stack)
@@ -207,7 +207,7 @@ TEST(core, co_local)
         EXPECT_EQ(value, "hello");
     });
 
-    c1.wait<void>();
+    c1.join();
     auto& value = CoLocal(name, std::string);
     EXPECT_EQ(value, "");
 }

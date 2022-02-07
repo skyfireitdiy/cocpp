@@ -29,6 +29,6 @@ int main()
     std::this_thread::sleep_for(1s);
     cocpp::co co_stop({ cocpp::with_bind_env(env) }, &stop);
 
-    co_deadloop.wait<void>();
-    co_stop.wait<void>();
+    co_deadloop.join();
+    co_stop.join();
 }

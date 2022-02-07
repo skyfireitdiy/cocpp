@@ -46,8 +46,8 @@ TEST(stl, vector)
             this_co::yield();
         }
     });
-    c1.wait<void>();
-    c2.wait<void>();
+    c1.join();
+    c2.join();
     EXPECT_EQ(v1, v2);
 }
 

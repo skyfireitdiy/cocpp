@@ -39,7 +39,7 @@ TEST(sync, mutex_try_lock)
 
     this_co::sleep_for(500ms);
     EXPECT_FALSE(mu.try_lock());
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, mutex_lock)
@@ -81,9 +81,9 @@ TEST(sync, mutex_lock)
         this_co::yield();
     }
 
-    c1.wait<void>();
-    c2.wait<void>();
-    c3.wait<void>();
+    c1.join();
+    c2.join();
+    c3.join();
 
     EXPECT_EQ(ret, 0);
 }
@@ -128,7 +128,7 @@ TEST(sync, timed_mutex_lock_for)
     EXPECT_FALSE(mu.try_lock_for(100ms));
     EXPECT_TRUE(mu.try_lock_for(600ms));
     mu.unlock();
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, shared_mutex_shared_lock)
@@ -143,7 +143,7 @@ TEST(sync, shared_mutex_shared_lock)
     this_co::sleep_for(500ms);
     EXPECT_TRUE(mu.try_lock_shared());
     mu.unlock_shared();
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, shared_mutex_try_lock_shared_locked_mutex)
@@ -157,7 +157,7 @@ TEST(sync, shared_mutex_try_lock_shared_locked_mutex)
     });
     this_co::sleep_for(500ms);
     EXPECT_FALSE(mu.try_lock_shared());
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, shared_mutex_lock_try_lock_shared_locked_mutex)
@@ -171,7 +171,7 @@ TEST(sync, shared_mutex_lock_try_lock_shared_locked_mutex)
     });
     this_co::sleep_for(500ms);
     EXPECT_FALSE(mu.try_lock());
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, shared_mutex_lock_try_lock_locked_mutex)
@@ -185,7 +185,7 @@ TEST(sync, shared_mutex_lock_try_lock_locked_mutex)
     });
     this_co::sleep_for(500ms);
     EXPECT_FALSE(mu.try_lock());
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, shared_timed_mutex_try_lock_for_locked_shread_mutex)
@@ -201,7 +201,7 @@ TEST(sync, shared_timed_mutex_try_lock_for_locked_shread_mutex)
     EXPECT_FALSE(mu.try_lock_for(100ms));
     EXPECT_TRUE(mu.try_lock_for(600ms));
     mu.unlock();
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, shared_timed_mutex_try_lock_for_locked_mutex)
@@ -217,7 +217,7 @@ TEST(sync, shared_timed_mutex_try_lock_for_locked_mutex)
     EXPECT_FALSE(mu.try_lock_for(100ms));
     EXPECT_TRUE(mu.try_lock_for(600ms));
     mu.unlock();
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, shared_timed_mutex_try_lock_shared_for_locked_mutex)
@@ -233,7 +233,7 @@ TEST(sync, shared_timed_mutex_try_lock_shared_for_locked_mutex)
     EXPECT_FALSE(mu.try_lock_shared_for(100ms));
     EXPECT_TRUE(mu.try_lock_shared_for(800ms));
     mu.unlock_shared();
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(sync, condition_variable_notify_one)
@@ -251,7 +251,7 @@ TEST(sync, condition_variable_notify_one)
     this_co::sleep_for(1s);
     EXPECT_EQ(n, 50);
     cond.notify_one();
-    c1.wait<void>();
+    c1.join();
     EXPECT_EQ(n, 45);
 }
 
@@ -275,8 +275,8 @@ TEST(sync, condition_variable_notify_all)
     this_co::sleep_for(1s);
     EXPECT_EQ(n, 50);
     cond.notify_all();
-    c1.wait<void>();
-    c2.wait<void>();
+    c1.join();
+    c2.join();
     EXPECT_EQ(n, 35);
 }
 
@@ -314,8 +314,8 @@ TEST(sync, call_once)
         co_call_once(flag, f, 10);
     });
 
-    c1.wait<void>();
-    c2.wait<void>();
+    c1.join();
+    c2.join();
     EXPECT_TRUE(n == 5 || n == 10);
 }
 
@@ -338,5 +338,5 @@ TEST(sync, counting_semaphore_normal)
         EXPECT_FALSE(sem.try_acquire_until(std::chrono::steady_clock::now() + 50ms));
     });
     sem.release(10);
-    c1.wait<void>();
+    c1.join();
 }

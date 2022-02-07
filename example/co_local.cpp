@@ -17,6 +17,6 @@ int main()
 {
     cocpp::co co_sum1(&sum, 100);
     cocpp::co co_sum2(&sum, 1000);
-    co_sum1.wait<void>();
-    co_sum2.wait<void>();
+    co_sum1.join();
+    co_sum2.join();
 }
