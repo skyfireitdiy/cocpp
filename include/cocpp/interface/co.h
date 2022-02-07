@@ -128,15 +128,9 @@ public:
     co(Func&& func, Args&&... args); // 构造一个协程，参数为可调用对象与参数列表，如：co c(add, 1, 2);
     template <typename Func, typename... Args>
     co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args); // 使用配置构造一个协程
-    template <CoIsNotVoid Ret>
-    Ret wait(); // 等待协程执行完毕，返回协程的返回值
-    template <CoIsVoid Ret>
-    Ret wait(); // 等待协程执行完毕，返回协程的返回值
-    template <class Rep, class Period>
-    std::optional<co_return_value> wait(const std::chrono::duration<Rep, Period>& wait_duration); // 等待协程执行完毕，返回协程的返回值
-    void                           detach();                                                      // 协程分离，协程结束后自动回收
-    void                           join();
-    bool                           joinable() const;
+    void detach();                                                                                    // 协程分离，协程结束后自动回收
+    void join();
+    bool joinable() const;
 
     ~co();
 };
@@ -182,24 +176,6 @@ co::co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& f
         cb(config);
     }
     init__(config, std::forward<Func>(func), std::forward<Args>(args)...);
-}
-
-template <CoIsNotVoid Ret>
-Ret co::wait()
-{
-    return manager__->current_env()->wait_ctx(ctx__);
-}
-
-template <CoIsVoid Ret>
-Ret co::wait()
-{
-    manager__->current_env()->wait_ctx(ctx__);
-}
-
-template <class Rep, class Period>
-std::optional<co_return_value> co::wait(const std::chrono::duration<Rep, Period>& wait_duration)
-{
-    return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
 }
 
 CO_NAMESPACE_END

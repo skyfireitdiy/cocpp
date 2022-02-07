@@ -12,6 +12,7 @@
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
+#include "cocpp/interface/co_async_run.h"
 #include "cocpp/interface/co_this_co.h"
 #include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/sync/co_binary_semaphore.h"
@@ -88,19 +89,19 @@ TEST(core, ref)
 
 TEST(core, return_value)
 {
-    co c1([](int n) { return n + 10; }, 25);
-    EXPECT_EQ(c1.wait<int>(), 35);
+    auto c1 = co_async_run([](int n) { return n + 10; }, 25);
+    EXPECT_EQ(c1.get(), 35);
 }
 
 TEST(core, wait_timeout)
 {
-    co   c1([]() {
+    auto c1  = co_async_run([]() {
         this_co::sleep_for(1s);
     });
-    auto ret = c1.wait(1ms);
-    EXPECT_FALSE(ret);
-    ret = c1.wait(10s);
-    EXPECT_TRUE(ret);
+    auto ret = c1.wait_for(1ms);
+    EXPECT_EQ(ret, std::future_status::timeout);
+    ret = c1.wait_for(10s);
+    EXPECT_EQ(ret, std::future_status::ready);
 }
 
 TEST(core, priority)
@@ -192,11 +193,11 @@ TEST(core, co_shared_stack)
         }
         return sum;
     };
-    co c1({ with_name("shared stack ctx 1"), with_shared_stack(true), with_bind_env(env) }, routine, 1);
-    co c2({ with_name("shared stack ctx 2"), with_shared_stack(true), with_bind_env(env) }, routine, 2);
+    auto c1 = co_async_run({ with_name("shared stack ctx 1"), with_shared_stack(true), with_bind_env(env) }, routine, 1);
+    auto c2 = co_async_run({ with_name("shared stack ctx 2"), with_shared_stack(true), with_bind_env(env) }, routine, 2);
 
-    EXPECT_EQ(c1.wait<int>(), 499500);
-    EXPECT_EQ(c2.wait<int>(), 499500);
+    EXPECT_EQ(c1.get(), 499500);
+    EXPECT_EQ(c2.get(), 499500);
 }
 
 TEST(core, co_local)

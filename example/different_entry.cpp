@@ -1,7 +1,7 @@
 // 此 example 演示接受不同函数签名的可调用对象
 
 #include "cocpp/interface/co.h"
-
+#include "cocpp/interface/co_async_run.h"
 #include <cstdio>
 #include <functional>
 
@@ -27,16 +27,16 @@ int div_(int a, int b)
 
 int main()
 {
-    cocpp::co add_co(&add, 1000, 200);
-    cocpp::co sub_co(sub {}, 1000, 200);
-    cocpp::co mul_co(mul, 1000, 200);
-    auto      p_div = std::function<int(int, int)>(&div_);
-    cocpp::co div_co(p_div, 1000, 200);
+    auto add_co = cocpp::co_async_run(&add, 1000, 200);
+    auto sub_co = cocpp::co_async_run(sub {}, 1000, 200);
+    auto mul_co = cocpp::co_async_run(mul, 1000, 200);
+    auto p_div  = std::function<int(int, int)>(&div_);
+    auto div_co = cocpp::co_async_run(p_div, 1000, 200);
 
-    auto add_ret = add_co.wait<int>();
-    auto sub_ret = sub_co.wait<int>();
-    auto mul_ret = mul_co.wait<int>();
-    auto div_ret = div_co.wait<int>();
+    auto add_ret = add_co.get();
+    auto sub_ret = sub_co.get();
+    auto mul_ret = mul_co.get();
+    auto div_ret = div_co.get();
 
     printf("add: %d\n", add_ret);
     printf("sub: %d\n", sub_ret);
