@@ -211,16 +211,17 @@ std::optional<co_return_value> co::wait_for(const std::chrono::duration<Rep, Per
 template <CoIsNotVoid Args, typename Result>
 co co::then(std::function<Result(Args)> f)
 {
-    return co([this, f]() -> Result {
-        return f(wait<Args>());
+    return co([this, ctx = ctx__, f]() -> Result {
+        Args r = manager__->current_env()->wait_ctx(ctx);
+        return f(r);
     });
 }
 
 template <typename Result>
 co co::then(std::function<Result()> f)
 {
-    return co([this, f]() -> Result {
-        wait<void>();
+    return co([this, ctx = ctx__, f]() -> Result {
+        manager__->current_env()->wait_ctx(ctx);
         return f();
     });
 }
