@@ -8,11 +8,6 @@ CO_NAMESPACE_BEGIN
 
 void co::detach()
 {
-    std::unique_lock lock(mu__, std::defer_lock);
-    if (!lock.try_lock())
-    {
-        return;
-    }
     if (ctx__ == nullptr)
     {
         return;
@@ -23,11 +18,6 @@ void co::detach()
 
 std::string co::name() const
 {
-    std::unique_lock lock(mu__, std::defer_lock);
-    if (!lock.try_lock())
-    {
-        return "";
-    }
     if (ctx__ == nullptr)
     {
         return "";
@@ -42,39 +32,12 @@ co::~co()
 
 co_id co::id() const
 {
-    std::unique_lock lock(mu__, std::defer_lock);
-    if (!lock.try_lock())
-    {
-        return co_id();
-    }
     return reinterpret_cast<co_id>(ctx__);
 }
 
 void co::join()
 {
-    std::unique_lock lock(mu__, std::defer_lock);
-    if (!lock.try_lock())
-    {
-        return;
-    }
-    if (ctx__ == nullptr)
-    {
-        return;
-    }
-    auto ctx = ctx__;
-    ctx->unlock_destroy();
-    ctx__ = nullptr;
-    manager__->current_env()->wait_ctx(ctx);
-}
-
-bool co::joinable() const
-{
-    std::unique_lock lock(mu__, std::defer_lock);
-    if (!lock.try_lock())
-    {
-        return false;
-    }
-    return ctx__ != nullptr;
+    wait<void>();
 }
 
 CO_NAMESPACE_END

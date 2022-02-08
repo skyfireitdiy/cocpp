@@ -33,9 +33,8 @@ concept CoIsNotVoid = !std::is_same_v<T, void>;
 class co final : private co_noncopyable
 {
 private:
-    co_ctx*                    ctx__; // 当前协程的上下文
-    mutable co_recursive_mutex mu__;
-    inline static co_manager*  manager__ = co_manager::instance();  // 协程管理器
+    co_ctx*                   ctx__;                                // 当前协程的上下文
+    inline static co_manager* manager__ = co_manager::instance();   // 协程管理器
     template <typename Func, typename... Args>                      //
     void init__(co_ctx_config config, Func&& func, Args&&... args); // 初始化协程
 
@@ -133,10 +132,9 @@ public:
     template <CoIsVoid Ret>
     Ret wait(); // 等待协程执行完毕，返回协程的返回值
     template <class Rep, class Period>
-    std::optional<co_return_value> wait(const std::chrono::duration<Rep, Period>& wait_duration); // 等待协程执行完毕，返回协程的返回值
-    void                           detach();                                                      // 协程分离，协程结束后自动回收
+    std::optional<co_return_value> wait_for(const std::chrono::duration<Rep, Period>& wait_duration); // 等待协程执行完毕，返回协程的返回值
+    void                           detach();                                                          // 协程分离，协程结束后自动回收
     void                           join();
-    bool                           joinable() const;
 
     ~co();
 };
@@ -193,11 +191,15 @@ Ret co::wait()
 template <CoIsVoid Ret>
 Ret co::wait()
 {
+    if (!ctx__)
+    {
+        return;
+    }
     manager__->current_env()->wait_ctx(ctx__);
 }
 
-template <class Rep, class Period>
-std::optional<co_return_value> co::wait(const std::chrono::duration<Rep, Period>& wait_duration)
+template <typename Rep, typename Period>
+std::optional<co_return_value> co::wait_for(const std::chrono::duration<Rep, Period>& wait_duration)
 {
     return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
 }

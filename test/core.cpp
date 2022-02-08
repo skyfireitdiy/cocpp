@@ -97,9 +97,9 @@ TEST(core, wait_timeout)
     co   c1([]() {
         this_co::sleep_for(1s);
     });
-    auto ret = c1.wait(1ms);
+    auto ret = c1.wait_for(1ms);
     EXPECT_FALSE(ret);
-    ret = c1.wait(10s);
+    ret = c1.wait_for(10s);
     EXPECT_TRUE(ret);
 }
 
@@ -144,7 +144,7 @@ TEST(core, this_co_id)
         id = this_co::id();
     });
     c1.join();
-    EXPECT_EQ(c1.id(), co_id());
+    EXPECT_EQ(c1.id(), id);
 }
 
 TEST(core, get_id_name_after_detach)
@@ -161,7 +161,7 @@ TEST(core, other_co_name)
 {
     co c1({ with_name("zhangsan") }, []() {});
     c1.join();
-    EXPECT_EQ(c1.name(), "");
+    EXPECT_EQ(c1.name(), "zhangsan");
 }
 
 TEST(core, co_wait_priority)
