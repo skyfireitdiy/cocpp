@@ -31,3 +31,5 @@ fish -c "abbr -a -U -- gco 'git checkout'"
 fish -c "abbr -a -U -- gb 'git branch'"
 
 
+# source ~/.bashrc to enable xmake
+source ~/.bashrc
