@@ -143,7 +143,7 @@ TEST(core, this_co_id)
     co    c1([&id]() {
         id = this_co::id();
     });
-    c1.join();
+    c1.wait<void>();
     EXPECT_EQ(c1.id(), id);
 }
 
@@ -160,7 +160,7 @@ TEST(core, get_id_name_after_detach)
 TEST(core, other_co_name)
 {
     co c1({ with_name("zhangsan") }, []() {});
-    c1.join();
+    c1.wait<void>();
     EXPECT_EQ(c1.name(), "zhangsan");
 }
 
@@ -236,4 +236,10 @@ TEST(core, void_then)
                  .then<void>([] { printf("hahaha %lld\n", this_co::id()); })
                  .then<int>([] { return 5; });
     EXPECT_EQ(c.wait<int>(), 5);
+}
+
+TEST(core, exception)
+{
+    auto c = co([] { throw 1; });
+    EXPECT_THROW(c.wait<int>(), int);
 }
