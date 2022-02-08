@@ -148,12 +148,12 @@ void co_ctx::reset_flag(size_t flag)
     if (env__ != nullptr)
     {
         std::scoped_lock lock(env__->sleep_lock());
-        flag_manager__.reset_flag(flag);
         flag_reset().pub(flag);
+        flag_manager__.reset_flag(flag);
         return;
     }
-    flag_manager__.reset_flag(flag);
     flag_reset().pub(flag);
+    flag_manager__.reset_flag(flag);
 }
 
 void co_ctx::check_and_rethrow_exception()

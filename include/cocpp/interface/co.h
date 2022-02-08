@@ -1,3 +1,4 @@
+#include "cocpp/utils/co_defer.h"
 _Pragma("once");
 
 #include "cocpp/comm/co_event.h"
@@ -22,12 +23,13 @@ CO_NAMESPACE_BEGIN
 
 class co_manager;
 class co_ctx;
+class co;
 
 template <typename T>
-concept CoIsVoid = std::is_same_v<T, void>;
+concept CoIsVoid = std::is_same_v<std::decay_t<T>, void>;
 
 template <typename T>
-concept CoIsNotVoid = !std::is_same_v<T, void>;
+concept CoIsNotVoid = !std::is_same_v<std::decay_t<T>, void>;
 
 class co final : private co_noncopyable
 {
@@ -127,18 +129,18 @@ public:
     template <typename Func, typename... Args>
     co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args); // 使用配置构造一个协程
     template <CoIsNotVoid Ret>
-    Ret wait(); // 等待协程执行完毕，返回协程的返回值
+    Ret wait() const; // 等待协程执行完毕，返回协程的返回值
     template <CoIsVoid Ret>
-    Ret wait(); // 等待协程执行完毕，返回协程的返回值
+    Ret wait() const; // 等待协程执行完毕，返回协程的返回值
     template <class Rep, class Period>
-    std::optional<co_return_value> wait_for(const std::chrono::duration<Rep, Period>& wait_duration); // 等待协程执行完毕，返回协程的返回值
-    void                           detach();                                                          // 协程分离，协程结束后自动回收
+    std::optional<co_return_value> wait_for(const std::chrono::duration<Rep, Period>& wait_duration) const; // 等待协程执行完毕，返回协程的返回值
+    void                           detach();                                                                // 协程分离，协程结束后自动回收
     void                           join();
 
     template <CoIsNotVoid Args, typename Result>
-    co then(std::function<Result(Args)> f);
+    co then(std::function<Result(Args)> f) const;
     template <typename Result>
-    co then(std::function<Result()> f);
+    co then(std::function<Result()> f) const;
 
     ~co();
 };
@@ -187,13 +189,13 @@ co::co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& f
 }
 
 template <CoIsNotVoid Ret>
-Ret co::wait()
+Ret co::wait() const
 {
     return manager__->current_env()->wait_ctx(ctx__);
 }
 
 template <CoIsVoid Ret>
-Ret co::wait()
+Ret co::wait() const
 {
     if (!ctx__)
     {
@@ -203,24 +205,29 @@ Ret co::wait()
 }
 
 template <typename Rep, typename Period>
-std::optional<co_return_value> co::wait_for(const std::chrono::duration<Rep, Period>& wait_duration)
+std::optional<co_return_value> co::wait_for(const std::chrono::duration<Rep, Period>& wait_duration) const
 {
     return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
 }
 
 template <CoIsNotVoid Args, typename Result>
-co co::then(std::function<Result(Args)> f)
+co co::then(std::function<Result(Args)> f) const
 {
-    return co([this, ctx = ctx__, f]() -> Result {
-        Args r = manager__->current_env()->wait_ctx(ctx);
-        return f(r);
+    auto ctx = ctx__;
+    ctx__    = nullptr;
+    return co([this, ctx, f]() -> Result {
+        CoDefer(ctx->unlock_destroy());
+        return f(manager__->current_env()->wait_ctx(ctx));
     });
 }
 
 template <typename Result>
-co co::then(std::function<Result()> f)
+co co::then(std::function<Result()> f) const
 {
-    return co([this, ctx = ctx__, f]() -> Result {
+    auto ctx = ctx__;
+    ctx__    = nullptr;
+    return co([this, ctx, f]() -> Result {
+        CoDefer(ctx->unlock_destroy());
         manager__->current_env()->wait_ctx(ctx);
         return f();
     });
