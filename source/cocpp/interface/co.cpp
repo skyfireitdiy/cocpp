@@ -12,8 +12,9 @@ void co::detach()
     {
         return;
     }
-    ctx__->unlock_destroy();
-    ctx__ = nullptr;
+    auto ctx = ctx__;
+    ctx__    = nullptr;
+    ctx->unlock_destroy();
 }
 
 std::string co::name() const
@@ -48,8 +49,9 @@ void co::join()
     }
     if (ctx__ != nullptr)
     {
-        ctx__->unlock_destroy();
-        ctx__ = nullptr;
+        auto ctx = ctx__;
+        ctx__    = nullptr;
+        ctx->unlock_destroy();
     }
     if (e)
     {
