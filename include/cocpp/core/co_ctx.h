@@ -13,6 +13,7 @@ _Pragma("once");
 
 #include <atomic>
 #include <bitset>
+#include <exception>
 #include <memory>
 #include <mutex>
 
@@ -48,6 +49,7 @@ private:                                                                        
     mutable std::recursive_mutex                                        priority_lock__;                     // 优先级锁
     std::map<std::string, std::shared_ptr<co_local_base>>               locals__;                            // 协程局部存储
     std::function<void(co_any&)>                                        entry__;                             // 协程入口函数
+    std::exception_ptr                                                  exception__;                         // 异常
 #ifdef __GNUC__                                                                                              //
 #ifdef __x86_64__                                                                                            //
     co_byte* regs__[32] {};                                                                                  // 协程寄存器
@@ -81,6 +83,7 @@ public:
     void                         set_state(const co_state& state);                 // 设置ctx状态
     void                         set_flag(size_t flag);                            // 设置标识
     void                         reset_flag(size_t flag);                          // 重置标识
+    void                         check_and_rethrow_exception();                    // 检测并重新抛出异常
 
     template <typename T>
     T& local_storage(const std::string& name); // 获取局部存储

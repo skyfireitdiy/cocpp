@@ -37,7 +37,24 @@ co_id co::id() const
 
 void co::join()
 {
-    wait<void>();
+    std::exception_ptr e;
+    try
+    {
+        wait<void>();
+    }
+    catch (...)
+    {
+        e = std::current_exception();
+    }
+    if (ctx__ != nullptr)
+    {
+        ctx__->unlock_destroy();
+        ctx__ = nullptr;
+    }
+    if (e)
+    {
+        std::rethrow_exception(e);
+    }
 }
 
 CO_NAMESPACE_END

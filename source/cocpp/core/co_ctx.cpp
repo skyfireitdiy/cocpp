@@ -5,6 +5,7 @@
 #include "cocpp/utils/co_state_manager.h"
 
 #include <cassert>
+#include <exception>
 #include <mutex>
 
 CO_NAMESPACE_BEGIN
@@ -57,7 +58,14 @@ std::function<void(co_any&)> co_ctx::entry() const
 
 void co_ctx::real_entry(co_ctx* ctx)
 {
-    ctx->entry()(ctx->ret_ref());
+    try
+    {
+        ctx->entry()(ctx->ret_ref());
+    }
+    catch (...)
+    {
+        ctx->exception__ = std::current_exception();
+    }
     // CO_DEBUG("ctx %s %p finished", ctx->config().name.c_str(), ctx);
     ctx->set_state(co_state::finished);
     ctx->finished().pub();
@@ -146,6 +154,16 @@ void co_ctx::reset_flag(size_t flag)
     }
     flag_manager__.reset_flag(flag);
     flag_reset().pub(flag);
+}
+
+void co_ctx::check_and_rethrow_exception()
+{
+    if (exception__)
+    {
+        auto e      = exception__;
+        exception__ = nullptr; // 仅第一次抛出异常
+        std::rethrow_exception(e);
+    }
 }
 
 bool co_ctx::can_schedule() const

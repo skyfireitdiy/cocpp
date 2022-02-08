@@ -106,6 +106,7 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
         schedule_switch();
     }
     wait_ctx_finished().pub(ctx);
+    ctx->check_and_rethrow_exception();
     return ctx->ret_ref();
 }
 
@@ -122,6 +123,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
         schedule_switch();
     }
     wait_ctx_finished().pub(ctx);
+    ctx->check_and_rethrow_exception();
     return ctx->ret_ref();
 }
 

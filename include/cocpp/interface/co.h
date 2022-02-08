@@ -195,6 +195,10 @@ Ret co::wait()
 template <CoIsVoid Ret>
 Ret co::wait()
 {
+    if (!ctx__)
+    {
+        return;
+    }
     manager__->current_env()->wait_ctx(ctx__);
 }
 
