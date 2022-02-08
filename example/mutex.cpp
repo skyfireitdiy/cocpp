@@ -33,7 +33,7 @@ int main()
 {
     cocpp::co co_add(&add_value);
     cocpp::co co_sub(&sub_value);
-    co_add.wait<void>();
-    co_sub.wait<void>();
+    co_add.join();
+    co_sub.join();
     printf("value: %lld\n", value);
 }

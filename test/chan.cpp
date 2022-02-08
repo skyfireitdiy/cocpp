@@ -63,7 +63,7 @@ TEST(chan, buffered)
         EXPECT_EQ(t, i);
     }
     EXPECT_FALSE(ch.pop());
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(chan, no_limited)
@@ -84,7 +84,7 @@ TEST(chan, no_limited)
         EXPECT_EQ(t, i);
     }
     EXPECT_FALSE(ch.pop());
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(chan, no_buf)
@@ -104,7 +104,7 @@ TEST(chan, no_buf)
         EXPECT_EQ(t, i);
     }
     EXPECT_FALSE(ch.pop());
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(chan, no_buffered_iterator)
@@ -126,7 +126,7 @@ TEST(chan, no_buffered_iterator)
     {
         pop.push_back(p);
     }
-    c1.wait<void>();
+    c1.join();
     EXPECT_EQ(push, pop);
 }
 
@@ -173,7 +173,7 @@ TEST(chan, no_buffered_operator_less)
         }
     }
 
-    c1.wait<void>();
+    c1.join();
     EXPECT_EQ(push, pop);
 }
 
@@ -191,7 +191,7 @@ TEST(chan, no_buffered_operator_shift)
     int a, b, c, d, e;
     ch >> a >> b >> c >> d >> e;
 
-    c1.wait<void>();
+    c1.join();
     EXPECT_EQ(a, 0);
     EXPECT_EQ(b, 1);
     EXPECT_EQ(c, 2);
@@ -217,7 +217,7 @@ TEST(chan, push_to_full_chan_closed)
         ch.close();
     });
     EXPECT_FALSE(ch.push(1));
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(chan, pop_from_empty_chan_closed)
@@ -228,7 +228,7 @@ TEST(chan, pop_from_empty_chan_closed)
         ch.close();
     });
     EXPECT_FALSE(ch.pop());
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(chan, pop_from_zero_chan_closed)
@@ -239,5 +239,5 @@ TEST(chan, pop_from_zero_chan_closed)
         ch.close();
     });
     EXPECT_FALSE(ch.pop());
-    c1.wait<void>();
+    c1.join();
 }

@@ -33,7 +33,7 @@ TEST(core, name)
     co c1({ with_name("test1") }, []() {
         EXPECT_EQ(this_co::name(), "test1");
     });
-    c1.wait<void>();
+    c1.join();
 }
 
 TEST(core, id)
@@ -47,8 +47,8 @@ TEST(core, id)
     };
     co c1({ with_name("test1") }, f);
     co c2({ with_name("test1") }, f);
-    c1.wait<void>();
-    c2.wait<void>();
+    c1.join();
+    c2.join();
 }
 
 TEST(core, thread_convert)
@@ -62,7 +62,7 @@ TEST(core, thread_convert)
         printf("new co %llu in thread %u\n", this_co::id(), gettid());
     });
 
-    c1.wait<void>();
+    c1.join();
     th.detach();
 }
 
@@ -82,7 +82,7 @@ TEST(core, ref)
 {
     int t = 20;
     co  c1([](int& n) { n += 10; }, std::ref(t));
-    c1.wait<void>();
+    c1.join();
     EXPECT_EQ(t, 30);
 }
 
@@ -97,9 +97,9 @@ TEST(core, wait_timeout)
     co   c1([]() {
         this_co::sleep_for(1s);
     });
-    auto ret = c1.wait(1ms);
+    auto ret = c1.wait_for(1ms);
     EXPECT_FALSE(ret);
-    ret = c1.wait(10s);
+    ret = c1.wait_for(10s);
     EXPECT_TRUE(ret);
 }
 
@@ -130,8 +130,8 @@ TEST(core, priority)
             this_co::yield();
         },
         std::ref(arr));
-    c1.wait<void>();
-    c2.wait<void>();
+    c1.join();
+    c2.join();
 
     std::vector<int> expect { 100, 200, 300, 400, 500, 600 };
     EXPECT_EQ(arr, expect);
@@ -143,7 +143,7 @@ TEST(core, this_co_id)
     co    c1([&id]() {
         id = this_co::id();
     });
-    c1.wait<void>();
+    c1.join();
     EXPECT_EQ(c1.id(), id);
 }
 
@@ -151,7 +151,7 @@ TEST(core, get_id_name_after_detach)
 {
     co c1([]() {
     });
-    c1.wait<void>();
+    c1.join();
     c1.detach();
     EXPECT_EQ(c1.id(), 0ULL);
     EXPECT_EQ(c1.name(), "");
@@ -160,7 +160,7 @@ TEST(core, get_id_name_after_detach)
 TEST(core, other_co_name)
 {
     co c1({ with_name("zhangsan") }, []() {});
-    c1.wait<void>();
+    c1.join();
     EXPECT_EQ(c1.name(), "zhangsan");
 }
 
@@ -173,10 +173,10 @@ TEST(core, co_wait_priority)
     });
 
     co c2({ with_priority(0), with_bind_env(env) }, [&] {
-        c1.wait<void>();
+        c1.join();
     });
 
-    c2.wait<void>();
+    c2.join();
 }
 
 TEST(core, co_shared_stack)
@@ -207,7 +207,7 @@ TEST(core, co_local)
         EXPECT_EQ(value, "hello");
     });
 
-    c1.wait<void>();
+    c1.join();
     auto& value = CoLocal(name, std::string);
     EXPECT_EQ(value, "");
 }
@@ -218,4 +218,22 @@ TEST(core, zone_edge)
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(2), 1ULL);
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(3), 2ULL);
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(4), 2ULL);
+}
+
+TEST(core, normal_then)
+{
+    int  p = 100;
+    auto c = co([](int a, int b) { return a + b; }, 10, 20)
+                 .then<int, int>([](int a) { return a - 40; })
+                 .then<int, int*>([&p](int a) -> int* { p -= a; return &p; });
+    *c.wait<int*>() += 200;
+    EXPECT_EQ(p, 310);
+}
+
+TEST(core, void_then)
+{
+    auto c = co([] { printf("hello world %lld\n", this_co::id()); })
+                 .then<void>([] { printf("hahaha %lld\n", this_co::id()); })
+                 .then<int>([] { return 5; });
+    EXPECT_EQ(c.wait<int>(), 5);
 }

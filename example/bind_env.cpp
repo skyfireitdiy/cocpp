@@ -25,8 +25,8 @@ int main()
     cocpp::co c3({ cocpp::with_bind_env(env) }, &print_thread_id);
     cocpp::co c4({ cocpp::with_bind_env(env) }, &print_thread_id);
 
-    c1.wait<void>();
-    c2.wait<void>();
-    c3.wait<void>();
-    c4.wait<void>();
+    c1.join();
+    c2.join();
+    c3.join();
+    c4.join();
 }

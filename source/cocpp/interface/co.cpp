@@ -27,11 +27,17 @@ std::string co::name() const
 
 co::~co()
 {
-    detach();
+    join();
 }
 
 co_id co::id() const
 {
     return reinterpret_cast<co_id>(ctx__);
 }
+
+void co::join()
+{
+    wait<void>();
+}
+
 CO_NAMESPACE_END

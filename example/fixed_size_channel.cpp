@@ -29,6 +29,6 @@ int main()
     cocpp::co_chan<int, 100> chan;
     cocpp::co                co_producer(&producer, std::ref(chan));
     cocpp::co                co_customer(&customer, std::ref(chan));
-    co_producer.wait<void>();
-    co_customer.wait<void>();
+    co_producer.join();
+    co_customer.join();
 }
