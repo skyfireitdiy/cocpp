@@ -8,7 +8,6 @@ _Pragma("once");
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_return_value.h"
-#include "cocpp/sync/co_recursive_mutex.h"
 #include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_noncopyable.h"
 
@@ -136,6 +135,11 @@ public:
     void                           detach();                                                          // 协程分离，协程结束后自动回收
     void                           join();
 
+    template <CoIsNotVoid Args, typename Result>
+    co then(std::function<Result(Args)> f);
+    template <typename Result>
+    co then(std::function<Result()> f);
+
     ~co();
 };
 
@@ -191,10 +195,6 @@ Ret co::wait()
 template <CoIsVoid Ret>
 Ret co::wait()
 {
-    if (!ctx__)
-    {
-        return;
-    }
     manager__->current_env()->wait_ctx(ctx__);
 }
 
@@ -202,6 +202,23 @@ template <typename Rep, typename Period>
 std::optional<co_return_value> co::wait_for(const std::chrono::duration<Rep, Period>& wait_duration)
 {
     return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
+}
+
+template <CoIsNotVoid Args, typename Result>
+co co::then(std::function<Result(Args)> f)
+{
+    return co([this, f]() -> Result {
+        return f(wait<Args>());
+    });
+}
+
+template <typename Result>
+co co::then(std::function<Result()> f)
+{
+    return co([this, f]() -> Result {
+        wait<void>();
+        return f();
+    });
 }
 
 CO_NAMESPACE_END
