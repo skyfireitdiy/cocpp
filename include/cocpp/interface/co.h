@@ -34,7 +34,7 @@ concept CoIsNotVoid = !std::is_same_v<std::decay_t<T>, void>;
 class co final : private co_noncopyable
 {
 private:
-    co_ctx*                   ctx__;                                // 当前协程的上下文
+    mutable co_ctx*           ctx__;                                // 当前协程的上下文
     inline static co_manager* manager__ = co_manager::instance();   // 协程管理器
     template <typename Func, typename... Args>                      //
     void init__(co_ctx_config config, Func&& func, Args&&... args); // 初始化协程
