@@ -1,15 +1,14 @@
 #include "cocpp/interface/co.h"
-#include "cocpp/interface/co_async_run.h"
 
 #include <cstdio>
 #include <string>
 
 int main()
 {
-    auto c1 = cocpp::co_async_run([]() {
+    cocpp::co c1([]() {
         return std::string("Hello ");
     });
 
-    auto ret = c1.get();
+    auto ret = c1.wait<std::string>();
     printf("%s", (ret + "World!\n").c_str());
 }
