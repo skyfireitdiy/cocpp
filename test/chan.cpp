@@ -70,14 +70,13 @@ TEST(chan, no_limited)
 {
     co_chan<int, -1> ch;
 
-    co c1([&] {
+    co  c1([&] {
         for (int i = 0; i < 10000; ++i)
         {
             ch.push(i);
         }
         ch.close();
     });
-    std::this_thread::sleep_for(2s);
     int t;
     for (int i = 0; i < 10000; ++i)
     {

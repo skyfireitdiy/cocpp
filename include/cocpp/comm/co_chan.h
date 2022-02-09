@@ -101,7 +101,7 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
         return false;
     }
     constexpr auto max_size = MaxSize == 0 ? 1 : MaxSize;
-    if constexpr (max_size > 0) // 当MaxSize < 0，是无限长度的chan
+    if constexpr (max_size > 0)
     {
         if (data__.size() == MaxSize)
         {
