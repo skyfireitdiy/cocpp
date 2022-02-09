@@ -20,9 +20,6 @@ private:
     co_condition_variable full_cond__;
     co_condition_variable empty_cond__;
 
-    co_binary_semaphore read_sem__ { 0 };
-    co_binary_semaphore write_sem__ { 0 };
-
 public:
     class iterator
     {
@@ -103,34 +100,27 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     {
         return false;
     }
-    if constexpr (MaxSize > 0) // 当MaxSize < 0，是无限长度的chan
+    constexpr auto max_size = MaxSize == 0 ? 1 : MaxSize;
+    if constexpr (max_size > 0)
     {
         if (data__.size() == MaxSize)
         {
-            full_cond__.wait(lock, [this] { return closed__ || data__.size() < MaxSize; });
+            full_cond__.wait(lock, [this] { return closed__ || data__.size() < max_size; });
             if (closed__)
             {
                 return false;
             }
         }
     }
-    else if constexpr (MaxSize == 0) // 无缓冲chan
-    {
-        lock.unlock();
-        read_sem__.acquire();
-        lock.lock();
-    }
+
     data__.push_back(value);
-    if constexpr (MaxSize == 0)
+    empty_cond__.notify_one();
+
+    if constexpr (MaxSize == 0) // 无缓冲channel需要等待接收侧将数据取走
     {
-        lock.unlock();
-        write_sem__.release();
-        lock.lock();
+        full_cond__.wait(lock, [this] { return closed__ || data__.empty(); });
     }
-    else
-    {
-        empty_cond__.notify_one();
-    }
+
     return true;
 }
 
@@ -140,42 +130,22 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
     std::optional<ValueType>   ret;
     std::unique_lock<co_mutex> lock(mu__);
 
-    if constexpr (MaxSize != 0)
-    {
-        if (data__.empty())
-        {
-            if (closed__)
-            {
-                return ret;
-            }
-            empty_cond__.wait(lock, [this] { return closed__ || !data__.empty(); });
-            if (data__.empty())
-            {
-                return ret;
-            }
-        }
-    }
-    else
+    if (data__.empty())
     {
         if (closed__)
         {
             return ret;
         }
-        lock.unlock();
-        read_sem__.release();
-        write_sem__.acquire();
-        lock.lock();
+        empty_cond__.wait(lock, [this] { return closed__ || !data__.empty(); });
         if (data__.empty())
         {
             return ret;
         }
     }
+
     ret = data__.front();
     data__.pop_front();
-    if constexpr (MaxSize != 0)
-    {
-        full_cond__.notify_one();
-    }
+    full_cond__.notify_one();
     return ret;
 }
 
@@ -184,15 +154,8 @@ void co_chan<ValueType, MaxSize>::close()
 {
     std::lock_guard<co_mutex> lock(mu__);
     closed__ = true;
-    if constexpr (MaxSize == 0)
-    {
-        write_sem__.release();
-    }
-    else
-    {
-        full_cond__.notify_all();
-        empty_cond__.notify_all();
-    }
+    full_cond__.notify_all();
+    empty_cond__.notify_all();
 }
 
 template <typename ValueType, int MaxSize>
