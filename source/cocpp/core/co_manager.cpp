@@ -474,4 +474,16 @@ void co_manager::steal_ctx_routine__()
     }
 }
 
+void co_manager::insert_timer_to_queue__(std::shared_ptr<co_timer> timer)
+{
+    std::scoped_lock lock(mu_timer_queue__);
+    timer_queue__.insert(timer);
+}
+
+void co_manager::remove_timer_from_queue__(std::shared_ptr<co_timer> timer)
+{
+    std::scoped_lock lock(mu_timer_queue__);
+    timer_queue__.erase(timer);
+}
+
 CO_NAMESPACE_END

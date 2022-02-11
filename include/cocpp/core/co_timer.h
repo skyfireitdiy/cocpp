@@ -5,6 +5,7 @@ _Pragma("once");
 
 #include <chrono>
 #include <functional>
+#include <mutex>
 
 CO_NAMESPACE_BEGIN
 
@@ -22,20 +23,32 @@ enum class co_timer_type
     relative,
 };
 
+enum class co_timer_status
+{
+    stopped,
+    running,
+};
+
 class co_timer final : private co_noncopyable,
                        public std::enable_shared_from_this<co_timer>
 {
 private:
-    co_timer_handle                       handle__;
-    std::function<void()>                 callback__;
-    co_timeout_type                       timeout_type__;
-    co_timer_type                         timer_type__;
-    unsigned long long                    interval__;
+    const co_timer_handle                 handle__;
+    const std::function<void()>           callback__;
+    const co_timeout_type                 timeout_type__;
+    const co_timer_type                   timer_type__;
+    const unsigned long long              interval__;
     std::chrono::steady_clock::time_point timeout_time__;
+    co_timer_status                       status__;
+    std::recursive_mutex                  mutex__;
 
     co_timer(const std::function<void()>& func, co_timeout_type type, unsigned long long interval_ms);
 
     co_timer(const std::function<void()>& func, std::chrono::steady_clock::time_point timeout_time);
+
+    void insert_to_timer_queue__();
+    void remove_from_timer_queue__();
+    void update_timeout_time__();
 
 public:
     ~co_timer();
