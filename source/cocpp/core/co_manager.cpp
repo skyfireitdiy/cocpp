@@ -186,7 +186,7 @@ void co_manager::remove_env__(co_env* env)
     std::scoped_lock lock(env_set__.normal_lock, env_set__.expired_lock);
     env_set__.normal_set.erase(env);
     env_set__.expired_set.insert(env);
-    env_set__.cond_expired_env.notify_one();
+    env_set__.cv_expired_env.notify_one();
 
     env_removed().pub(env);
 }
@@ -228,7 +228,7 @@ void co_manager::set_clean_up__()
         }
         env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
     }
-    env_set__.cond_expired_env.notify_one();
+    env_set__.cv_expired_env.notify_one();
     cv_timer_queue__.notify_one();
 
     clean_up_set().pub();
@@ -241,7 +241,7 @@ void co_manager::clean_env_routine__()
     while (!clean_up__ || env_set__.normal_env_count != 0)
     {
         clean_lock.unlock();
-        env_set__.cond_expired_env.wait(lck);
+        env_set__.cv_expired_env.wait(lck);
 
         clean_lock.lock();
         std::scoped_lock lock(env_set__.mu_normal_env_count);

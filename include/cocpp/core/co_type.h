@@ -50,7 +50,7 @@ struct co_env_set
     std::recursive_mutex        normal_lock;         // 普通线程环境互斥锁
     std::set<co_env*>           expired_set;         // 过期线程环境
     std::recursive_mutex        expired_lock;        // 过期线程环境互斥锁
-    std::condition_variable_any cond_expired_env;    // 过期线程环境条件变量
+    std::condition_variable_any cv_expired_env;      // 过期线程环境条件变量
     unsigned int                normal_env_count;    // 普通线程环境数量
     std::recursive_mutex        mu_normal_env_count; // 普通线程环境数量互斥锁
     unsigned int                base_env_count;      // 基础线程环境数量

@@ -6,7 +6,7 @@ CO_NAMESPACE_BEGIN
 void co_sleep_controller::wake_up()
 {
     std::scoped_lock lock(mu__);
-    cond__.notify_one();
+    cv__.notify_one();
 }
 
 void co_sleep_controller::sleep_if_need()
@@ -14,7 +14,7 @@ void co_sleep_controller::sleep_if_need()
     std::unique_lock lock(mu__);
     while (checker__())
     {
-        cond__.wait(lock);
+        cv__.wait(lock);
     }
 }
 
@@ -23,7 +23,7 @@ void co_sleep_controller::sleep_if_need(std::function<bool()> checker)
     std::unique_lock lock(mu__);
     while (checker())
     {
-        cond__.wait(lock);
+        cv__.wait(lock);
     }
 }
 
