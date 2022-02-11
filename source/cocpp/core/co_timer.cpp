@@ -7,7 +7,7 @@ co_timer::co_timer(const std::function<void()>& func, co_expire_type type, unsig
     : handle__(static_cast<co_timer_handle>(reinterpret_cast<unsigned long>(this)))
     , callback__(func)
     , expire_type__(type)
-    , timer_type__(co_timer_type::absolute)
+    , timer_type__(co_timer_type::relative)
     , interval__(interval_ms)
     , status__(co_timer_status::stopped)
 {
@@ -17,7 +17,7 @@ co_timer::co_timer(const std::function<void()>& func, std::chrono::steady_clock:
     : handle__(static_cast<co_timer_handle>(reinterpret_cast<unsigned long>(this)))
     , callback__(func)
     , expire_type__(co_expire_type::once)
-    , timer_type__(co_timer_type::relative)
+    , timer_type__(co_timer_type::absolute)
     , interval__(0)
     , expire_time__(expire_time)
     , status__(co_timer_status::stopped)
