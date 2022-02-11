@@ -19,7 +19,6 @@ _Pragma("once");
 #include <map>
 #include <mutex>
 #include <set>
-#include <shared_mutex>
 
 CO_NAMESPACE_BEGIN
 
@@ -75,10 +74,13 @@ private:
     std::function<bool()>               need_free_mem_cb__ { [] { return false; } };         // 需要释放内存回调
     std::recursive_mutex                need_free_mem_cb_lock__;                             // 需要释放内存回调锁
     std::set<std::shared_ptr<co_timer>> timer_queue__;                                       // 定时器队列
-    std::shared_mutex                   mu_timer_queue__;                                    // 定时器队列锁
+    std::recursive_mutex                mu_timer_queue__;                                    // 定时器队列锁
+    std::condition_variable_any         cv_timer_queue__;                                    // 定时器队列条件变量
 
-    void    clean_env_routine__();              // 清理协程调度环境
-    void    timer_routine__();                  // 定时器
+    void clean_env_routine__(); // 清理协程调度环境
+    void monitor_routine__();   // 监控协程调度环境
+    void timer_routine__();     // 定时器
+
     void    redistribute_ctx__();               // 重新分配协程
     void    force_schedule__();                 // 强制调度
     void    destroy_redundant_env__();          // 销毁冗余环境
