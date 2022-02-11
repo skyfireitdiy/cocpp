@@ -4,6 +4,7 @@
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_env_factory.h"
 #include "cocpp/core/co_stack_factory.h"
+#include "cocpp/core/co_timer.h"
 #include "cocpp/core/co_vos.h"
 #include "cocpp/sync/co_spinlock.h"
 #include <cassert>
@@ -110,6 +111,9 @@ void co_manager::create_background_task__()
 {
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         clean_env_routine__();
+    }));
+    background_task__.emplace_back(std::async(std::launch::async, [this]() {
+        monitor_routine__();
     }));
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         timer_routine__();
@@ -225,6 +229,7 @@ void co_manager::set_clean_up__()
         env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
     }
     env_set__.cond_expired_env.notify_one();
+    cv_timer_queue__.notify_one();
 
     clean_up_set().pub();
 }
@@ -355,7 +360,7 @@ void co_manager::destroy_redundant_env__()
     redundant_env_destroyed().pub();
 }
 
-void co_manager::timer_routine__()
+void co_manager::monitor_routine__()
 {
     std::unique_lock lck(clean_up_lock__);
     while (!clean_up__)
@@ -366,6 +371,41 @@ void co_manager::timer_routine__()
         lck.lock();
     }
     timing_routine_finished().pub();
+}
+
+void co_manager::timer_routine__()
+{
+    std::unique_lock lck(mu_timer_queue__);
+
+    while (!clean_up__)
+    {
+        if (timer_queue__.empty())
+        {
+            cv_timer_queue__.wait(lck);
+        }
+        if (clean_up__)
+        {
+            break;
+        }
+        auto front = *timer_queue__.begin();
+        if (front->is_expired())
+        {
+            create_and_schedule_ctx(
+                {}, [front](co_any&) { front->run(); }, false);
+            if (front->expire_type() == co_expire_type::once)
+            {
+                front->stop();
+            }
+            else
+            {
+                front->reset();
+            }
+        }
+        else
+        {
+            cv_timer_queue__.wait_until(lck, front->expire_time());
+        }
+    }
 }
 
 void co_manager::set_timer_tick_duration(
@@ -472,6 +512,19 @@ void co_manager::steal_ctx_routine__()
             }
         }
     }
+}
+
+void co_manager::insert_timer_to_queue__(std::shared_ptr<co_timer> timer)
+{
+    std::scoped_lock lock(mu_timer_queue__);
+    timer_queue__.insert(timer);
+    cv_timer_queue__.notify_one();
+}
+
+void co_manager::remove_timer_from_queue__(std::shared_ptr<co_timer> timer)
+{
+    std::scoped_lock lock(mu_timer_queue__);
+    timer_queue__.erase(timer);
 }
 
 CO_NAMESPACE_END

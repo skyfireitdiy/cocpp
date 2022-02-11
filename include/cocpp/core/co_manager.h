@@ -28,6 +28,8 @@ class co_env_factory;
 class co_ctx_factory;
 class co_stack_factory;
 class co_scheduler_factory;
+class co_timer;
+
 using namespace std::chrono_literals;
 class co_manager final : public co_singleton_static<co_manager>
 {
@@ -71,9 +73,14 @@ private:
     size_t                              default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE; // 默认共享堆栈大小
     std::function<bool()>               need_free_mem_cb__ { [] { return false; } };         // 需要释放内存回调
     std::recursive_mutex                need_free_mem_cb_lock__;                             // 需要释放内存回调锁
+    std::set<std::shared_ptr<co_timer>> timer_queue__;                                       // 定时器队列
+    std::recursive_mutex                mu_timer_queue__;                                    // 定时器队列锁
+    std::condition_variable_any         cv_timer_queue__;                                    // 定时器队列条件变量
 
-    void    clean_env_routine__();              // 清理协程调度环境
-    void    timer_routine__();                  // 定时器
+    void clean_env_routine__(); // 清理协程调度环境
+    void monitor_routine__();   // 监控协程调度环境
+    void timer_routine__();     // 定时器
+
     void    redistribute_ctx__();               // 重新分配协程
     void    force_schedule__();                 // 强制调度
     void    destroy_redundant_env__();          // 销毁冗余环境
@@ -89,6 +96,9 @@ private:
     void    create_background_task__();         // 创建后台任务
     void    create_env_from_this_thread__();    // 创建当前线程环境
     void    steal_ctx_routine__();              // 偷取协程
+
+    void insert_timer_to_queue__(std::shared_ptr<co_timer> timer);   // 插入定时器到队列
+    void remove_timer_from_queue__(std::shared_ptr<co_timer> timer); // 从队列移除定时器
 
     co_manager(); // 构造函数
 public:
@@ -114,6 +124,7 @@ public:
     CoMemberMethodProxy(factory_set__.stack_factory, destroy_stack);
 
     friend class co_singleton_static<co_manager>;
+    friend class co_timer;
 };
 
 CO_NAMESPACE_END
