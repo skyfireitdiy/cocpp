@@ -12,7 +12,7 @@ class co_sleep_controller final
 {
 private:
     std::recursive_mutex        mu__;      // 互斥锁
-    std::condition_variable_any cond__;    // 条件变量
+    std::condition_variable_any cv__;      // 条件变量
     std::function<bool()>       checker__; // 条件检查函数
 public:
     co_sleep_controller(std::function<bool()> checker);                 // 构造函数

@@ -15,8 +15,8 @@ class co_counting_semaphore final : private co_noncopyable
 {
 private:
     co_mutex              mu__;            // 互斥锁
-    co_condition_variable empty_cond__;    // 空闲条件变量
-    co_condition_variable full_cond__;     // 满条件变量
+    co_condition_variable cv_empty__;      // 空闲条件变量
+    co_condition_variable cv_full__;       // 满条件变量
     std::ptrdiff_t        desired__;       // 期望值
     void                  release_one__(); // 释放一个信号量
 public:
@@ -40,10 +40,10 @@ void co_counting_semaphore<LeastMaxValue>::acquire()
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
     while (desired__ == 0)
     {
-        empty_cond__.wait(lock);
+        cv_empty__.wait(lock);
     }
     --desired__;
-    full_cond__.notify_one();
+    cv_full__.notify_one();
 }
 
 template <std::ptrdiff_t LeastMaxValue>
@@ -53,10 +53,10 @@ void co_counting_semaphore<LeastMaxValue>::release_one__()
     assert(desired__ >= 0 && desired__ <= LeastMaxValue);
     while (desired__ == LeastMaxValue)
     {
-        full_cond__.wait(lock);
+        cv_full__.wait(lock);
     }
     ++desired__;
-    empty_cond__.notify_one();
+    cv_empty__.notify_one();
 }
 
 template <std::ptrdiff_t LeastMaxValue>
@@ -78,7 +78,7 @@ bool co_counting_semaphore<LeastMaxValue>::try_acquire() noexcept
         return false;
     }
     --desired__;
-    full_cond__.notify_one();
+    cv_full__.notify_one();
     return true;
 }
 

@@ -17,8 +17,8 @@ private:
     std::deque<ValueType> data__;
     bool                  closed__ { false };
     mutable co_mutex      mu__;
-    co_condition_variable full_cond__;
-    co_condition_variable empty_cond__;
+    co_condition_variable cv_full__;
+    co_condition_variable cv_empty__;
 
 public:
     class iterator
@@ -105,7 +105,7 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     {
         if (data__.size() == MaxSize)
         {
-            full_cond__.wait(lock, [this] { return closed__ || data__.size() < max_size; });
+            cv_full__.wait(lock, [this] { return closed__ || data__.size() < max_size; });
             if (closed__)
             {
                 return false;
@@ -114,11 +114,11 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     }
 
     data__.push_back(value);
-    empty_cond__.notify_one();
+    cv_empty__.notify_one();
 
     if constexpr (MaxSize == 0) // 无缓冲channel需要等待接收侧将数据取走
     {
-        full_cond__.wait(lock, [this] { return closed__ || data__.empty(); });
+        cv_full__.wait(lock, [this] { return closed__ || data__.empty(); });
     }
 
     return true;
@@ -136,7 +136,7 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
         {
             return ret;
         }
-        empty_cond__.wait(lock, [this] { return closed__ || !data__.empty(); });
+        cv_empty__.wait(lock, [this] { return closed__ || !data__.empty(); });
         if (data__.empty())
         {
             return ret;
@@ -145,7 +145,7 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
 
     ret = data__.front();
     data__.pop_front();
-    full_cond__.notify_one();
+    cv_full__.notify_one();
     return ret;
 }
 
@@ -154,8 +154,8 @@ void co_chan<ValueType, MaxSize>::close()
 {
     std::scoped_lock lock(mu__);
     closed__ = true;
-    full_cond__.notify_all();
-    empty_cond__.notify_all();
+    cv_full__.notify_all();
+    cv_empty__.notify_all();
 }
 
 template <typename ValueType, int MaxSize>
