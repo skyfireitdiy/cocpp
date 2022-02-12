@@ -179,6 +179,7 @@ void co_env::update_ctx_state__(co_ctx* curr, co_ctx* next)
     next->set_state(co_state::running);
 }
 
+// 此函数调用前必须保证调度已经被锁定
 bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
 {
     co_ctx* curr = current_ctx();
@@ -194,7 +195,10 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
     }
     else
     {
+        // 进入睡眠前需要解除调度锁，否则其他线程可能会被阻塞
+        unlock_schedule();
         sleep_if_need([this] { return idle_ctx__->test_flag(CO_CTX_FLAG_WAITING); });
+        lock_schedule();
     }
 
     if (curr == next)
@@ -247,6 +251,7 @@ void co_env::switch_normal_ctx__()
 void co_env::schedule_switch()
 {
     lock_schedule();
+    CoDefer(unlock_schedule());
     remove_detached_ctx__();
     if (shared_stack_switch_info__.need_switch)
     {
@@ -256,7 +261,6 @@ void co_env::schedule_switch()
     {
         switch_normal_ctx__();
     }
-    unlock_schedule();
 }
 
 void co_env::remove_ctx(co_ctx* ctx)

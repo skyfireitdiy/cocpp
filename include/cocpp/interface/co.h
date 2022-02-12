@@ -6,6 +6,7 @@ _Pragma("once");
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_return_value.h"
+#include "cocpp/core/co_timer.h"
 #include "cocpp/utils/co_defer.h"
 #include "cocpp/utils/co_noncopyable.h"
 
@@ -197,10 +198,19 @@ void this_co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration
 template <class Clock, class Duration>
 void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time)
 {
-    do
-    {
-        co_manager::instance()->current_env()->schedule_switch();
-    } while (std::chrono::steady_clock::now() < abs_time);
+    auto env   = co_manager::instance()->current_env();
+    auto ctx   = env->current_ctx();
+    auto timer = co_timer::create([ctx] {
+        ctx->leave_wait_resource_state();
+    },
+                                  abs_time);
+
+    env->lock_schedule(); // 在设置等待状态到启动定时器之间不能有调度
+    ctx->enter_wait_resource_state(CO_RC_TYPE_TIMER, nullptr);
+    timer->start();
+    env->unlock_schedule();
+
+    yield();
 }
 
 CO_NAMESPACE_END
