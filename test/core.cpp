@@ -12,7 +12,6 @@
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
-#include "cocpp/interface/co_this_co.h"
 #include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/sync/co_binary_semaphore.h"
 #include "cocpp/sync/co_call_once.h"

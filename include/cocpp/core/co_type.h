@@ -1,7 +1,6 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
-#include "cocpp/sync/co_spinlock.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -16,10 +15,11 @@ class co_env_factory;
 class co_ctx_factory;
 class co_stack_factory;
 
-using co_byte          = unsigned char;
-using co_id            = unsigned long long;
-using co_event_handler = unsigned long long;
-using co_tid           = unsigned long long;
+using co_byte         = unsigned char;
+using co_id           = unsigned long long;
+using co_event_handle = unsigned long long;
+using co_tid          = unsigned long long;
+using co_timer_handle = unsigned long long;
 
 enum class co_state : unsigned char
 {
@@ -55,13 +55,6 @@ struct co_env_set
     std::recursive_mutex        mu_normal_env_count; // 普通线程环境数量互斥锁
     unsigned int                base_env_count;      // 基础线程环境数量
     unsigned int                max_env_count;       // 最大线程环境数量
-};
-
-struct co_factory_set
-{
-    co_env_factory* const   env_factory;   // 环境工厂
-    co_ctx_factory* const   ctx_factory;   // 上下文工厂
-    co_stack_factory* const stack_factory; // 堆栈工厂
 };
 
 CO_NAMESPACE_END

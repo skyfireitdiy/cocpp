@@ -2,7 +2,6 @@ _Pragma("once");
 #include "cocpp/core/co_define.h"
 #include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/mem/co_object_pool.h"
-#include "cocpp/utils/co_noncopyable.h"
 #include "cocpp/utils/co_singleton.h"
 #include <cstddef>
 

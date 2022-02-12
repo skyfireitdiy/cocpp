@@ -1,7 +1,7 @@
 _Pragma("once");
 #include "cocpp/core/co_define.h"
-#include "cocpp/core/co_stack_factory.h"
 #include <functional>
+#include <string>
 
 CO_NAMESPACE_BEGIN
 

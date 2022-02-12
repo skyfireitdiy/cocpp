@@ -1,22 +1,16 @@
 _Pragma("once");
 
 #include "cocpp/comm/co_event.h"
-#include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env_factory.h"
 #include "cocpp/core/co_stack_factory.h"
-#include "cocpp/sync/co_spinlock.h"
-#include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_noncopyable.h"
 #include "cocpp/utils/co_singleton.h"
 
-#include <condition_variable>
-#include <deque>
 #include <functional>
 #include <future>
 #include <list>
-#include <map>
 #include <mutex>
 #include <set>
 
@@ -26,9 +20,9 @@ class co_env;
 class co_ctx;
 class co_env_factory;
 class co_ctx_factory;
-class co_stack_factory;
 class co_scheduler_factory;
 class co_timer;
+struct co_ctx_config;
 
 using namespace std::chrono_literals;
 class co_manager final : public co_singleton_static<co_manager>
@@ -58,12 +52,6 @@ private:
         .base_env_count   = std::thread::hardware_concurrency(),    // 基础环境数量
         .max_env_count    = std::thread::hardware_concurrency() * 2 // 最大环境数量
     };                                                              // 协程调度环境集合
-
-    co_factory_set factory_set__ {
-        .env_factory   = co_env_factory::instance(),  // 环境工厂
-        .ctx_factory   = co_ctx_factory::instance(),  // 协程工厂
-        .stack_factory = co_stack_factory::instance() // 堆栈工厂
-    };                                                // 工厂集合
 
     bool                                clean_up__ { false };                                // 是否需要清理协程调度环境
     std::recursive_mutex                clean_up_lock__;                                     // 清理协程调度环境锁
@@ -117,11 +105,6 @@ public:
            const std::chrono::steady_clock::duration& duration);        // 设置定时器时间
     const std::chrono::steady_clock::duration& timing_duration() const; // 获取定时器时间
     ~co_manager();                                                      // 析构函数
-
-    CoMemberMethodProxy(factory_set__.ctx_factory, create_ctx);
-    CoMemberMethodProxy(factory_set__.ctx_factory, destroy_ctx);
-    CoMemberMethodProxy(factory_set__.stack_factory, create_stack);
-    CoMemberMethodProxy(factory_set__.stack_factory, destroy_stack);
 
     friend class co_singleton_static<co_manager>;
     friend class co_timer;

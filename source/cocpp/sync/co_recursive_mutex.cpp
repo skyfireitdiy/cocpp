@@ -1,8 +1,8 @@
 #include "cocpp/sync/co_recursive_mutex.h"
 #include "cocpp/core/co_define.h"
+#include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/exception/co_error.h"
-#include "cocpp/interface/co.h"
-#include "cocpp/interface/co_this_co.h"
 #include "cocpp/utils/co_utils.h"
 
 #include <cassert>
@@ -11,7 +11,7 @@ CO_NAMESPACE_BEGIN
 
 void co_recursive_mutex::lock()
 {
-    auto             ctx = co::current_ctx();
+    auto             ctx = co_manager::instance()->current_env()->current_ctx();
     std::scoped_lock lock(spinlock__);
 
     if (owner__ == nullptr || owner__ == ctx)
@@ -30,7 +30,7 @@ void co_recursive_mutex::lock()
                 return true;
             }
             spinlock__.unlock();
-            this_co::yield();
+            co_manager::instance()->current_env()->schedule_switch();
             spinlock__.lock();
             return false;
         }))
@@ -45,14 +45,14 @@ void co_recursive_mutex::lock()
         ctx->enter_wait_resource_state(CO_RC_TYPE_RECURSIVE_MUTEX, this);
 
         spinlock__.unlock();
-        this_co::yield();
+        co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
     }
 }
 
 bool co_recursive_mutex::try_lock()
 {
-    auto             ctx = co::current_ctx();
+    auto             ctx = co_manager::instance()->current_env()->current_ctx();
     std::scoped_lock lock(spinlock__);
     if (owner__ != ctx && owner__ != nullptr)
     {
@@ -65,7 +65,7 @@ bool co_recursive_mutex::try_lock()
 
 void co_recursive_mutex::unlock()
 {
-    auto             ctx = co::current_ctx();
+    auto             ctx = co_manager::instance()->current_env()->current_ctx();
     std::scoped_lock lock(spinlock__);
     if (owner__ != ctx)
     {

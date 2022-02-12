@@ -1,15 +1,12 @@
-#include "cocpp/utils/co_defer.h"
 _Pragma("once");
 
 #include "cocpp/comm/co_event.h"
-#include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_ctx_config.h"
-#include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_return_value.h"
-#include "cocpp/utils/co_any.h"
+#include "cocpp/utils/co_defer.h"
 #include "cocpp/utils/co_noncopyable.h"
 
 #include <chrono>
@@ -17,7 +14,6 @@ _Pragma("once");
 #include <initializer_list>
 #include <optional>
 #include <thread>
-#include <type_traits>
 
 CO_NAMESPACE_BEGIN
 
@@ -41,7 +37,6 @@ private:
 
 public:
     // 静态函数
-    CoMemberMethodProxyStatic(manager__, set_if_free_mem_callback);
     CoMemberMethodProxyStatic(manager__, create_env);
     CoMemberMethodProxyStatic(manager__, current_env);
     CoMemberMethodProxyStatic(manager__, set_env_shared_stack_size);
@@ -49,10 +44,6 @@ public:
     CoMemberMethodProxyStatic(manager__, set_max_schedule_thread_count);
     CoMemberMethodProxyStatic(manager__, set_timer_tick_duration);
     CoMemberMethodProxyStatic(manager__, timing_duration);
-    CoMemberMethodProxyStatic(manager__, create_ctx);
-    CoMemberMethodProxyStatic(manager__, destroy_ctx);
-    CoMemberMethodProxyStatic(manager__, create_stack);
-    CoMemberMethodProxyStatic(manager__, destroy_stack);
 
     CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), workload, current_env_);
     CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), state, current_env_);
@@ -76,53 +67,6 @@ public:
     CoMemberMethodProxyWithPrefix(ctx__, finished, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, priority_changed, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, state_changed, ctx_);
-    CoMemberMethodProxyWithPrefix(ctx__, env_set, ctx_);
-    CoMemberMethodProxyWithPrefix(ctx__, locked_destroy, ctx_);
-    CoMemberMethodProxyWithPrefix(ctx__, unlocked_destroy, ctx_);
-    CoMemberMethodProxyWithPrefix(ctx__, stack_set, ctx_);
-
-    // env事件
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), task_finished, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), ctx_added, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), wait_ctx_timeout, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), wait_ctx_finished, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), state_changed, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), switched_to, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), ctx_removed, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), schedule_stopped, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), schedule_started, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), idle_waited, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), idle_waked, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), all_ctx_removed, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), scheduled_flag_reset, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), schedule_locked, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), schedule_unlocked, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), ctx_taken, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), ctx_initted, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), shared_stack_saved, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), shared_stack_restored, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), all_moveable_ctx_taken, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), this_thread_converted_to_schedule_thread, current_env_);
-
-    // manager 事件
-    CoMemberMethodProxyStaticWithPrefix(manager__, best_env_got, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, env_created, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, env_shared_stack_size_set, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, background_task_created, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, env_removed, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, env_from_this_thread_created, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, clean_up_set, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, env_routine_cleaned, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, base_thread_count_set, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, max_thread_count_set, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, ctx_redistributed, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, redundant_env_destroyed, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, timing_routine_finished, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, timing_duration_set, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, all_factory_destroyed, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, background_task_finished, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, ctx_created, manager_);
-    CoMemberMethodProxyStaticWithPrefix(manager__, timing_routine_timout, manager_);
 
     template <typename Func, typename... Args>
     co(Func&& func, Args&&... args); // 构造一个协程，参数为可调用对象与参数列表，如：co c(add, 1, 2);
@@ -144,6 +88,17 @@ public:
 
     ~co();
 };
+
+namespace this_co
+{
+co_id       id();    // 协程id
+std::string name();  // 协程名称
+void        yield(); // 主动让出cpu
+template <class Rep, class Period>
+void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration); // 协程睡眠
+template <class Clock, class Duration>
+void sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time); // 协程睡眠
+}
 
 #define CoLocal(name, type) []() -> type& {                      \
     return cocpp::co::current_ctx()->local_storage<type>(#name); \
@@ -231,6 +186,21 @@ co co::then(std::function<Result()> f) const
         manager__->current_env()->wait_ctx(ctx);
         return f();
     });
+}
+
+template <class Rep, class Period>
+void this_co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
+{
+    return sleep_until(std::chrono::steady_clock::now() + sleep_duration);
+}
+
+template <class Clock, class Duration>
+void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time)
+{
+    do
+    {
+        co_manager::instance()->current_env()->schedule_switch();
+    } while (std::chrono::steady_clock::now() < abs_time);
 }
 
 CO_NAMESPACE_END

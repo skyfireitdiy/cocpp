@@ -1,8 +1,8 @@
 #include "cocpp/sync/co_mutex.h"
 #include "cocpp/core/co_define.h"
+#include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/exception/co_error.h"
-#include "cocpp/interface/co.h"
-#include "cocpp/interface/co_this_co.h"
 #include "cocpp/utils/co_defer.h"
 #include "cocpp/utils/co_utils.h"
 #include <chrono>
@@ -12,7 +12,7 @@ CO_NAMESPACE_BEGIN
 
 void co_mutex::lock()
 {
-    auto             ctx = co::current_ctx();
+    auto             ctx = co_manager::instance()->current_env()->current_ctx();
     std::scoped_lock lock(spinlock__);
 
     if (owner__ == nullptr)
@@ -26,7 +26,7 @@ void co_mutex::lock()
     while (std::chrono::steady_clock::now() < deadline)
     {
         spinlock__.unlock();
-        this_co::yield();
+        co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
         if (owner__ == nullptr)
         {
@@ -43,7 +43,7 @@ void co_mutex::lock()
                 return true;
             }
             spinlock__.unlock();
-            this_co::yield();
+            co_manager::instance()->current_env()->schedule_switch();
             spinlock__.lock();
             return false;
         }))
@@ -57,7 +57,7 @@ void co_mutex::lock()
     {
         ctx->enter_wait_resource_state(CO_RC_TYPE_MUTEX, this);
         spinlock__.unlock();
-        this_co::yield();
+        co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
     }
     owner__ = ctx;
@@ -65,7 +65,7 @@ void co_mutex::lock()
 
 bool co_mutex::try_lock()
 {
-    auto             ctx = co::current_ctx();
+    auto             ctx = co_manager::instance()->current_env()->current_ctx();
     std::scoped_lock lock(spinlock__);
     if (owner__ != nullptr)
     {
@@ -77,7 +77,7 @@ bool co_mutex::try_lock()
 
 void co_mutex::unlock()
 {
-    auto             ctx = co::current_ctx();
+    auto             ctx = co_manager::instance()->current_env()->current_ctx();
     std::scoped_lock lock(spinlock__);
     if (owner__ != ctx)
     {

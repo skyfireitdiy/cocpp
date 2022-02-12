@@ -1,11 +1,13 @@
 _Pragma("once");
-#include "cocpp/core/co_ctx_config.h"
-#include "cocpp/core/co_stack.h"
-#include "cocpp/mem/co_object_pool.h"
+#include "cocpp/core/co_ctx.h"
 #include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_singleton.h"
 
+#include <functional>
+
 CO_NAMESPACE_BEGIN
+
+struct co_ctx_config;
 
 class co_ctx_factory final : public co_singleton<co_ctx_factory>
 {

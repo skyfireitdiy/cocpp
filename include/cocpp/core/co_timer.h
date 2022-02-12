@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
+#include "cocpp/core/co_type.h"
 #include "cocpp/utils/co_noncopyable.h"
 
 #include <chrono>
@@ -9,8 +10,6 @@ _Pragma("once");
 #include <mutex>
 
 CO_NAMESPACE_BEGIN
-
-using co_timer_handle = unsigned long long;
 
 enum class co_expire_type
 {

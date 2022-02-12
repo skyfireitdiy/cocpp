@@ -1,8 +1,6 @@
 _Pragma("once");
-#include <iostream>
-#include <thread>
 
-#include <unistd.h>
+#include <cstddef>
 
 #define CO_NAMESPACE cocpp
 #define CO_NAMESPACE_BEGIN \

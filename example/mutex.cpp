@@ -1,7 +1,6 @@
 // 此 example 演示co_mutex使用
 
 #include "cocpp/interface/co.h"
-#include "cocpp/interface/co_this_co.h"
 #include "cocpp/sync/co_mutex.h"
 
 #include <cstdio>
