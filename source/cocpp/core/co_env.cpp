@@ -77,6 +77,7 @@ void co_env::move_ctx_to_here(co_ctx* ctx)
     {
         std::scoped_lock lock(mu_normal_ctx__);
         all_normal_ctx__[ctx->priority()].push_back(ctx);
+        ++ctx_count__;
     }
 
     update_min_priority__(ctx->priority());
@@ -127,16 +128,16 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
     return ctx->ret_ref();
 }
 
-int co_env::workload() const
+size_t co_env::workload() const
 {
-    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
+    std::scoped_lock lock(mu_normal_ctx__);
+    return ctx_count__;
+}
 
-    size_t ret = 0;
-    for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
-    {
-        ret += all_normal_ctx__[i].size();
-    }
-    return ret;
+size_t co_env::ctx_count() const
+{
+    std::scoped_lock lock(mu_normal_ctx__);
+    return ctx_count__;
 }
 
 void co_env::remove_detached_ctx__()
@@ -537,6 +538,7 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
             if (ctx->can_move())
             {
                 all_normal_ctx__[i].remove(ctx);
+                --ctx_count__;
                 ret.push_back(ctx);
             }
         }
@@ -556,6 +558,7 @@ co_ctx* co_env::take_one_movable_ctx()
             if (ctx->can_move())
             {
                 all_normal_ctx__[i].remove(ctx);
+                --ctx_count__;
                 one_moveable_ctx_taken().pub(ctx);
                 return ctx;
             }
@@ -577,14 +580,7 @@ void co_env::update_min_priority__(int priority)
 bool co_env::has_ctx() const
 {
     std::scoped_lock lock(mu_normal_ctx__);
-    for (auto& lst : all_normal_ctx__)
-    {
-        if (!lst.empty())
-        {
-            return true;
-        }
-    }
-    return false;
+    return ctx_count__ > 0;
 }
 
 void co_env::lock_schedule()

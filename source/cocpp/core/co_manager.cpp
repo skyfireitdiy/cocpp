@@ -23,7 +23,7 @@ co_env* co_manager::get_best_env__()
     }
 
     co_env* best_env               = nullptr;
-    auto    min_workload           = std::numeric_limits<int>::max();
+    auto    min_workload           = std::numeric_limits<size_t>::max();
     size_t  can_schedule_env_count = 0;
     for (auto& env : env_set__.normal_set)
     {
