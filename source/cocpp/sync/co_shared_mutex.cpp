@@ -46,7 +46,7 @@ void co_shared_mutex::lock()
 
     while (!owners__.contains(ctx))
     {
-        ctx->enter_wait_resource_state(CO_RC_TYPE_SHARED_MUTEX, this);
+        ctx->enter_wait_resource_state(co_waited_rc_type::shared_mutex, this);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
@@ -117,7 +117,7 @@ void co_shared_mutex::lock_shared()
 
     while (!owners__.contains(ctx))
     {
-        ctx->enter_wait_resource_state(CO_RC_TYPE_SHARED_MUTEX, this);
+        ctx->enter_wait_resource_state(co_waited_rc_type::shared_mutex, this);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
