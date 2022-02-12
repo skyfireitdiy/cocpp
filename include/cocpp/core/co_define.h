@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include <cstddef>
+#include <unistd.h>
 
 #define CO_NAMESPACE cocpp
 #define CO_NAMESPACE_BEGIN \
@@ -48,6 +49,7 @@ constexpr int CO_MAX_PRIORITY      = 100; // 最大优先级
 constexpr int CO_RC_TYPE_MUTEX           = 0; // 互斥锁
 constexpr int CO_RC_TYPE_RECURSIVE_MUTEX = 1; // 递归互斥锁
 constexpr int CO_RC_TYPE_SHARED_MUTEX    = 2; // 共享互斥锁
+constexpr int CO_RC_TYPE_TIMER           = 3; // 计时器
 
 CO_NAMESPACE_END
 
