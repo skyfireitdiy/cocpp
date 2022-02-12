@@ -209,7 +209,7 @@ co_id co_ctx::id() const
     return reinterpret_cast<co_id>(this);
 }
 
-void co_ctx::enter_wait_resource_state(int rc_type, void* rc)
+void co_ctx::enter_wait_resource_state(co_waited_rc_type rc_type, void* rc)
 {
     {
         std::scoped_lock lock(wait_data__.mu);

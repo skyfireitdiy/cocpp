@@ -42,7 +42,7 @@ void co_recursive_mutex::lock()
 
     while (owner__ != ctx)
     {
-        ctx->enter_wait_resource_state(CO_RC_TYPE_RECURSIVE_MUTEX, this);
+        ctx->enter_wait_resource_state(co_waited_rc_type::shared_mutex, this);
 
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();

@@ -37,10 +37,18 @@ enum class co_env_state : unsigned char
     created,    // 创建完成状态，此env不能用于调度ctx，通常是普通线程适配产生的env
 };
 
+enum class co_waited_rc_type : unsigned char
+{
+    mutex,           // 互斥锁
+    recursive_mutex, // 递归互斥锁
+    shared_mutex,    // 共享互斥锁
+    timer,           // 定时器
+};
+
 struct co_ctx_wait_data
 {
     std::recursive_mutex mu;       // 互斥锁
-    int                  type;     // 等待类型
+    co_waited_rc_type    type;     // 等待类型
     void*                resource; // 等待资源
 };
 

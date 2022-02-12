@@ -206,7 +206,7 @@ void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_ti
                                   abs_time);
 
     env->lock_schedule(); // 在设置等待状态到启动定时器之间不能有调度
-    ctx->enter_wait_resource_state(CO_RC_TYPE_TIMER, nullptr);
+    ctx->enter_wait_resource_state(co_waited_rc_type::timer, nullptr);
     timer->start();
     env->unlock_schedule();
 

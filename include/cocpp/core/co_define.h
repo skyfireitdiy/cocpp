@@ -46,11 +46,6 @@ constexpr int CO_ENV_FLAG_MAX               = 8; // 最大FLAG值
 constexpr int CO_IDLE_CTX_PRIORITY = 99;  // idle ctx优先级
 constexpr int CO_MAX_PRIORITY      = 100; // 最大优先级
 
-constexpr int CO_RC_TYPE_MUTEX           = 0; // 互斥锁
-constexpr int CO_RC_TYPE_RECURSIVE_MUTEX = 1; // 递归互斥锁
-constexpr int CO_RC_TYPE_SHARED_MUTEX    = 2; // 共享互斥锁
-constexpr int CO_RC_TYPE_TIMER           = 3; // 计时器
-
 CO_NAMESPACE_END
 
 // 调试宏

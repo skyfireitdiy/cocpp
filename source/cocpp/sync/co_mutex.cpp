@@ -55,7 +55,7 @@ void co_mutex::lock()
 
     while (owner__ != ctx)
     {
-        ctx->enter_wait_resource_state(CO_RC_TYPE_MUTEX, this);
+        ctx->enter_wait_resource_state(co_waited_rc_type::mutex, this);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
