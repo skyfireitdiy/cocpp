@@ -286,7 +286,7 @@ void co_manager::force_schedule__()
     for (auto& env : env_set__.normal_set)
     {
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
-        if (env->is_blocked())
+        if (env->is_blocked() && env->ctx_count() > 1)
         {
             // 强行外部调度
             send_switch_from_outside_signal(env);
