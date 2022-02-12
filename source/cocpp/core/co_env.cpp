@@ -143,7 +143,7 @@ size_t co_env::ctx_count() const
 void co_env::remove_detached_ctx__()
 {
     auto curr    = current_ctx();
-    auto all_ctx = all_scheduleable_ctx__();
+    auto all_ctx = all_ctx__();
     for (auto& ctx : all_ctx)
     {
         // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
@@ -264,6 +264,7 @@ void co_env::remove_ctx(co_ctx* ctx)
         std::scoped_lock lock(mu_normal_ctx__);
         // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
         all_normal_ctx__[ctx->priority()].remove(ctx);
+        --ctx_count__;
     }
     co::destroy_ctx(ctx);
     ctx_removed().pub(ctx);
@@ -488,17 +489,6 @@ co_ctx* co_env::choose_ctx_from_normal_list__()
 }
 
 std::list<co_ctx*> co_env::all_ctx__()
-{
-    std::scoped_lock   lock(mu_normal_ctx__);
-    std::list<co_ctx*> ret;
-    for (auto& lst : all_normal_ctx__)
-    {
-        ret.insert(ret.end(), lst.begin(), lst.end());
-    }
-    return ret;
-}
-
-std::list<co_ctx*> co_env::all_scheduleable_ctx__() const
 {
     std::scoped_lock   lock(mu_normal_ctx__);
     std::list<co_ctx*> ret;
