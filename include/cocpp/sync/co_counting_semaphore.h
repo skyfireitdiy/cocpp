@@ -1,7 +1,8 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
-#include "cocpp/interface/co_this_co.h"
+#include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/sync/co_condition_variable.h"
 #include "cocpp/sync/co_mutex.h"
 #include "cocpp/utils/co_noncopyable.h"
@@ -99,7 +100,7 @@ bool co_counting_semaphore<LeastMaxValue>::try_acquire_until(const std::chrono::
         {
             return true;
         }
-        co::current_env()->schedule_switch();
+        co_manager::instance()->current_env()->schedule_switch();
     } while (std::chrono::steady_clock::now() < abs_time);
     return false;
 }

@@ -3,7 +3,8 @@ _Pragma("once");
 #include <chrono>
 
 #include "cocpp/core/co_define.h"
-#include "cocpp/interface/co.h"
+#include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/sync/co_shared_mutex.h"
 #include "cocpp/sync/co_timed_addition.h"
 
@@ -35,7 +36,7 @@ bool co_shared_timed_mutex::try_lock_shared_until(const std::chrono::time_point<
         {
             return true;
         }
-        co::current_env()->schedule_switch();
+        co_manager::instance()->current_env()->schedule_switch();
     } while (std::chrono::steady_clock::now() < timeout_time);
     return false;
 }

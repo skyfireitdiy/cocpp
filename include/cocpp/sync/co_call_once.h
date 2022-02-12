@@ -3,7 +3,6 @@ _Pragma("once");
 #include "cocpp/utils/co_noncopyable.h"
 #include <atomic>
 #include <functional>
-#include <utility>
 
 CO_NAMESPACE_BEGIN
 

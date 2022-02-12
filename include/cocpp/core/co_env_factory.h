@@ -1,6 +1,5 @@
 _Pragma("once");
 
-#include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/mem/co_object_pool.h"
 #include "cocpp/utils/co_singleton.h"

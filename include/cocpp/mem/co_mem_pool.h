@@ -2,7 +2,6 @@ _Pragma("once");
 
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_type.h"
-#include "cocpp/sync/co_spinlock.h"
 #include "cocpp/utils/co_noncopyable.h"
 #include <deque>
 #include <mutex>

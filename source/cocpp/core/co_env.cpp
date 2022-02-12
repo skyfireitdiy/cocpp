@@ -1,12 +1,13 @@
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_ctx_config.h"
+#include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_stack.h"
+#include "cocpp/core/co_stack_factory.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
 #include "cocpp/exception/co_error.h"
-#include "cocpp/interface/co.h"
 #include "cocpp/utils/co_defer.h"
 
 #include <cassert>
@@ -266,7 +267,7 @@ void co_env::remove_ctx(co_ctx* ctx)
         all_normal_ctx__[ctx->priority()].remove(ctx);
         --ctx_count__;
     }
-    co::destroy_ctx(ctx);
+    co_ctx_factory::instance()->destroy_ctx(ctx);
     ctx_removed().pub(ctx);
 }
 
@@ -388,7 +389,7 @@ void co_env::save_shared_stack__(co_ctx* ctx)
 {
 
     auto stack_size = get_valid_stack_size__(ctx);
-    auto tmp_stack  = co::create_stack(stack_size);
+    auto tmp_stack  = co_stack_factory::instance()->create_stack(stack_size);
     memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
     ctx->set_stack(tmp_stack);
     shared_stack_saved().pub(ctx);
@@ -402,7 +403,7 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
     {
         memcpy(shared_stack__->stack_top() - ctx->stack()->stack_size(), ctx->stack()->stack(), ctx->stack()->stack_size());
         // 销毁原stack
-        co::destroy_stack(ctx->stack());
+        co_stack_factory::instance()->destroy_stack(ctx->stack());
     }
     else
     {

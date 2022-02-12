@@ -85,7 +85,7 @@ void co_manager::subscribe_ctx_event__(co_ctx* ctx)
 co_env* co_manager::create_env(bool dont_auto_destory)
 {
     assert(!clean_up__);
-    auto env = factory_set__.env_factory->create_env(default_shared_stack_size__);
+    auto env = co_env_factory::instance()->create_env(default_shared_stack_size__);
 
     subscribe_env_event__(env);
 
@@ -157,19 +157,19 @@ void co_manager::free_mem__()
         std::scoped_lock lck(need_free_mem_cb_lock__);
         if (need_free_mem_cb__())
         {
-            factory_set__.env_factory->free_obj_pool();
+            co_env_factory::instance()->free_obj_pool();
         }
         if (need_free_mem_cb__())
         {
-            factory_set__.ctx_factory->free_obj_pool();
+            co_ctx_factory::instance()->free_obj_pool();
         }
         if (need_free_mem_cb__())
         {
-            factory_set__.stack_factory->free_obj_pool();
+            co_stack_factory::instance()->free_obj_pool();
         }
         if (need_free_mem_cb__())
         {
-            factory_set__.stack_factory->free_stack_mem_pool();
+            co_stack_factory::instance()->free_stack_mem_pool();
         }
     }
 }
@@ -194,7 +194,7 @@ void co_manager::remove_env__(co_env* env)
 void co_manager::create_env_from_this_thread__()
 {
     std::scoped_lock lck(env_set__.normal_lock, env_set__.mu_normal_env_count);
-    current_env__ = factory_set__.env_factory->create_env_from_this_thread(default_shared_stack_size__);
+    current_env__ = co_env_factory::instance()->create_env_from_this_thread(default_shared_stack_size__);
 
     subscribe_env_event__(current_env__);
 
@@ -247,7 +247,7 @@ void co_manager::clean_env_routine__()
         std::scoped_lock lock(env_set__.mu_normal_env_count);
         for (auto& p : env_set__.expired_set)
         {
-            factory_set__.env_factory->destroy_env(p);
+            co_env_factory::instance()->destroy_env(p);
             --env_set__.normal_env_count;
         }
         env_set__.expired_set.clear();
@@ -455,7 +455,7 @@ void co_manager::wait_background_task__()
 
 co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, std::function<void(co_any&)> entry, bool lock_destroy)
 {
-    auto ctx = factory_set__.ctx_factory->create_ctx(config, entry);
+    auto ctx = co_ctx_factory::instance()->create_ctx(config, entry);
     subscribe_ctx_event__(ctx);
     if (lock_destroy)
     {

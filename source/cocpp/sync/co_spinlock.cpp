@@ -1,6 +1,7 @@
 #include "cocpp/sync/co_spinlock.h"
 #include "cocpp/core/co_define.h"
-#include "cocpp/interface/co_this_co.h"
+#include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
 #include <thread>
 
 CO_NAMESPACE_BEGIN
@@ -9,7 +10,7 @@ void co_spinlock::lock()
 {
     while (locked__.test_and_set(std::memory_order_acquire))
     {
-        this_co::yield();
+        co_manager::instance()->current_env()->schedule_switch();
     }
 }
 

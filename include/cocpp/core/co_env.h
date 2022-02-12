@@ -1,33 +1,26 @@
 _Pragma("once");
 
 #include "cocpp/comm/co_event.h"
-#include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_return_value.h"
 #include "cocpp/core/co_sleep_controller.h"
-#include "cocpp/core/co_stack_factory.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/mem/co_object_pool.h"
-#include "cocpp/sync/co_spinlock.h"
 #include "cocpp/utils/co_flag_manager.h"
 #include "cocpp/utils/co_noncopyable.h"
 #include "cocpp/utils/co_state_manager.h"
 
-#include <atomic>
-#include <bitset>
 #include <chrono>
-#include <condition_variable>
 #include <future>
 #include <list>
 #include <mutex>
 #include <optional>
-#include <set>
-#include <shared_mutex>
 #include <thread>
 
 CO_NAMESPACE_BEGIN
 
 class co_ctx;
+class co_stack;
 
 class co_env final : private co_noncopyable
 {

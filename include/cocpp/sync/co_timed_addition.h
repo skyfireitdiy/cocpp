@@ -3,7 +3,8 @@ _Pragma("once");
 #include <chrono>
 
 #include "cocpp/core/co_define.h"
-#include "cocpp/interface/co_this_co.h"
+#include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
 
 CO_NAMESPACE_BEGIN
 
@@ -36,7 +37,7 @@ bool co_timed_addition<Lock>::try_lock_until(const std::chrono::time_point<Clock
         {
             return true;
         }
-        co::current_env()->schedule_switch();
+        co_manager::instance()->current_env()->schedule_switch();
     } while (std::chrono::steady_clock::now() < timeout_time);
     return false;
 }

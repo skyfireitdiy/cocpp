@@ -1,9 +1,10 @@
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
+#include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
-#include "cocpp/interface/co.h"
 #include "cocpp/utils/co_defer.h"
 
 #include <mutex>
@@ -162,7 +163,7 @@ static void restore_context_from_ctx(sigcontext_64* context, co_ctx* ctx)
 
 void switch_from_outside(sigcontext_64* context)
 {
-    auto env = co::current_env();
+    auto env = co_manager::instance()->current_env();
 
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;

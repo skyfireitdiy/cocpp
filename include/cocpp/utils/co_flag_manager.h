@@ -1,7 +1,6 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
-#include "cocpp/sync/co_spinlock.h"
 
 #include <bitset>
 #include <mutex>

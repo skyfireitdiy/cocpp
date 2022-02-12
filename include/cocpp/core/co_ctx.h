@@ -1,18 +1,14 @@
 _Pragma("once");
 #include "co_define.h"
 #include "cocpp/comm/co_event.h"
-#include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_local.h"
-#include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/mem/co_object_pool.h"
 #include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_flag_manager.h"
 #include "cocpp/utils/co_state_manager.h"
 
-#include <atomic>
-#include <bitset>
 #include <exception>
 #include <memory>
 #include <mutex>
@@ -20,6 +16,7 @@ _Pragma("once");
 CO_NAMESPACE_BEGIN
 
 class co_env;
+class co_stack;
 
 class co_ctx final : private co_noncopyable
 {
