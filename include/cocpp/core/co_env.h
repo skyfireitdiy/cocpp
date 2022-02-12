@@ -86,7 +86,6 @@ private:                                                                        
     bool               need_sleep__();                                          // 是否需要睡眠
     co_ctx*            choose_ctx_from_normal_list__();                         // 从普通协程列表中选择ctx
     std::list<co_ctx*> all_ctx__();                                             // 所有ctx
-    std::list<co_ctx*> all_scheduleable_ctx__() const;                          // 所有可调度ctx
     bool               can_schedule__() const;                                  // 是否可以调度
     void               update_min_priority__(int priority);                     // 更新最小优先级
     void               create_shared_stack__();                                 // 创建共享栈
