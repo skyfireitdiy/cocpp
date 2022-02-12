@@ -66,6 +66,7 @@ private:                                                                        
     co_ctx* const                                                                   idle_ctx__ { nullptr };               // 空闲协程
     co_tid                                                                          schedule_thread_tid__ {};             // 调度线程tid
     std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY }; // 所有普通协程
+    size_t                                                                          ctx_count__ { 0 };                    // 协程数量
     mutable std::recursive_mutex                                                    mu_normal_ctx__;                      // 普通协程锁
     co_ctx*                                                                         curr_ctx__ { nullptr };               // 当前协程
     mutable std::recursive_mutex                                                    mu_curr_ctx__;                        // 当前协程锁
@@ -103,7 +104,7 @@ public:
     void                           move_ctx_to_here(co_ctx* ctx);                                  // 将ctx移动到这里
     std::optional<co_return_value> wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout); // 等待ctx
     co_return_value                wait_ctx(co_ctx* ctx);                                          // 等待ctx
-    int                            workload() const;                                               // 工作量
+    size_t                         workload() const;                                               // 工作量
     void                           schedule_switch();                                              // 调度切换
     void                           remove_ctx(co_ctx* ctx);                                        // 删除ctx
     co_ctx*                        current_ctx() const;                                            // 当前ctx
@@ -127,6 +128,7 @@ public:
     void                           set_exclusive();                                                // 设置为独占模式
     bool                           exclusive() const;                                              // 是否为独占模式
     bool                           has_ctx() const;                                                // 是否有ctx
+    size_t                         ctx_count() const;                                              // ctx数量
 
     CoConstMemberMethodProxy(&state_manager__, state);       // 获取状态
     CoConstMemberMethodProxy(&flag_manager__, test_flag);    // 测试标志
