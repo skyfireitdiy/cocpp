@@ -5,12 +5,14 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_stack_factory.h"
+#include "cocpp/core/co_timer.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
 #include "cocpp/exception/co_error.h"
 #include "cocpp/utils/co_defer.h"
 
 #include <cassert>
+#include <chrono>
 #include <cstring>
 #include <future>
 #include <iterator>
@@ -97,17 +99,39 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
 
     std::optional<co_return_value> ret;
 
-    auto now = std::chrono::steady_clock::now();
-    while (ctx->state() != co_state::finished)
+    ctx->state_lock().lock();
+    lock_schedule();
+    auto curr_ctx = current_ctx();
+    if (ctx->state() != co_state::finished)
     {
-        if (std::chrono::steady_clock::now() - now > timeout)
-        {
-            wait_ctx_timeout().pub(ctx);
-            return ret;
-        }
+        curr_ctx->enter_wait_resource_state(co_waited_rc_type::finished, nullptr);
+        auto timer = co_timer::create(
+            [curr_ctx] {
+                curr_ctx->leave_wait_resource_state(); // fixme: 此处应该删除sub回调函数
+            },
+            co_expire_type::once, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+        timer->start(); // 启动定时器，唤醒当前ctx
+        ctx->finished().sub([curr_ctx, timer] {
+            curr_ctx->leave_wait_resource_state();
+            timer->stop();
+        });
+
+        unlock_schedule();
+        ctx->state_lock().unlock();
         schedule_switch();
     }
+    else
+    {
+        unlock_schedule();
+        ctx->state_lock().unlock();
+    }
+
+    std ::scoped_lock lock(ctx->state_lock());
     wait_ctx_finished().pub(ctx);
+    if (ctx->state() != co_state::finished)
+    {
+        return ret;
+    }
     ctx->check_and_rethrow_exception();
     return ctx->ret_ref();
 }
