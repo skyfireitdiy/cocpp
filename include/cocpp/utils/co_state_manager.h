@@ -14,8 +14,9 @@ private:
     T                            state__ { InitState };
 
 public:
-    void set_state(const T& state);
-    T    state() const;
+    void  set_state(const T& state);
+    T     state() const;
+    auto& state_lock() const noexcept;
 };
 
 /////////////////////////////////// 模板实现 /////////////////////////////
@@ -34,6 +35,12 @@ T co_state_manager<T, InitState, FinalState>::state() const
 {
     std::scoped_lock lock(mu_state__);
     return state__;
+}
+
+template <typename T, T InitState, T FinalState>
+auto& co_state_manager<T, InitState, FinalState>::state_lock() const noexcept
+{
+    return mu_state__;
 }
 
 CO_NAMESPACE_END

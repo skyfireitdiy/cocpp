@@ -120,10 +120,27 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
     CoDefer(current_ctx()->set_priority(old_priority));
 
-    while (ctx->state() != co_state::finished)
     {
-        schedule_switch();
+        ctx->state_lock().lock();
+        lock_schedule();
+        auto curr_ctx = current_ctx();
+        if (ctx->state() != co_state::finished)
+        {
+            curr_ctx->enter_wait_resource_state(co_waited_rc_type::finished, nullptr);
+            ctx->finished().sub([curr_ctx] {
+                curr_ctx->leave_wait_resource_state();
+            });
+            unlock_schedule();
+            ctx->state_lock().unlock();
+            schedule_switch();
+        }
+        else
+        {
+            unlock_schedule();
+            ctx->state_lock().unlock();
+        }
     }
+
     wait_ctx_finished().pub(ctx);
     ctx->check_and_rethrow_exception();
     return ctx->ret_ref();
