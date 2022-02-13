@@ -85,8 +85,9 @@ public:
     template <typename T>
     T& local_storage(const std::string& name); // 获取局部存储
 
-    CoConstMemberMethodProxy(&flag_manager__, test_flag); // 测试标志
-    CoConstMemberMethodProxy(&state_manager__, state);    // 获取状态
+    CoConstMemberMethodProxy(&flag_manager__, test_flag);   // 测试标志
+    CoConstMemberMethodProxy(&state_manager__, state);      // 获取状态
+    CoConstMemberMethodProxy(&state_manager__, state_lock); // 获取状态
 
     friend class co_object_pool<co_ctx>;
 };

@@ -43,6 +43,7 @@ enum class co_waited_rc_type : unsigned char
     recursive_mutex, // 递归互斥锁
     shared_mutex,    // 共享互斥锁
     timer,           // 定时器
+    finished,        // 结束
 };
 
 struct co_ctx_wait_data
