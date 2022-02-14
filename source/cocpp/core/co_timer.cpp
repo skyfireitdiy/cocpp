@@ -117,7 +117,11 @@ bool co_timer::is_expired() const
 
 void co_timer::run() const
 {
-    callback__();
+    std::scoped_lock lock(mutex__);
+    if (callback__)
+    {
+        callback__();
+    }
 }
 
 bool operator==(const std::shared_ptr<co_timer>& lhs, const std::shared_ptr<co_timer>& rhs)
@@ -128,6 +132,14 @@ bool operator==(const std::shared_ptr<co_timer>& lhs, const std::shared_ptr<co_t
 bool operator<(const std::shared_ptr<co_timer>& lhs, const std::shared_ptr<co_timer>& rhs)
 {
     return lhs->expire_time() < rhs->expire_time();
+}
+
+std::function<void()> co_timer::set_expire_callback(const std::function<void()>& func)
+{
+    std::scoped_lock lock(mutex__);
+    auto             old_cb = callback__;
+    callback__              = func;
+    return old_cb;
 }
 
 CO_NAMESPACE_END

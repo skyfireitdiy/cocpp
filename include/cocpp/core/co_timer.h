@@ -34,7 +34,7 @@ class co_timer final : private co_noncopyable,
 {
 private:
     const co_timer_handle                 handle__;
-    const std::function<void()>           callback__;
+    std::function<void()>                 callback__;
     const co_expire_type                  expire_type__;
     const co_timer_type                   timer_type__;
     const unsigned long long              interval__;
@@ -43,7 +43,6 @@ private:
     mutable std::recursive_mutex          mutex__;
 
     co_timer(const std::function<void()>& func, co_expire_type type, unsigned long long interval_ms);
-
     co_timer(const std::function<void()>& func, std::chrono::steady_clock::time_point expire_time);
 
     void insert_to_timer_queue__();
@@ -61,6 +60,7 @@ public:
     co_expire_type                        expire_type() const;
     co_timer_type                         timer_type() const;
     bool                                  is_expired() const;
+    std::function<void()>                 set_expire_callback(const std::function<void()>& func);
 
     static std::shared_ptr<co_timer>
     create(const std::function<void()>& func, co_expire_type type, unsigned long long interval_ms);

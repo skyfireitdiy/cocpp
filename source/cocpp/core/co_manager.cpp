@@ -525,6 +525,7 @@ void co_manager::remove_timer_from_queue__(std::shared_ptr<co_timer> timer)
 {
     std::scoped_lock lock(mu_timer_queue__);
     timer_queue__.erase(timer);
+    cv_timer_queue__.notify_one();
 }
 
 CO_NAMESPACE_END
