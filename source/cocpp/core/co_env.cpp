@@ -105,16 +105,19 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
     if (ctx->state() != co_state::finished)
     {
         curr_ctx->enter_wait_resource_state(co_waited_rc_type::finished, nullptr);
+
         auto timer = co_timer::create(
-            [curr_ctx] {
-                curr_ctx->leave_wait_resource_state(); // fixme: 此处应该删除sub回调函数
-            },
+            nullptr,
             co_expire_type::once, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
-        timer->start(); // 启动定时器，唤醒当前ctx
-        ctx->finished().sub([curr_ctx, timer] {
+        auto handle = ctx->finished().sub([curr_ctx, timer] {
             curr_ctx->leave_wait_resource_state();
             timer->stop();
         });
+        timer->set_expire_callback([curr_ctx, ctx, handle] {
+            curr_ctx->leave_wait_resource_state();
+            ctx->finished().unsub(handle);
+        });
+        timer->start(); // 启动定时器，唤醒当前ctx
 
         unlock_schedule();
         ctx->state_lock().unlock();
