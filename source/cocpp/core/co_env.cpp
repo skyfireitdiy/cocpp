@@ -92,7 +92,7 @@ void co_env::move_ctx_to_here(co_ctx* ctx)
 
 std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
 {
-    // 反转优先级，防止高优先级ctx永久等待低优先级ctx
+    // Priority inversion prevents high priorities from being kept waiting and low priorities from being executed
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());
     CoDefer(current_ctx()->set_priority(old_priority));
@@ -110,14 +110,14 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
             nullptr,
             co_expire_type::once, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
         auto handle = ctx->finished().sub([curr_ctx, timer] {
+            timer->stop(); // Handle delete callbacks first and wake up later to prevent timing problems
             curr_ctx->leave_wait_resource_state();
-            timer->stop();
         });
         timer->set_expire_callback([curr_ctx, ctx, handle] {
+            ctx->finished().unsub(handle); // Unsubscribe before wake up to prevent timing problems
             curr_ctx->leave_wait_resource_state();
-            ctx->finished().unsub(handle);
         });
-        timer->start(); // 启动定时器，唤醒当前ctx
+        timer->start();
 
         unlock_schedule();
         ctx->state_lock().unlock();
