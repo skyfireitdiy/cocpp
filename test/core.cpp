@@ -102,40 +102,6 @@ TEST(core, wait_timeout)
     EXPECT_TRUE(ret);
 }
 
-TEST(core, priority)
-{
-    std::vector<int> arr;
-
-    auto env = co::create_env(true);
-    co   c1(
-        { with_priority(0), with_bind_env(env) }, [](std::vector<int>& arr) {
-            this_co::sleep_for(50ms);
-            arr.push_back(100);
-            this_co::yield();
-            arr.push_back(200);
-            this_co::yield();
-            arr.push_back(300);
-            this_co::yield();
-        },
-        std::ref(arr));
-    co c2(
-        { with_priority(1), with_bind_env(env) }, [](std::vector<int>& arr) {
-            this_co::sleep_for(50ms);
-            arr.push_back(400);
-            this_co::yield();
-            arr.push_back(500);
-            this_co::yield();
-            arr.push_back(600);
-            this_co::yield();
-        },
-        std::ref(arr));
-    c1.join();
-    c2.join();
-
-    std::vector<int> expect { 100, 200, 300, 400, 500, 600 };
-    EXPECT_EQ(arr, expect);
-}
-
 TEST(core, this_co_id)
 {
     co_id id;
