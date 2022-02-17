@@ -105,9 +105,7 @@ void co_ctx::set_priority(int priority)
     }
     if (old_priority != priority__)
     {
-        lock.unlock(); // 在priority_changed 事件处理中，可能会修改priority__，所以需要解锁
         priority_changed().pub(old_priority, priority__);
-        lock.lock();
     }
 }
 
