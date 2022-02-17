@@ -168,10 +168,7 @@ void switch_from_outside(sigcontext_64* context)
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
     {
-        if (!env->try_lock_schedule())
-        {
-            return;
-        }
+        env->lock_schedule();
         CoDefer(env->unlock_schedule());
         if (!env->prepare_to_switch(curr, next))
         {
