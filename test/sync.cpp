@@ -48,7 +48,7 @@ TEST(sync, mutex_lock)
     int ret = 0;
 
     co c1([&]() {
-        for (int i = 0; i < 100000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             std::scoped_lock lock(mu);
             ret += i;
@@ -66,7 +66,7 @@ TEST(sync, mutex_lock)
         }
     });
     co c3([&]() {
-        for (int i = 0; i < 100000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             std::scoped_lock lock(mu);
             ret -= i;
