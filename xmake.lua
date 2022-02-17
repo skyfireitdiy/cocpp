@@ -144,8 +144,8 @@ add_links("gtest")
 add_deps("cocpp")
 if is_mode("debug") then
     after_build(function()
-        import("core.project.task")
-        task.run("test_cov")
+        -- import("core.project.task")
+        -- task.run("test_cov")
     end)
 end
 
