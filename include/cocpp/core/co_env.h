@@ -60,11 +60,12 @@ private:                                                                        
     co_tid                                                                          schedule_thread_tid__ {};             // 调度线程tid
     std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY }; // 所有普通协程
     size_t                                                                          ctx_count__ { 0 };                    // 协程数量
+    mutable std::recursive_mutex                                                    mu_normal_ctx__;                      // 普通协程锁
     co_ctx*                                                                         curr_ctx__ { nullptr };               // 当前协程
     mutable std::recursive_mutex                                                    mu_curr_ctx__;                        // 当前协程锁
     int                                                                             min_priority__ = 0;                   // 最小优先级
     mutable std::recursive_mutex                                                    mu_min_priority__;                    // 最小优先级锁
-    mutable std::recursive_mutex                                                    schedule_lock__;                      // 调度锁
+    std::recursive_mutex                                                            schedule_lock__;                      // 调度锁
 
     co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_thread); // 构造函数
     void               start_schedule_routine__();                              // 启动调度线程
@@ -115,7 +116,6 @@ public:
     co_ctx*                        take_one_movable_ctx();                                         // 拿走一个可移动的ctx
     void                           lock_schedule();                                                // 锁定调度
     void                           unlock_schedule();                                              // 解锁调度
-    bool                           try_lock_schedule();                                            // 尝试锁定调度
     void                           set_state(const co_env_state& state);                           //  设置状态，覆盖父类函数
     void                           set_exclusive();                                                // 设置为独占模式
     bool                           exclusive() const;                                              // 是否为独占模式

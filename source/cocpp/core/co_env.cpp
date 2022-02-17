@@ -78,7 +78,7 @@ void co_env::move_ctx_to_here(co_ctx* ctx)
     ctx->set_env(this);
 
     {
-        std::scoped_lock lock(schedule_lock__);
+        std::scoped_lock lock(mu_normal_ctx__);
         all_normal_ctx__[ctx->priority()].push_back(ctx);
         ++ctx_count__;
     }
@@ -173,13 +173,13 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
 size_t co_env::workload() const
 {
-    std::scoped_lock lock(schedule_lock__);
+    std::scoped_lock lock(mu_normal_ctx__);
     return ctx_count__;
 }
 
 size_t co_env::ctx_count() const
 {
-    std::scoped_lock lock(schedule_lock__);
+    std::scoped_lock lock(mu_normal_ctx__);
     return ctx_count__;
 }
 
@@ -308,7 +308,7 @@ void co_env::schedule_switch()
 void co_env::remove_ctx(co_ctx* ctx)
 {
     {
-        std::scoped_lock lock(schedule_lock__);
+        std::scoped_lock lock(mu_normal_ctx__);
         // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
         all_normal_ctx__[ctx->priority()].remove(ctx);
         --ctx_count__;
@@ -473,7 +473,7 @@ bool co_env::can_schedule_ctx() const
 
 void co_env::handle_priority_changed(int old, co_ctx* ctx)
 {
-    std::scoped_lock lock(schedule_lock__);
+    std::scoped_lock lock(mu_normal_ctx__);
     for (auto iter = all_normal_ctx__[old].begin(); iter != all_normal_ctx__[old].end(); ++iter)
     {
         if (*iter == ctx)
@@ -489,7 +489,7 @@ void co_env::handle_priority_changed(int old, co_ctx* ctx)
 
 bool co_env::can_schedule__() const
 {
-    std::scoped_lock lock(schedule_lock__, mu_min_priority__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         for (auto& ctx : all_normal_ctx__[i])
@@ -515,7 +515,7 @@ bool co_env::need_sleep__()
 
 co_ctx* co_env::choose_ctx_from_normal_list__()
 {
-    std::scoped_lock lock(schedule_lock__, mu_curr_ctx__, mu_min_priority__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_curr_ctx__, mu_min_priority__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         for (auto& ctx : all_normal_ctx__[i])
@@ -537,7 +537,7 @@ co_ctx* co_env::choose_ctx_from_normal_list__()
 
 std::list<co_ctx*> co_env::all_ctx__()
 {
-    std::scoped_lock   lock(schedule_lock__);
+    std::scoped_lock   lock(mu_normal_ctx__);
     std::list<co_ctx*> ret;
     for (auto& lst : all_normal_ctx__)
     {
@@ -565,7 +565,7 @@ void co_env::ctx_enter_wait_state(co_ctx* ctx)
 
 std::list<co_ctx*> co_env::take_all_movable_ctx()
 {
-    std::scoped_lock   lock(schedule_lock__, mu_min_priority__, schedule_lock__);
+    std::scoped_lock   lock(mu_normal_ctx__, mu_min_priority__, schedule_lock__);
     std::list<co_ctx*> ret;
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
@@ -586,7 +586,7 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
 
 co_ctx* co_env::take_one_movable_ctx()
 {
-    std::scoped_lock lock(schedule_lock__, mu_min_priority__, schedule_lock__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__, schedule_lock__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         auto backup = all_normal_ctx__[i];
@@ -616,7 +616,7 @@ void co_env::update_min_priority__(int priority)
 
 bool co_env::has_ctx() const
 {
-    std::scoped_lock lock(schedule_lock__);
+    std::scoped_lock lock(mu_normal_ctx__);
     return ctx_count__ > 0;
 }
 
@@ -630,11 +630,6 @@ void co_env::unlock_schedule()
 {
     schedule_lock__.unlock();
     schedule_unlocked().pub();
-}
-
-bool co_env::try_lock_schedule()
-{
-    return schedule_lock__.try_lock();
 }
 
 void co_env::set_state(const co_env_state& state)
