@@ -24,7 +24,7 @@ public:
     void            unsub(co_event_handle h);
 };
 
-// 模板实现
+
 
 template <typename... Args>
 co_event_handle co_event<Args...>::sub(std::function<void(Args... args)> cb)

@@ -14,19 +14,18 @@ template <typename ObjectType>
 class co_object_pool final : private co_noncopyable
 {
 private:
-    std::deque<void*>    pool__;    // 内存池
-    std::recursive_mutex mu__;      // 互斥锁
-    size_t               max_cap__; // 最大容量
-public:
-    co_object_pool(size_t max_cap); // 构造函数
-    template <typename... ConstructParam>
-    ObjectType* create_obj(ConstructParam&&... params); // 创建对象
-    void        destroy_obj(ObjectType* obj);           // 销毁对象
-    void        clear_free_object();                    // 清空空闲对象
-    ~co_object_pool();                                  // 析构函数
-};
+    std::deque<void*>    pool__;
+    std::recursive_mutex mu__;
+    size_t               max_cap__;
 
-// 模板实现
+public:
+    co_object_pool(size_t max_cap);
+    template <typename... ConstructParam>
+    ObjectType* create_obj(ConstructParam&&... params);
+    void        destroy_obj(ObjectType* obj);
+    void        clear_free_object();
+    ~co_object_pool();
+};
 
 template <typename ObjectType>
 co_object_pool<ObjectType>::co_object_pool(size_t max_cap)
@@ -64,7 +63,7 @@ void co_object_pool<ObjectType>::destroy_obj(ObjectType* obj)
     }
     else
     {
-        pool__.push_front(obj); // 尽快用到这块内存
+        pool__.push_front(obj);
     }
 }
 

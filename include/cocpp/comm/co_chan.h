@@ -58,8 +58,6 @@ co_chan<ValueType, MaxSize>& operator<<(co_chan<ValueType, MaxSize>& ch, ValueTy
 template <typename ValueType, int MaxSize>
 co_chan<ValueType, MaxSize>& operator>>(co_chan<ValueType, MaxSize>& ch, ValueType& value);
 
-// 模板实现
-
 template <typename ValueType, int MaxSize>
 bool operator<(co_chan<ValueType, MaxSize>& ch, ValueType value)
 {
@@ -116,7 +114,7 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     data__.push_back(value);
     cv_empty__.notify_one();
 
-    if constexpr (MaxSize == 0) // 无缓冲channel需要等待接收侧将数据取走
+    if constexpr (MaxSize == 0)
     {
         cv_full__.wait(lock, [this] { return closed__ || data__.empty(); });
     }
@@ -165,14 +163,12 @@ bool co_chan<ValueType, MaxSize>::closed() const
     return closed__;
 }
 
-// 迭代器相关
-
 template <typename ValueType, int MaxSize>
 co_chan<ValueType, MaxSize>::iterator::iterator(co_chan<ValueType, MaxSize>* ch)
     : ch__(ch)
     , closed__(ch->closed__)
 {
-    ++*this; // 填充第一个元素
+    ++*this;
 }
 
 template <typename ValueType, int MaxSize>

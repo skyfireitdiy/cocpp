@@ -14,12 +14,12 @@ template <typename T>
 class co_local : public co_local_base
 {
 private:
-    T local_data__; // 局部数据
+    T local_data__;
+
 public:
-    T& get(); // 获取局部数据
+    T& get();
 };
 
-// 模板实现
 template <typename T>
 T& co_local<T>::get()
 {

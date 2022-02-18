@@ -31,13 +31,12 @@ concept CoIsNotVoid = !std::is_same_v<std::decay_t<T>, void>;
 class co final : private co_noncopyable
 {
 private:
-    mutable co_ctx*           ctx__;                                // 当前协程的上下文
-    inline static co_manager* manager__ = co_manager::instance();   // 协程管理器
-    template <typename Func, typename... Args>                      //
-    void init__(co_ctx_config config, Func&& func, Args&&... args); // 初始化协程
+    mutable co_ctx*           ctx__;
+    inline static co_manager* manager__ = co_manager::instance();
+    template <typename Func, typename... Args> //
+    void init__(co_ctx_config config, Func&& func, Args&&... args);
 
 public:
-    // 静态函数
     CoMemberMethodProxyStatic(manager__, create_env);
     CoMemberMethodProxyStatic(manager__, current_env);
     CoMemberMethodProxyStatic(manager__, set_env_shared_stack_size);
@@ -52,7 +51,6 @@ public:
     CoMemberMethodProxyStatic((manager__->current_env()), current_ctx);
     CoMemberMethodProxyStatic((manager__->current_env()), can_auto_destroy);
 
-    // 成员函数
     CoMemberMethodProxyWithPrefix(ctx__, state, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, config, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, env, ctx_);
@@ -64,22 +62,21 @@ public:
     std::string name() const;
     co_id       id() const;
 
-    // ctx事件
     CoMemberMethodProxyWithPrefix(ctx__, finished, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, priority_changed, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, state_changed, ctx_);
 
     template <typename Func, typename... Args>
-    co(Func&& func, Args&&... args); // 构造一个协程，参数为可调用对象与参数列表，如：co c(add, 1, 2);
+    co(Func&& func, Args&&... args);
     template <typename Func, typename... Args>
-    co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args); // 使用配置构造一个协程
+    co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args);
     template <CoIsNotVoid Ret>
-    Ret wait() const; // 等待协程执行完毕，返回协程的返回值
+    Ret wait() const;
     template <CoIsVoid Ret>
-    Ret wait() const; // 等待协程执行完毕，返回协程的返回值
+    Ret wait() const;
     template <class Rep, class Period>
-    std::optional<co_return_value> wait_for(const std::chrono::duration<Rep, Period>& wait_duration) const; // 等待协程执行完毕，返回协程的返回值
-    void                           detach();                                                                // 协程分离，协程结束后自动回收
+    std::optional<co_return_value> wait_for(const std::chrono::duration<Rep, Period>& wait_duration) const;
+    void                           detach();
     void                           join();
 
     template <CoIsNotVoid Args, typename Result>
@@ -92,20 +89,20 @@ public:
 
 namespace this_co
 {
-co_id       id();    // 协程id
-std::string name();  // 协程名称
-void        yield(); // 主动让出cpu
+co_id       id();
+std::string name();
+void        yield();
 template <class Rep, class Period>
-void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration); // 协程睡眠
+void sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration);
 template <class Clock, class Duration>
-void sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time); // 协程睡眠
+void sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time);
 }
 
 #define CoLocal(name, type) []() -> type& {                      \
     return cocpp::co::current_ctx()->local_storage<type>(#name); \
 }()
 
-///// 模板实现
+///
 
 template <typename Func, typename... Args>
 void co::init__(co_ctx_config config, Func&& func, Args&&... args)
@@ -190,7 +187,7 @@ co co::then(std::function<Result()> f) const
 }
 
 template <class Rep, class Period>
-void this_co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration) // 协程睡眠
+void this_co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration)
 {
     return sleep_until(std::chrono::steady_clock::now() + sleep_duration);
 }
@@ -205,7 +202,7 @@ void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_ti
     },
                                   abs_time);
 
-    env->lock_schedule(); // 在设置等待状态到启动定时器之间不能有调度
+    env->lock_schedule();
     ctx->enter_wait_resource_state(co_waited_rc_type::timer, nullptr);
     timer->start();
     env->unlock_schedule();

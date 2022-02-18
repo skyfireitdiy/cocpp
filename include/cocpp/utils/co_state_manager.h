@@ -18,7 +18,6 @@ public:
     T    state() const;
 };
 
-/////////////////////////////////// 模板实现 /////////////////////////////
 template <typename T, T InitState, T FinalState>
 void co_state_manager<T, InitState, FinalState>::set_state(const T& state)
 {
