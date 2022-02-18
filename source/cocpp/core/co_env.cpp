@@ -99,7 +99,7 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
 
     std::optional<co_return_value> ret;
 
-    ctx->state_lock().lock();
+    ctx->lock_finished_state();
     lock_schedule();
     auto curr_ctx = current_ctx();
     if (ctx->state() != co_state::finished)
@@ -120,21 +120,23 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
         timer->start();
 
         unlock_schedule();
-        ctx->state_lock().unlock();
+        ctx->unlock_finished_state();
         schedule_switch();
     }
     else
     {
         unlock_schedule();
-        ctx->state_lock().unlock();
+        ctx->unlock_finished_state();
     }
 
-    std ::scoped_lock lock(ctx->state_lock());
+    ctx->lock_finished_state();
     wait_ctx_finished().pub(ctx);
     if (ctx->state() != co_state::finished)
     {
+        ctx->unlock_finished_state();
         return ret;
     }
+    ctx->unlock_finished_state();
     ctx->check_and_rethrow_exception();
     return ctx->ret_ref();
 }
@@ -147,7 +149,7 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
     CoDefer(current_ctx()->set_priority(old_priority));
 
-    ctx->state_lock().lock();
+    ctx->lock_finished_state();
     lock_schedule();
     auto curr_ctx = current_ctx();
     if (ctx->state() != co_state::finished)
@@ -157,13 +159,13 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
             curr_ctx->leave_wait_resource_state();
         });
         unlock_schedule();
-        ctx->state_lock().unlock();
+        ctx->unlock_finished_state();
         schedule_switch();
     }
     else
     {
         unlock_schedule();
-        ctx->state_lock().unlock();
+        ctx->unlock_finished_state();
     }
 
     wait_ctx_finished().pub(ctx);
