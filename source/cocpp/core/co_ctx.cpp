@@ -65,7 +65,9 @@ void co_ctx::real_entry(co_ctx* ctx)
         ctx->exception__ = std::current_exception();
     }
     // CO_DEBUG("ctx %s %p finished", ctx->config().name.c_str(), ctx);
+    ctx->lock_finished_state();
     ctx->set_state(co_state::finished);
+    ctx->unlock_finished_state();
     ctx->finished().pub();
     assert(ctx->env() != nullptr);
     ctx->env()->schedule_switch(); // 此处的ctx对应的env不可能为空，如果为空，这个ctx就不可能被调度
@@ -102,22 +104,9 @@ void co_ctx::set_priority(int priority)
     }
     if (old_priority != priority__)
     {
+        // NOTE: maybe change priority in event handler
         priority_changed().pub(old_priority, priority__);
     }
-}
-
-void co_ctx::set_state(const co_state& state)
-{
-    // TODO 此处可以优化
-    if (env__ != nullptr)
-    {
-        std::scoped_lock lock(env__->sleep_lock());
-        state_manager__.set_state(state);
-        state_set().pub(state);
-        return;
-    }
-    state_manager__.set_state(state);
-    state_set().pub(state);
 }
 
 void co_ctx::set_flag(size_t flag)
@@ -226,6 +215,16 @@ void co_ctx::leave_wait_resource_state()
     env__->ctx_leave_wait_state(this);
     env__->wake_up();
     wait_resource_state_leaved().pub();
+}
+
+void co_ctx::lock_finished_state()
+{
+    finish_lock__.lock();
+}
+
+void co_ctx::unlock_finished_state()
+{
+    finish_lock__.unlock();
 }
 
 CO_NAMESPACE_END
