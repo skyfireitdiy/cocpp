@@ -3,8 +3,9 @@ add_rules("mode.debug", "mode.release")
 if is_mode("release") then set_optimize("none") end
 
 if is_mode("debug") then
-    add_links("gcov")
-    add_cxxflags("-fprofile-arcs", "-ftest-coverage", "-ggdb")
+    -- add_links("gcov")
+    -- add_cxxflags("-fprofile-arcs", "-ftest-coverage")
+    add_cxxflags("-ggdb")
 end
 
 set_languages("c++20")
