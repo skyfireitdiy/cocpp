@@ -32,14 +32,12 @@ co_any& co_ctx::ret_ref()
 
 void co_ctx::set_env(co_env* env)
 {
-    std::scoped_lock lock(env_lock__);
     env__ = env;
     env_set().pub(env__);
 }
 
 co_env* co_ctx::env() const
 {
-    std::scoped_lock lock(env_lock__);
     return env__;
 }
 
@@ -97,7 +95,6 @@ void co_ctx::set_priority(int priority)
     }
     priority__ = priority;
     {
-        std::scoped_lock lock(env_lock__);
         if (env__ == nullptr) // 首次调用的时候env为空
         {
             return;
@@ -112,7 +109,6 @@ void co_ctx::set_priority(int priority)
 void co_ctx::set_state(const co_state& state)
 {
     // TODO 此处可以优化
-    std::scoped_lock lock(env_lock__);
     if (env__ != nullptr)
     {
         std::scoped_lock lock(env__->sleep_lock());
@@ -127,7 +123,7 @@ void co_ctx::set_state(const co_state& state)
 void co_ctx::set_flag(size_t flag)
 {
     // TODO 此处可以优化
-    std::scoped_lock lock(env_lock__);
+
     if (env__ != nullptr)
     {
         std::scoped_lock lock(env__->sleep_lock());
@@ -142,7 +138,7 @@ void co_ctx::set_flag(size_t flag)
 void co_ctx::reset_flag(size_t flag)
 {
     // TODO 此处可以优化
-    std::scoped_lock lock(env_lock__);
+
     if (env__ != nullptr)
     {
         std::scoped_lock lock(env__->sleep_lock());
@@ -215,7 +211,7 @@ void co_ctx::enter_wait_resource_state(co_waited_rc_type rc_type, void* rc)
         wait_data__.resource = rc;
         set_flag(CO_CTX_FLAG_WAITING);
     }
-    std::scoped_lock env_lock(env_lock__);
+
     env__->ctx_enter_wait_state(this);
     wait_resource_state_entered().pub(rc_type, rc);
 }
@@ -226,7 +222,7 @@ void co_ctx::leave_wait_resource_state()
         std::scoped_lock lock(wait_data__.mu);
         reset_flag(CO_CTX_FLAG_WAITING);
     }
-    std::scoped_lock lock(env_lock__);
+
     env__->ctx_leave_wait_state(this);
     env__->wake_up();
     wait_resource_state_leaved().pub();

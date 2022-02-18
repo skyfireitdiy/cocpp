@@ -41,7 +41,6 @@ private:                                                                        
     co_ctx_config                                                       config__ {};                         // 协程配置
     co_any                                                              ret__;                               // 协程返回值
     co_env*                                                             env__ { nullptr };                   // 协程当前对应的运行环境
-    mutable std::recursive_mutex                                        env_lock__;                          // 运行环境锁
     int                                                                 priority__ { CO_IDLE_CTX_PRIORITY }; // 优先级
     mutable std::recursive_mutex                                        priority_lock__;                     // 优先级锁
     std::map<std::string, std::shared_ptr<co_local_base>>               locals__;                            // 协程局部存储
