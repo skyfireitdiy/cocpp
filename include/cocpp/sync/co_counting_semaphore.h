@@ -15,24 +15,24 @@ template <std::ptrdiff_t LeastMaxValue>
 class co_counting_semaphore final : private co_noncopyable
 {
 private:
-    co_mutex              mu__;            // 互斥锁
-    co_condition_variable cv_empty__;      // 空闲条件变量
-    co_condition_variable cv_full__;       // 满条件变量
-    std::ptrdiff_t        desired__;       // 期望值
-    void                  release_one__(); // 释放一个信号量
+    co_mutex              mu__;            
+    co_condition_variable cv_empty__;      
+    co_condition_variable cv_full__;       
+    std::ptrdiff_t        desired__;       
+    void                  release_one__(); 
 public:
-    void acquire();                          // 获取一个信号量
-    void release(std::ptrdiff_t update = 1); // 释放一个信号量
-    bool try_acquire() noexcept;             // 尝试获取一个信号量
+    void acquire();                          
+    void release(std::ptrdiff_t update = 1); 
+    bool try_acquire() noexcept;             
     template <class Rep, class Period>
-    bool try_acquire_for(const std::chrono::duration<Rep, Period>& rel_time); // 尝试获取一个信号量
+    bool try_acquire_for(const std::chrono::duration<Rep, Period>& rel_time); 
     template <class Clock, class Duration>
-    bool try_acquire_until(const std::chrono::time_point<Clock, Duration>& abs_time); // 尝试获取一个信号量
-    constexpr explicit co_counting_semaphore(std::ptrdiff_t desired);                 // 构造函数
-    static constexpr std::ptrdiff_t max() noexcept;                                   // 最大值
+    bool try_acquire_until(const std::chrono::time_point<Clock, Duration>& abs_time); 
+    constexpr explicit co_counting_semaphore(std::ptrdiff_t desired);                 
+    static constexpr std::ptrdiff_t max() noexcept;                                   
 };
 
-// 模板实现
+
 
 template <std::ptrdiff_t LeastMaxValue>
 void co_counting_semaphore<LeastMaxValue>::acquire()

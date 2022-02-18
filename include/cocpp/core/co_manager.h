@@ -48,63 +48,64 @@ class co_manager final : public co_singleton_static<co_manager>
 
 private:
     co_env_set env_set__ {
-        .normal_env_count = 0,                                      // 正常环境数量
-        .base_env_count   = std::thread::hardware_concurrency(),    // 基础环境数量
-        .max_env_count    = std::thread::hardware_concurrency() * 2 // 最大环境数量
-    };                                                              // 协程调度环境集合
+        .normal_env_count = 0,
+        .base_env_count   = std::thread::hardware_concurrency(),
+        .max_env_count    = std::thread::hardware_concurrency() * 2
+    };
 
-    bool                                clean_up__ { false };                                // 是否需要清理协程调度环境
-    std::recursive_mutex                clean_up_lock__;                                     // 清理协程调度环境锁
-    std::list<std::future<void>>        background_task__;                                   // 后台任务队列
-    mutable std::recursive_mutex        mu_timer_duration__;                                 // 定时器时间锁
-    std::chrono::steady_clock::duration timer_duration__ { 10ms };                           // 定时器时间
-    size_t                              default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE; // 默认共享堆栈大小
-    std::function<bool()>               need_free_mem_cb__ { [] { return false; } };         // 需要释放内存回调
-    std::recursive_mutex                need_free_mem_cb_lock__;                             // 需要释放内存回调锁
-    std::set<std::shared_ptr<co_timer>> timer_queue__;                                       // 定时器队列
-    std::recursive_mutex                mu_timer_queue__;                                    // 定时器队列锁
-    std::condition_variable_any         cv_timer_queue__;                                    // 定时器队列条件变量
+    bool                                clean_up__ { false };
+    std::recursive_mutex                clean_up_lock__;
+    std::list<std::future<void>>        background_task__;
+    mutable std::recursive_mutex        mu_timer_duration__;
+    std::chrono::steady_clock::duration timer_duration__ { 10ms };
+    size_t                              default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
+    std::function<bool()>               need_free_mem_cb__ { [] { return false; } };
+    std::recursive_mutex                need_free_mem_cb_lock__;
+    std::set<std::shared_ptr<co_timer>> timer_queue__;
+    std::recursive_mutex                mu_timer_queue__;
+    std::condition_variable_any         cv_timer_queue__;
 
-    void clean_env_routine__(); // 清理协程调度环境
-    void monitor_routine__();   // 监控协程调度环境
-    void timer_routine__();     // 定时器
+    void clean_env_routine__();
+    void monitor_routine__();
+    void timer_routine__();
 
-    void    redistribute_ctx__();               // 重新分配协程
-    void    force_schedule__();                 // 强制调度
-    void    destroy_redundant_env__();          // 销毁冗余环境
-    void    free_mem__();                       // 释放内存
-    void    wait_background_task__();           // 等待后台任务
-    void    set_clean_up__();                   // 设置清理协程调度环境
-    void    destroy_all_factory__();            // 销毁所有工厂
-    co_env* get_best_env__();                   // 获取最佳环境
-    void    remove_env__(co_env* env);          // 移除环境
-    void    subscribe_env_event__(co_env* env); // 订阅环境事件
-    void    subscribe_ctx_event__(co_ctx* env); // 订阅协程事件
-    void    subscribe_manager_event__();        // 订阅管理器事件
-    void    create_background_task__();         // 创建后台任务
-    void    create_env_from_this_thread__();    // 创建当前线程环境
-    void    steal_ctx_routine__();              // 偷取协程
+    void    redistribute_ctx__();
+    void    force_schedule__();
+    void    destroy_redundant_env__();
+    void    free_mem__();
+    void    wait_background_task__();
+    void    set_clean_up__();
+    void    destroy_all_factory__();
+    co_env* get_best_env__();
+    void    remove_env__(co_env* env);
+    void    subscribe_env_event__(co_env* env);
+    void    subscribe_ctx_event__(co_ctx* env);
+    void    subscribe_manager_event__();
+    void    create_background_task__();
+    void    create_env_from_this_thread__();
+    void    steal_ctx_routine__();
 
-    void insert_timer_to_queue__(std::shared_ptr<co_timer> timer);   // 插入定时器到队列
-    void remove_timer_from_queue__(std::shared_ptr<co_timer> timer); // 从队列移除定时器
+    void insert_timer_to_queue__(std::shared_ptr<co_timer> timer);
+    void remove_timer_from_queue__(std::shared_ptr<co_timer> timer);
 
-    co_manager(); // 构造函数
+    co_manager();
+
 public:
-    co_env* create_env(bool dont_auto_destory); // 创建环境
+    co_env* create_env(bool dont_auto_destory);
     co_ctx* create_and_schedule_ctx(
         const co_ctx_config&         config,
         std::function<void(co_any&)> entry,
-        bool                         lock_destroy = true);                                    // 创建并调度协程
-                                                                      //
-    void    set_env_shared_stack_size(size_t size);                   // 设置环境共享堆栈大小
-    co_env* current_env();                                            // 获取当前环境
-    void    set_base_schedule_thread_count(size_t base_thread_count); // 设置基础调度线程数量
-    void    set_max_schedule_thread_count(size_t max_thread_count);   // 设置最大调度线程数量
-    void    set_if_free_mem_callback(std::function<bool()> cb);       // 设置是否释放内存回调
+        bool                         lock_destroy = true);
+
+    void    set_env_shared_stack_size(size_t size);
+    co_env* current_env();
+    void    set_base_schedule_thread_count(size_t base_thread_count);
+    void    set_max_schedule_thread_count(size_t max_thread_count);
+    void    set_if_free_mem_callback(std::function<bool()> cb);
     void    set_timer_tick_duration(
-           const std::chrono::steady_clock::duration& duration);        // 设置定时器时间
-    const std::chrono::steady_clock::duration& timing_duration() const; // 获取定时器时间
-    ~co_manager();                                                      // 析构函数
+           const std::chrono::steady_clock::duration& duration);
+    const std::chrono::steady_clock::duration& timing_duration() const;
+    ~co_manager();
 
     friend class co_singleton_static<co_manager>;
     friend class co_timer;

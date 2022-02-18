@@ -9,11 +9,11 @@ CO_NAMESPACE_BEGIN
 class co_once_flag : private co_noncopyable
 {
 public:
-    std::atomic<bool> flag__ { false }; // 标志位
+    std::atomic<bool> flag__ { false }; 
 };
 
 template <class Callable, class... Args>
-void co_call_once(co_once_flag& flag, Callable&& f, Args&&... args) // 只执行一次
+void co_call_once(co_once_flag& flag, Callable&& f, Args&&... args) 
 {
     if (!flag.flag__.load(std::memory_order_acquire))
     {

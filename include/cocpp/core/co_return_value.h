@@ -5,18 +5,18 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-// 协程返回值对象
 class co_return_value
 {
-    co_any value__; // 用来存储返回值
+    co_any value__;
+
 public:
-    co_return_value(co_any value);                                      // 构造函数
-    co_return_value(const co_return_value& value) = default;            // 构造函数
-    co_return_value& operator=(const co_return_value& value) = default; // 赋值操作符
-    co_return_value& operator=(co_return_value&& value) = default;      // 赋值操作符
+    co_return_value(co_any value);
+    co_return_value(const co_return_value& value) = default;
+    co_return_value& operator=(const co_return_value& value) = default;
+    co_return_value& operator=(co_return_value&& value) = default;
 
     template <typename T>
-    operator T(); // 类型转换操作符，如果类型不匹配会抛出异常
+    operator T();
 };
 
 template <typename T>

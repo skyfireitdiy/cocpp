@@ -6,7 +6,7 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-// 单例模式
+
 template <typename T>
 class co_singleton : private co_noncopyable
 {
@@ -14,13 +14,13 @@ private:
     co_singleton() = default;
 
 public:
-    // 获取实例
+    
     static T*   instance();
     static void destroy_instance();
     friend T;
 };
 
-// 单例模式（可回收）
+
 template <typename T>
 class co_singleton_static : private co_noncopyable
 {
@@ -28,7 +28,7 @@ private:
     co_singleton_static() = default;
 
 public:
-    // 获取实例
+    
     static T* instance();
     friend T;
 };

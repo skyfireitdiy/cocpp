@@ -13,12 +13,12 @@ class co_timed_addition : public Lock
 {
 public:
     template <class Rep, class Period>
-    bool try_lock_for(const std::chrono::duration<Rep, Period>& timeout_duration); // 尝试加锁
+    bool try_lock_for(const std::chrono::duration<Rep, Period>& timeout_duration); 
     template <class Clock, class Duration>
-    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& timeout_time); // 尝试加锁
+    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& timeout_time); 
 };
 
-// 模板实现
+
 
 template <class Lock>
 template <class Rep, class Period>

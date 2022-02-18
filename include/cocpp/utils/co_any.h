@@ -7,7 +7,7 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-class co_any final //: private co_noncopyable
+class co_any final 
 {
 private:
     class base_type
@@ -40,7 +40,7 @@ public:
     T& get();
 };
 
-// 模板实现
+
 
 template <typename T>
 T& co_any::real_type<T>::get()

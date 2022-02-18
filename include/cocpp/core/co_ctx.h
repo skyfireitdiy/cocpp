@@ -21,17 +21,17 @@ class co_stack;
 class co_ctx final : private co_noncopyable
 {
     RegCoEvent(finished);
-    RegCoEvent(priority_changed, int, int);                            // 原优先级
-    RegCoEvent(state_changed, co_state, co_state);                     // 原状态
-    RegCoEvent(env_set, co_env*);                                      // 设置的env
-    RegCoEvent(locked_destroy);                                        // 锁定销毁
-    RegCoEvent(unlocked_destroy);                                      // 解锁销毁
-    RegCoEvent(stack_set, co_stack*);                                  // 设置的stack
-    RegCoEvent(state_set, co_state);                                   // 设置状态
-    RegCoEvent(flag_set, size_t);                                      // 设置标识
-    RegCoEvent(flag_reset, size_t);                                    // 重置标识
-    RegCoEvent(wait_resource_state_entered, co_waited_rc_type, void*); // 等待资源状态进入
-    RegCoEvent(wait_resource_state_leaved);                            // 等待资源状态离开
+    RegCoEvent(priority_changed, int, int);
+    RegCoEvent(state_changed, co_state, co_state);
+    RegCoEvent(env_set, co_env*);
+    RegCoEvent(locked_destroy);
+    RegCoEvent(unlocked_destroy);
+    RegCoEvent(stack_set, co_stack*);
+    RegCoEvent(state_set, co_state);
+    RegCoEvent(flag_set, size_t);
+    RegCoEvent(flag_reset, size_t);
+    RegCoEvent(wait_resource_state_entered, co_waited_rc_type, void*);
+    RegCoEvent(wait_resource_state_leaved);
 
 private:
     co_flag_manager<CO_CTX_FLAG_MAX> flag_manager__;
@@ -40,7 +40,7 @@ private:
     co_state_manager<co_state, co_state::suspended, co_state::finished> state_manager__;
     std::recursive_mutex                                                finish_lock__;
 
-    co_ctx_wait_data wait_data__ {}; // 等待数据
+    co_ctx_wait_data wait_data__ {};
 
     co_stack*     stack__ { nullptr };
     co_ctx_config config__ {};
