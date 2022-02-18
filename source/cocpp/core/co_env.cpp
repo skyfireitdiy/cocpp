@@ -319,14 +319,11 @@ void co_env::remove_ctx(co_ctx* ctx)
     ctx_removed().pub(ctx);
 }
 
+// Warning: The CTX returned by this interface is not guaranteed to be valid after the call.
 co_ctx* co_env::current_ctx() const
 {
-    std::scoped_lock lock(mu_curr_ctx__);
-    if (curr_ctx__ == nullptr)
-    {
-        return idle_ctx__;
-    }
-    return curr_ctx__;
+    auto ret = curr_ctx__.load();
+    return ret != nullptr ? ret : idle_ctx__;
 }
 
 void co_env::stop_schedule()
@@ -517,7 +514,7 @@ bool co_env::need_sleep__()
 
 co_ctx* co_env::choose_ctx_from_normal_list__()
 {
-    std::scoped_lock lock(mu_normal_ctx__, mu_curr_ctx__, mu_min_priority__);
+    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         for (auto& ctx : all_normal_ctx__[i])

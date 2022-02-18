@@ -48,24 +48,33 @@ class co_env final : private co_noncopyable
     RegCoEvent(one_moveable_ctx_taken, co_ctx*);                           // 一个可移动ctx被拿走
     RegCoEvent(this_thread_converted_to_schedule_thread, std::thread::id); // 当前线程转换为调度线程
 
-private:                                                                                                                  //
-    co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;                       // 标志管理器
-    co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying> state_manager__;                      // 状态管理器
-    std::future<void>                                                               worker__;                             // 工作线程
-    co_sleep_controller                                                             sleep_controller__;                   // 睡眠控制器
-    co_stack*                                                                       shared_stack__ { nullptr };           // 共享栈
-    size_t                                                                          shared_stack_size__ { 0 };            // 共享栈大小
-    std::once_flag                                                                  shared_stack_once_flag__;             // 共享栈初始化标志
-    co_ctx* const                                                                   idle_ctx__ { nullptr };               // 空闲协程
-    co_tid                                                                          schedule_thread_tid__ {};             // 调度线程tid
-    std::vector<std::list<co_ctx*>>                                                 all_normal_ctx__ { CO_MAX_PRIORITY }; // 所有普通协程
-    size_t                                                                          ctx_count__ { 0 };                    // 协程数量
-    mutable std::recursive_mutex                                                    mu_normal_ctx__;                      // 普通协程锁
-    co_ctx*                                                                         curr_ctx__ { nullptr };               // 当前协程
-    mutable std::recursive_mutex                                                    mu_curr_ctx__;                        // 当前协程锁
-    int                                                                             min_priority__ = 0;                   // 最小优先级
-    mutable std::recursive_mutex                                                    mu_min_priority__;                    // 最小优先级锁
-    std::recursive_mutex                                                            schedule_lock__;                      // 调度锁
+private:
+    co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;
+    co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying> state_manager__;
+
+    std::future<void> worker__;
+
+    co_sleep_controller sleep_controller__;
+
+    co_stack*      shared_stack__ { nullptr };
+    size_t         shared_stack_size__ { 0 };
+    std::once_flag shared_stack_once_flag__;
+
+    co_ctx* const idle_ctx__ { nullptr };
+
+    co_tid schedule_thread_tid__ {};
+
+    // Another thread will add a new CTX to this list.
+    std::vector<std::list<co_ctx*>> all_normal_ctx__ { CO_MAX_PRIORITY };
+    mutable std::recursive_mutex    mu_normal_ctx__;
+    size_t                          ctx_count__ { 0 };
+
+    // Another thread will get current CTX from this ENV.
+    std::atomic<co_ctx*> curr_ctx__ { nullptr };
+
+    int                          min_priority__ = 0;
+    mutable std::recursive_mutex mu_min_priority__;
+    std::recursive_mutex         schedule_lock__;
 
     co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_thread); // 构造函数
     void               start_schedule_routine__();                              // 启动调度线程
