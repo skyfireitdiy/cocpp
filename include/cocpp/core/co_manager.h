@@ -53,17 +53,23 @@ private:
         .max_env_count    = std::thread::hardware_concurrency() * 2
     };
 
-    bool                                clean_up__ { false };
-    std::recursive_mutex                clean_up_lock__;
-    std::list<std::future<void>>        background_task__;
+    // Other threads can access this data.
+    bool                 clean_up__ { false };
+    std::recursive_mutex clean_up_lock__;
+
     mutable std::recursive_mutex        mu_timer_duration__;
     std::chrono::steady_clock::duration timer_duration__ { 10ms };
-    size_t                              default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
-    std::function<bool()>               need_free_mem_cb__ { [] { return false; } };
-    std::recursive_mutex                need_free_mem_cb_lock__;
+
+    std::function<bool()> need_free_mem_cb__ { [] { return false; } };
+    std::recursive_mutex  need_free_mem_cb_lock__;
+
     std::set<std::shared_ptr<co_timer>> timer_queue__;
     std::recursive_mutex                mu_timer_queue__;
     std::condition_variable_any         cv_timer_queue__;
+
+    std::list<std::future<void>> background_task__;
+
+    size_t default_shared_stack_size__ = CO_DEFAULT_STACK_SIZE;
 
     void clean_env_routine__();
     void monitor_routine__();
