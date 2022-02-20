@@ -128,20 +128,20 @@ void co_manager::subscribe_manager_event__()
         // 每两次超时重新分配一次
         static bool double_timeout = false;
 
-        // 强制重新调度
-        force_schedule__();
+        // FIXME: There are problems with external scheduling and it is difficult to determine the safety point
+        // force_schedule__();
 
-        // 如果是第二次超时
+        // If it's the second time out
         if (double_timeout)
         {
-            // // 重新调度
-            // redistribute_ctx__();
-            // // 偷取ctx
-            // steal_ctx_routine__();
-            // // 销毁多余的env
-            // destroy_redundant_env__();
-            // // 释放内存
-            // free_mem__();
+            // 重新调度
+            redistribute_ctx__();
+            // 偷取ctx
+            steal_ctx_routine__();
+            // 销毁多余的env
+            destroy_redundant_env__();
+            // 释放内存
+            free_mem__();
         }
         double_timeout = !double_timeout;
     });

@@ -3,7 +3,6 @@ _Pragma("once");
 #include "cocpp/comm/co_event.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_return_value.h"
-#include "cocpp/core/co_sleep_controller.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/mem/co_object_pool.h"
 #include "cocpp/utils/co_flag_manager.h"
@@ -54,8 +53,6 @@ private:
 
     std::future<void> worker__;
 
-    co_sleep_controller sleep_controller__;
-
     co_stack*      shared_stack__ { nullptr };
     size_t         shared_stack_size__ { 0 };
     std::once_flag shared_stack_once_flag__;
@@ -74,7 +71,12 @@ private:
 
     int                          min_priority__ = 0;
     mutable std::recursive_mutex mu_min_priority__;
-    std::mutex                   schedule_lock__;
+    mutable std::recursive_mutex schedule_lock__;
+
+    std::condition_variable_any cv_sleep__;
+
+    void sleep_if_need__();
+    void sleep_if_need__(std::function<bool()> checker);
 
     co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_thread);
     void               start_schedule_routine__();
@@ -131,14 +133,12 @@ public:
     bool                           exclusive() const;
     bool                           has_ctx() const;
     size_t                         ctx_count() const;
+    void                           wake_up();
 
     CoConstMemberMethodProxy(&state_manager__, state);
     CoConstMemberMethodProxy(&flag_manager__, test_flag);
     CoMemberMethodProxy(&flag_manager__, set_flag);
     CoMemberMethodProxy(&flag_manager__, reset_flag);
-    CoMemberMethodProxy(&sleep_controller__, sleep_if_need);
-    CoMemberMethodProxy(&sleep_controller__, wake_up);
-    CoMemberMethodProxy(&sleep_controller__, sleep_lock);
 
     friend class co_object_pool<co_env>;
     friend class co_env_factory;

@@ -154,6 +154,9 @@ void send_switch_from_outside_signal(co_env* env)
 static void save_context_to_ctx(sigcontext_64* context, co_ctx* ctx)
 {
     *reinterpret_cast<sigcontext_64*>(ctx->regs()) = *context;
+    printf("rip: 0x%llx\n", context->ip);
+    printf("rsp: 0x%llx\n", context->sp);
+    printf("rbp: 0x%llx\n", context->bp);
 }
 
 static void restore_context_from_ctx(sigcontext_64* context, co_ctx* ctx)

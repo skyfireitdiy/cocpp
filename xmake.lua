@@ -6,6 +6,7 @@ if is_mode("debug") then
     -- add_links("gcov")
     -- add_cxxflags("-fprofile-arcs", "-ftest-coverage")
     add_cxxflags("-ggdb")
+    add_ldflags("-no-pie")
 end
 
 set_languages("c++20")
