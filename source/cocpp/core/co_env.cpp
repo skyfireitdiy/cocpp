@@ -23,8 +23,7 @@ CO_NAMESPACE_BEGIN
 thread_local co_env* current_env__ = nullptr;
 
 co_env::co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_thread)
-    : sleep_controller__([this] { return need_sleep__(); })
-    , shared_stack_size__(shared_stack_size)
+    : shared_stack_size__(shared_stack_size)
     , idle_ctx__(idle_ctx)
 {
     idle_ctx__->set_env(this);
@@ -241,7 +240,7 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
     {
         // 进入睡眠前需要解除调度锁，否则其他线程可能会被阻塞
         unlock_schedule();
-        sleep_if_need([this] { return idle_ctx__->test_flag(CO_CTX_FLAG_WAITING); });
+        sleep_if_need__([this] { return idle_ctx__->test_flag(CO_CTX_FLAG_WAITING); });
         lock_schedule();
     }
 
@@ -389,7 +388,7 @@ void co_env::start_schedule_routine__()
         set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
 
         unlock_schedule();
-        sleep_if_need();
+        sleep_if_need__();
         lock_schedule();
     }
 
@@ -643,7 +642,7 @@ bool co_env::try_lock_schedule()
 
 void co_env::set_state(const co_env_state& state)
 {
-    std::scoped_lock lock(sleep_lock());
+    std::scoped_lock lock(schedule_lock__);
     state_manager__.set_state(state);
 }
 
@@ -655,6 +654,30 @@ void co_env::set_exclusive()
 bool co_env::exclusive() const
 {
     return test_flag(CO_ENV_FLAG_EXCLUSIVE);
+}
+
+void co_env::wake_up()
+{
+    std::scoped_lock lock(schedule_lock__);
+    cv_sleep__.notify_one();
+}
+
+void co_env::sleep_if_need__()
+{
+    std::unique_lock lock(schedule_lock__);
+    while (need_sleep__())
+    {
+        cv_sleep__.wait(lock);
+    }
+}
+
+void co_env::sleep_if_need__(std::function<bool()> checker)
+{
+    std::unique_lock lock(schedule_lock__);
+    while (checker())
+    {
+        cv_sleep__.wait(lock);
+    }
 }
 
 CO_NAMESPACE_END

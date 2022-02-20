@@ -111,30 +111,12 @@ void co_ctx::set_priority(int priority)
 
 void co_ctx::set_flag(size_t flag)
 {
-    // TODO 此处可以优化
-
-    if (env__ != nullptr)
-    {
-        std::scoped_lock lock(env__->sleep_lock());
-        flag_manager__.set_flag(flag);
-        flag_set().pub(flag);
-        return;
-    }
     flag_manager__.set_flag(flag);
     flag_set().pub(flag);
 }
 
 void co_ctx::reset_flag(size_t flag)
 {
-    // TODO 此处可以优化
-
-    if (env__ != nullptr)
-    {
-        std::scoped_lock lock(env__->sleep_lock());
-        flag_reset().pub(flag);
-        flag_manager__.reset_flag(flag);
-        return;
-    }
     flag_reset().pub(flag);
     flag_manager__.reset_flag(flag);
 }
