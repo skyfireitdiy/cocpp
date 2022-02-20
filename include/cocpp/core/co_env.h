@@ -74,7 +74,7 @@ private:
 
     int                          min_priority__ = 0;
     mutable std::recursive_mutex mu_min_priority__;
-    std::recursive_mutex         schedule_lock__;
+    std::mutex                   schedule_lock__;
 
     co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_thread);
     void               start_schedule_routine__();
@@ -125,6 +125,7 @@ public:
     co_ctx*                        take_one_movable_ctx();
     void                           lock_schedule();
     void                           unlock_schedule();
+    bool                           try_lock_schedule();
     void                           set_state(const co_env_state& state);
     void                           set_exclusive();
     bool                           exclusive() const;

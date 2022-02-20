@@ -342,6 +342,7 @@ void co_env::start_schedule()
 {
     worker__ = std::async(std::launch::async, [this]() {
         current_env__ = this;
+        std::scoped_lock lock(schedule_lock__);
         start_schedule_routine__();
     });
 }
@@ -375,7 +376,9 @@ void co_env::start_schedule_routine__()
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
     {
+        unlock_schedule();
         schedule_switch();
+        lock_schedule();
 
         // 切换回来检测是否需要执行共享栈切换
         if (shared_stack_switch_info__.need_switch)
@@ -385,7 +388,9 @@ void co_env::start_schedule_routine__()
 
         set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
 
+        unlock_schedule();
         sleep_if_need();
+        lock_schedule();
     }
 
     remove_all_ctx__();
@@ -629,6 +634,11 @@ void co_env::unlock_schedule()
 {
     schedule_lock__.unlock();
     schedule_unlocked().pub();
+}
+
+bool co_env::try_lock_schedule()
+{
+    return schedule_lock__.try_lock();
 }
 
 void co_env::set_state(const co_env_state& state)
