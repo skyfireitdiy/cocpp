@@ -168,12 +168,16 @@ void switch_from_outside(sigcontext_64* context)
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
     {
-        env->lock_schedule();
+        if (!env->try_lock_schedule())
+        {
+            return;
+        }
         CoDefer(env->unlock_schedule());
         if (!env->prepare_to_switch(curr, next))
         {
             return;
         }
+        printf("force switch from %p to %p\n", curr, next);
     }
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);

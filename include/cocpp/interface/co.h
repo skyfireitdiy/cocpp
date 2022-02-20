@@ -45,20 +45,13 @@ public:
     CoMemberMethodProxyStatic(manager__, set_timer_tick_duration);
     CoMemberMethodProxyStatic(manager__, timing_duration);
 
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), workload, current_env_);
-    CoMemberMethodProxyStaticWithPrefix((manager__->current_env()), state, current_env_);
     CoMemberMethodProxyStatic((manager__->current_env()), schedule_in_this_thread);
-    CoMemberMethodProxyStatic((manager__->current_env()), current_ctx);
-    CoMemberMethodProxyStatic((manager__->current_env()), can_auto_destroy);
 
     CoMemberMethodProxyWithPrefix(ctx__, state, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, config, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, env, ctx_);
-    CoMemberMethodProxyWithPrefix(ctx__, can_destroy, ctx_);
-    CoMemberMethodProxyWithPrefix(ctx__, can_move, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, set_priority, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, priority, ctx_);
-    CoMemberMethodProxyWithPrefix(ctx__, can_schedule, ctx_);
     std::string name() const;
     co_id       id() const;
 
@@ -98,8 +91,8 @@ template <class Clock, class Duration>
 void sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time);
 }
 
-#define CoLocal(name, type) []() -> type& {                      \
-    return cocpp::co::current_ctx()->local_storage<type>(#name); \
+#define CoLocal(name, type) []() -> type& {                                     \
+    return cocpp::co::current_env()->current_ctx()->local_storage<type>(#name); \
 }()
 
 ///

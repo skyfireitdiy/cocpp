@@ -69,12 +69,12 @@ void yield()
 
 co_id id()
 {
-    return reinterpret_cast<co_id>(co::current_ctx());
+    return reinterpret_cast<co_id>(co::current_env()->current_ctx());
 }
 
 std::string name()
 {
-    return co::current_ctx()->config().name;
+    return co::current_env()->current_ctx()->config().name;
 }
 
 }
