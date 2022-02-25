@@ -23,7 +23,8 @@ class co_ctx;
 class co;
 
 template <typename T>
-concept CoIsVoid = std::is_same_v<std::decay_t<T>, void>;
+concept CoIsVoid = std::is_same_v < std::decay_t<T>,
+void > ;
 
 template <typename T>
 concept CoIsNotVoid = !std::is_same_v<std::decay_t<T>, void>;
@@ -161,7 +162,7 @@ co co::then(std::function<Result(Args)> f) const
 {
     auto ctx = ctx__;
     ctx__    = nullptr;
-    return co([this, ctx, f]() -> Result {
+    return co([ctx, f]() -> Result {
         CoDefer(ctx->unlock_destroy());
         return f(manager__->current_env()->wait_ctx(ctx));
     });
@@ -172,7 +173,7 @@ co co::then(std::function<Result()> f) const
 {
     auto ctx = ctx__;
     ctx__    = nullptr;
-    return co([this, ctx, f]() -> Result {
+    return co([ctx, f]() -> Result {
         CoDefer(ctx->unlock_destroy());
         manager__->current_env()->wait_ctx(ctx);
         return f();
