@@ -24,28 +24,6 @@ class co_stack;
 class co_env final : private co_noncopyable
 {
     RegCoEvent(task_finished);
-    RegCoEvent(ctx_added, co_ctx*);
-    RegCoEvent(ctx_received, co_ctx*);
-    RegCoEvent(wait_ctx_timeout, co_ctx*);
-    RegCoEvent(wait_ctx_finished, co_ctx*);
-    RegCoEvent(state_changed, co_env_state, co_env_state);
-    RegCoEvent(switched_to, co_ctx*);
-    RegCoEvent(ctx_removed, co_ctx*);
-    RegCoEvent(schedule_stopped);
-    RegCoEvent(schedule_started);
-    RegCoEvent(idle_waited);
-    RegCoEvent(idle_waked);
-    RegCoEvent(all_ctx_removed);
-    RegCoEvent(scheduled_flag_reset);
-    RegCoEvent(schedule_locked);
-    RegCoEvent(schedule_unlocked);
-    RegCoEvent(ctx_taken, co_ctx*);
-    RegCoEvent(ctx_initted, co_ctx*);
-    RegCoEvent(shared_stack_saved, co_ctx*);
-    RegCoEvent(shared_stack_restored, co_ctx*);
-    RegCoEvent(all_moveable_ctx_taken, std::list<co_ctx*>);
-    RegCoEvent(one_moveable_ctx_taken, co_ctx*);
-    RegCoEvent(this_thread_converted_to_schedule_thread, std::thread::id);
 
 private:
     co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;
