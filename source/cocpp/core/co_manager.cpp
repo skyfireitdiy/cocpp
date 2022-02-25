@@ -29,7 +29,6 @@ co_env* co_manager::get_best_env__()
     {
         if (env->state() == co_env_state::idle)
         {
-            best_env_got().pub(env);
             return env;
         }
         if (!env->can_schedule_ctx())
@@ -53,7 +52,6 @@ co_env* co_manager::get_best_env__()
     if (best_env == nullptr)
     {
         auto ret = create_env(true);
-        best_env_got().pub(ret);
         return ret;
     }
 
@@ -61,10 +59,8 @@ co_env* co_manager::get_best_env__()
     if (can_schedule_env_count < env_set__.base_env_count)
     {
         auto ret = create_env(true);
-        best_env_got().pub(ret);
         return ret;
     }
-    best_env_got().pub(best_env);
     return best_env;
 }
 
@@ -97,14 +93,12 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     env_set__.normal_set.insert(env);
     ++env_set__.normal_env_count;
 
-    env_created().pub(env);
     return env;
 }
 
 void co_manager::set_env_shared_stack_size(size_t size)
 {
     default_shared_stack_size__ = size;
-    env_shared_stack_size_set().pub(size);
 }
 
 void co_manager::create_background_task__()
@@ -118,8 +112,6 @@ void co_manager::create_background_task__()
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         timer_routine__();
     }));
-
-    background_task_created().pub();
 }
 
 void co_manager::subscribe_manager_event__()
@@ -129,7 +121,7 @@ void co_manager::subscribe_manager_event__()
         static bool double_timeout = false;
 
         // FIXME: There are problems with external scheduling and it is difficult to determine the safety point
-        // force_schedule__();
+        force_schedule__();
 
         // If it's the second time out
         if (double_timeout)
@@ -187,8 +179,6 @@ void co_manager::remove_env__(co_env* env)
     env_set__.normal_set.erase(env);
     env_set__.expired_set.insert(env);
     env_set__.cv_expired_env.notify_one();
-
-    env_removed().pub(env);
 }
 
 void co_manager::create_env_from_this_thread__()
@@ -200,8 +190,6 @@ void co_manager::create_env_from_this_thread__()
 
     env_set__.normal_set.insert(current_env__);
     ++env_set__.normal_env_count;
-
-    env_from_this_thread_created().pub(current_env__);
 }
 
 co_env* co_manager::current_env()
@@ -230,8 +218,6 @@ void co_manager::set_clean_up__()
     }
     env_set__.cv_expired_env.notify_one();
     cv_timer_queue__.notify_one();
-
-    clean_up_set().pub();
 }
 
 void co_manager::clean_env_routine__()
@@ -252,8 +238,6 @@ void co_manager::clean_env_routine__()
         }
         env_set__.expired_set.clear();
     }
-
-    env_routine_cleaned().pub();
 }
 
 void co_manager::set_base_schedule_thread_count(size_t base_thread_count)
@@ -263,7 +247,6 @@ void co_manager::set_base_schedule_thread_count(size_t base_thread_count)
         base_thread_count = 1;
     }
     env_set__.base_env_count = base_thread_count;
-    base_thread_count_set().pub(env_set__.base_env_count);
 }
 
 void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
@@ -273,7 +256,6 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
         max_thread_count = 1;
     }
     env_set__.max_env_count = max_thread_count;
-    max_thread_count_set().pub(env_set__.max_env_count);
 }
 
 void co_manager::force_schedule__()
@@ -326,8 +308,6 @@ void co_manager::redistribute_ctx__()
     {
         get_best_env__()->move_ctx_to_here(ctx);
     }
-
-    ctx_redistributed().pub();
 }
 
 void co_manager::destroy_redundant_env__()
@@ -357,7 +337,6 @@ void co_manager::destroy_redundant_env__()
             idle_env_list[i]->stop_schedule();
         }
     }
-    redundant_env_destroyed().pub();
 }
 
 void co_manager::monitor_routine__()
@@ -370,7 +349,6 @@ void co_manager::monitor_routine__()
         timing_routine_timout().pub();
         lck.lock();
     }
-    timing_routine_finished().pub();
 }
 
 void co_manager::timer_routine__()
@@ -420,7 +398,6 @@ void co_manager::set_timer_tick_duration(
     {
         timer_duration__ = duration;
     }
-    timing_duration_set().pub();
 }
 
 const std::chrono::steady_clock::duration& co_manager::timing_duration() const
@@ -441,7 +418,6 @@ void co_manager::destroy_all_factory__()
     co_stack_factory::destroy_instance();
     co_ctx_factory::destroy_instance();
     co_env_factory::destroy_instance();
-    all_factory_destroyed().pub();
 }
 
 void co_manager::wait_background_task__()
@@ -450,7 +426,6 @@ void co_manager::wait_background_task__()
     {
         task.wait();
     }
-    background_task_finished().pub();
 }
 
 co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, std::function<void(co_any&)> entry, bool lock_destroy)
@@ -470,8 +445,6 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, std::fu
     {
         get_best_env__()->add_ctx(ctx);
     }
-
-    ctx_created().pub(ctx);
     return ctx;
 }
 

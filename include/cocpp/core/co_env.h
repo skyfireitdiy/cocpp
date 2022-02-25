@@ -26,6 +26,22 @@ class co_env final : private co_noncopyable
     RegCoEvent(task_finished);
 
 private:
+    class recursive_mutex_with_count : public std::recursive_mutex
+    {
+    private:
+        std::atomic<size_t> count__;
+
+    public:
+        using std::recursive_mutex::recursive_mutex;
+        void   lock();
+        void   unlock();
+        bool   try_lock();
+        size_t count() const;
+        void   increate_count();
+        void   decreate_count();
+    };
+
+private:
     co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;
     co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying> state_manager__;
 
@@ -47,9 +63,9 @@ private:
     // Another thread will get current CTX from this ENV.
     std::atomic<co_ctx*> curr_ctx__ { nullptr };
 
-    int                          min_priority__ = 0;
-    mutable std::recursive_mutex mu_min_priority__;
-    mutable std::recursive_mutex schedule_lock__;
+    int                                min_priority__ = 0;
+    mutable std::recursive_mutex       mu_min_priority__;
+    mutable recursive_mutex_with_count schedule_lock__;
 
     std::condition_variable_any cv_sleep__;
 
@@ -112,6 +128,7 @@ public:
     bool                           has_ctx() const;
     size_t                         ctx_count() const;
     void                           wake_up();
+    bool                           can_force_schedule() const;
 
     CoConstMemberMethodProxy(&state_manager__, state);
     CoConstMemberMethodProxy(&flag_manager__, test_flag);

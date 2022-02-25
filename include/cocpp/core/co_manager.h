@@ -27,23 +27,6 @@ struct co_ctx_config;
 using namespace std::chrono_literals;
 class co_manager final : public co_singleton_static<co_manager>
 {
-    RegCoEvent(best_env_got, co_env*);
-    RegCoEvent(env_created, co_env*);
-    RegCoEvent(env_shared_stack_size_set, size_t);
-    RegCoEvent(background_task_created);
-    RegCoEvent(env_removed, co_env*);
-    RegCoEvent(env_from_this_thread_created, co_env*);
-    RegCoEvent(clean_up_set);
-    RegCoEvent(env_routine_cleaned);
-    RegCoEvent(base_thread_count_set, size_t);
-    RegCoEvent(max_thread_count_set, size_t);
-    RegCoEvent(ctx_redistributed);
-    RegCoEvent(redundant_env_destroyed);
-    RegCoEvent(timing_routine_finished);
-    RegCoEvent(timing_duration_set);
-    RegCoEvent(all_factory_destroyed);
-    RegCoEvent(background_task_finished);
-    RegCoEvent(ctx_created, co_ctx*);
     RegCoEvent(timing_routine_timout);
 
 private:
@@ -58,7 +41,7 @@ private:
     std::recursive_mutex clean_up_lock__;
 
     mutable std::recursive_mutex        mu_timer_duration__;
-    std::chrono::steady_clock::duration timer_duration__ { 1000ns };
+    std::chrono::steady_clock::duration timer_duration__ { 100ns };
 
     std::function<bool()> need_free_mem_cb__ { [] { return false; } };
     std::recursive_mutex  need_free_mem_cb_lock__;
