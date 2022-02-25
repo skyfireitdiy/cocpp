@@ -15,6 +15,7 @@
 #ifdef __GNUC__
 #ifdef __x86_64__
 
+extern "C" void _start();
 CO_NAMESPACE_BEGIN
 
 static void          switch_signal_handler(int signo);
@@ -126,10 +127,12 @@ void switch_to(co_byte** curr, co_byte** next)
 void init_ctx(co_stack* stack, co_ctx* ctx)
 {
     auto context = get_sigcontext_64(ctx);
-    CO_SETREG(context, sp, stack->stack_top());
-    CO_SETREG(context, bp, stack->stack_top());
+    CO_SETREG(context, sp, stack->stack_top() - 8);
+    CO_SETREG(context, bp, stack->stack_top() - 8);
     CO_SETREG(context, ip, &co_ctx::real_entry);
     CO_SETREG(context, di, ctx);
+    // Store the address of '_start' at the bottom of the stack to prevent segment fault in case of exception backtracking of the call chain
+    *reinterpret_cast<void**>(context->sp) = reinterpret_cast<void*>(&::_start);
 }
 
 co_tid gettid()
