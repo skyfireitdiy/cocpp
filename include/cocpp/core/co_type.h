@@ -44,6 +44,7 @@ enum class co_waited_rc_type : unsigned char
     shared_mutex,
     timer,
     finished,
+    condition_variable,
 };
 
 struct co_ctx_wait_data
