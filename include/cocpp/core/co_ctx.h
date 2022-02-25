@@ -22,16 +22,6 @@ class co_ctx final : private co_noncopyable
 {
     RegCoEvent(finished);
     RegCoEvent(priority_changed, int, int);
-    RegCoEvent(state_changed, co_state, co_state);
-    RegCoEvent(env_set, co_env*);
-    RegCoEvent(locked_destroy);
-    RegCoEvent(unlocked_destroy);
-    RegCoEvent(stack_set, co_stack*);
-    RegCoEvent(state_set, co_state);
-    RegCoEvent(flag_set, size_t);
-    RegCoEvent(flag_reset, size_t);
-    RegCoEvent(wait_resource_state_entered, co_waited_rc_type, void*);
-    RegCoEvent(wait_resource_state_leaved);
 
 private:
     co_flag_manager<CO_CTX_FLAG_MAX> flag_manager__;

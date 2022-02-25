@@ -33,7 +33,6 @@ co_any& co_ctx::ret_ref()
 void co_ctx::set_env(co_env* env)
 {
     env__ = env;
-    env_set().pub(env__);
 }
 
 co_env* co_ctx::env() const
@@ -112,12 +111,10 @@ void co_ctx::set_priority(int priority)
 void co_ctx::set_flag(size_t flag)
 {
     flag_manager__.set_flag(flag);
-    flag_set().pub(flag);
 }
 
 void co_ctx::reset_flag(size_t flag)
 {
-    flag_reset().pub(flag);
     flag_manager__.reset_flag(flag);
 }
 
@@ -144,19 +141,16 @@ bool co_ctx::can_destroy() const
 void co_ctx::lock_destroy()
 {
     set_flag(CO_CTX_FLAG_LOCKED);
-    locked_destroy().pub();
 }
 
 void co_ctx::unlock_destroy()
 {
     reset_flag(CO_CTX_FLAG_LOCKED);
-    unlocked_destroy().pub();
 }
 
 void co_ctx::set_stack(co_stack* stack)
 {
     stack__ = stack;
-    stack_set().pub(stack__);
 }
 
 bool co_ctx::can_move() const
@@ -184,7 +178,6 @@ void co_ctx::enter_wait_resource_state(co_waited_rc_type rc_type, void* rc)
     }
 
     env__->ctx_enter_wait_state(this);
-    wait_resource_state_entered().pub(rc_type, rc);
 }
 
 void co_ctx::leave_wait_resource_state()
@@ -196,7 +189,6 @@ void co_ctx::leave_wait_resource_state()
 
     env__->ctx_leave_wait_state(this);
     env__->wake_up();
-    wait_resource_state_leaved().pub();
 }
 
 void co_ctx::lock_finished_state()

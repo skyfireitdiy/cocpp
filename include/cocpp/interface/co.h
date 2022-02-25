@@ -58,7 +58,6 @@ public:
 
     CoMemberMethodProxyWithPrefix(ctx__, finished, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, priority_changed, ctx_);
-    CoMemberMethodProxyWithPrefix(ctx__, state_changed, ctx_);
 
     template <typename Func, typename... Args>
     co(Func&& func, Args&&... args);
