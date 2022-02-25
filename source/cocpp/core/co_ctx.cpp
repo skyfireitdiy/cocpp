@@ -58,6 +58,7 @@ void co_ctx::real_entry(co_ctx* ctx)
 {
     try
     {
+        // FIXME: An exception is thrown here that GCC11.2 did not catch
         ctx->entry()(ctx->ret_ref());
     }
     catch (...)
