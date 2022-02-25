@@ -62,11 +62,8 @@ void co_env::add_ctx(co_ctx* ctx)
     }
 
     init_ctx(is_shared_stack ? shared_stack__ : ctx->stack(), ctx); // 初始化ctx
-    ctx_initted().pub(ctx);
 
     move_ctx_to_here(ctx);
-
-    ctx_added().pub(ctx);
 }
 
 void co_env::move_ctx_to_here(co_ctx* ctx)
@@ -86,7 +83,6 @@ void co_env::move_ctx_to_here(co_ctx* ctx)
     set_state(co_env_state::busy);
 
     wake_up();
-    ctx_received().pub(ctx);
 }
 
 std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
@@ -129,7 +125,6 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
     }
 
     ctx->lock_finished_state();
-    wait_ctx_finished().pub(ctx);
     if (ctx->state() != co_state::finished)
     {
         ctx->unlock_finished_state();
@@ -167,7 +162,6 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
         ctx->unlock_finished_state();
     }
 
-    wait_ctx_finished().pub(ctx);
     ctx->check_and_rethrow_exception();
     return ctx->ret_ref();
 }
@@ -288,7 +282,6 @@ void co_env::switch_normal_ctx__()
     unlock_schedule();
     switch_to(curr->regs(), next->regs());
     lock_schedule();
-    switched_to().pub(curr);
 }
 
 void co_env::schedule_switch()
@@ -315,7 +308,6 @@ void co_env::remove_ctx(co_ctx* ctx)
         --ctx_count__;
     }
     co_ctx_factory::instance()->destroy_ctx(ctx);
-    ctx_removed().pub(ctx);
 }
 
 // Warning: The CTX returned by this interface is not guaranteed to be valid after the call.
@@ -333,8 +325,6 @@ void co_env::stop_schedule()
     }
 
     wake_up();
-
-    schedule_stopped().pub();
 }
 
 void co_env::start_schedule()
@@ -364,13 +354,11 @@ void co_env::switch_shared_stack_ctx__()
     unlock_schedule();
     switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
     lock_schedule();
-    switched_to().pub(idle_ctx__);
 }
 
 void co_env::start_schedule_routine__()
 {
     schedule_thread_tid__ = gettid();
-    schedule_started().pub();
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
     while (state() != co_env_state::destorying)
@@ -403,7 +391,6 @@ void co_env::schedule_in_this_thread()
     {
         throw co_error("schedule_in_this_thread: already started");
     }
-    this_thread_converted_to_schedule_thread().pub(std::this_thread::get_id());
     start_schedule_routine__();
 }
 
@@ -414,13 +401,11 @@ void co_env::remove_all_ctx__()
     {
         remove_ctx(obj);
     }
-    all_ctx_removed().pub();
 }
 
 void co_env::reset_scheduled_flag()
 {
     reset_flag(CO_ENV_FLAG_SCHEDULED);
-    scheduled_flag_reset().pub();
 }
 
 bool co_env::can_auto_destroy() const
@@ -441,7 +426,6 @@ void co_env::save_shared_stack__(co_ctx* ctx)
     auto tmp_stack  = co_stack_factory::instance()->create_stack(stack_size);
     memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
     ctx->set_stack(tmp_stack);
-    shared_stack_saved().pub(ctx);
 }
 
 void co_env::restore_shared_stack__(co_ctx* ctx)
@@ -459,7 +443,6 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
     }
     // 设置为共享栈
     ctx->set_stack(shared_stack__);
-    shared_stack_restored().pub(ctx);
 }
 
 co_tid co_env::schedule_thread_tid() const
@@ -583,7 +566,6 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
             }
         }
     }
-    all_moveable_ctx_taken().pub(ret);
     return ret;
 }
 
@@ -599,12 +581,10 @@ co_ctx* co_env::take_one_movable_ctx()
             {
                 all_normal_ctx__[i].remove(ctx);
                 --ctx_count__;
-                one_moveable_ctx_taken().pub(ctx);
                 return ctx;
             }
         }
     }
-    one_moveable_ctx_taken().pub(nullptr);
     return nullptr;
 }
 
@@ -626,13 +606,11 @@ bool co_env::has_ctx() const
 void co_env::lock_schedule()
 {
     schedule_lock__.lock();
-    schedule_locked().pub();
 }
 
 void co_env::unlock_schedule()
 {
     schedule_lock__.unlock();
-    schedule_unlocked().pub();
 }
 
 bool co_env::try_lock_schedule()
