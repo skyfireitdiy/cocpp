@@ -51,6 +51,7 @@ void co_condition_variable::wait(Lock& lock)
     auto ctx = co_manager::instance()->current_env()->current_ctx();
     ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
     {
+        CO_O_DEBUG("co_condition_variable::wait: ctx: %p\n", ctx);
         std::scoped_lock lk(cv_lock__);
         waiters__.push_back(ctx);
     }
@@ -64,18 +65,17 @@ void co_condition_variable::wait(Lock& lock, Predicate pred)
 {
     auto ctx = co_manager::instance()->current_env()->current_ctx();
     lock.unlock();
-
-    while (!pred())
+    do
     {
         ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
         {
+            CO_O_DEBUG("co_condition_variable::wait with pred: ctx: %p\n", ctx);
             std::scoped_lock lk(cv_lock__);
             waiters__.push_back(ctx);
         }
-        lock.unlock();
         co_manager::instance()->current_env()->schedule_switch();
-        lock.lock();
-    }
+    } while (!pred());
+    lock.lock();
 }
 
 template <typename Lock, typename Clock, typename Duration>
@@ -86,11 +86,11 @@ bool co_condition_variable::wait_until(Lock& lock, const std::chrono::time_point
 
     ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
     {
+        CO_O_DEBUG("co_condition_variable::wait_until ctx: %p\n", ctx);
         std::scoped_lock lk(cv_lock__);
         waiters__.push_back(ctx);
     }
 
-    lock.unlock();
     auto timer = co_timer::create([this, ctx] {
         {
             std::scoped_lock lk(cv_lock__);
@@ -102,9 +102,10 @@ bool co_condition_variable::wait_until(Lock& lock, const std::chrono::time_point
                                   abs_time);
     timer->start();
     co_manager::instance()->current_env()->unlock_schedule();
+    lock.unlock();
     co_manager::instance()->current_env()->schedule_switch();
-    timer->stop();
     lock.lock();
+    timer->stop();
     return !timeout__;
 }
 
@@ -119,13 +120,7 @@ bool co_condition_variable::wait_until(Lock& lock, const std::chrono::time_point
                                        Predicate pred)
 {
     co_manager::instance()->current_env()->lock_schedule();
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
-    ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
-    {
-        std::scoped_lock lk(cv_lock__);
-        waiters__.push_back(ctx);
-    }
-    lock.unlock();
+    auto ctx   = co_manager::instance()->current_env()->current_ctx();
     auto timer = co_timer::create([this, ctx] {
         {
             std::scoped_lock lk(cv_lock__);
@@ -136,15 +131,23 @@ bool co_condition_variable::wait_until(Lock& lock, const std::chrono::time_point
     },
                                   abs_time);
     timer->start();
-    while (!timeout__ && !pred())
-    {
-        co_manager::instance()->current_env()->unlock_schedule();
-        co_manager::instance()->current_env()->schedule_switch();
-        co_manager::instance()->current_env()->lock_schedule();
-    }
+
+    lock.unlock();
     co_manager::instance()->current_env()->unlock_schedule();
-    timer->stop();
+    do
+    {
+        ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
+        {
+            CO_O_DEBUG("co_condition_variable::wait_until with pred: ctx: %p\n", ctx);
+            std::scoped_lock lk(cv_lock__);
+            waiters__.push_back(ctx);
+        }
+        co_manager::instance()->current_env()->schedule_switch();
+    } while (!timeout__ && !pred());
+
     lock.lock();
+    timer->stop();
+
     return !timeout__ && pred();
 }
 
