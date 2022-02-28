@@ -17,6 +17,7 @@ void co_condition_variable::notify_all()
     std::scoped_lock lk(cv_lock__);
     for (auto ctx : waiters__)
     {
+        CO_O_DEBUG("co_condition_variable::notify_all: ctx: %p\n", ctx);
         ctx->leave_wait_resource_state();
     }
     waiters__.clear();
@@ -27,11 +28,11 @@ void co_condition_variable::notify_one()
     std::scoped_lock lk(cv_lock__);
     if (waiters__.empty())
     {
-        cv_lock__.unlock();
         return;
     }
     auto ctx = waiters__.front();
     waiters__.pop_front();
+    CO_O_DEBUG("co_condition_variable::notify_all: ctx: %p\n", ctx);
     ctx->leave_wait_resource_state();
 }
 
