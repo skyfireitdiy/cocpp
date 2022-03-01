@@ -51,7 +51,7 @@ void co_condition_variable::wait(Lock& lock)
     auto ctx = co_manager::instance()->current_env()->current_ctx();
     ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
     {
-        CO_O_DEBUG("co_condition_variable::wait: ctx: %p\n", ctx);
+        // CO_O_DEBUG("co_condition_variable::wait: ctx: %p\n", ctx);
         std::scoped_lock lk(cv_lock__);
         waiters__.push_back(ctx);
     }
@@ -69,7 +69,7 @@ void co_condition_variable::wait(Lock& lock, Predicate pred)
     {
         ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
         {
-            CO_O_DEBUG("co_condition_variable::wait with pred: ctx: %p\n", ctx);
+            // CO_O_DEBUG("co_condition_variable::wait with pred: ctx: %p\n", ctx);
             std::scoped_lock lk(cv_lock__);
             waiters__.push_back(ctx);
         }
@@ -86,7 +86,7 @@ bool co_condition_variable::wait_until(Lock& lock, const std::chrono::time_point
 
     ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
     {
-        CO_O_DEBUG("co_condition_variable::wait_until ctx: %p\n", ctx);
+        // CO_O_DEBUG("co_condition_variable::wait_until ctx: %p\n", ctx);
         std::scoped_lock lk(cv_lock__);
         waiters__.push_back(ctx);
     }
@@ -138,7 +138,7 @@ bool co_condition_variable::wait_until(Lock& lock, const std::chrono::time_point
     {
         ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
         {
-            CO_O_DEBUG("co_condition_variable::wait_until with pred: ctx: %p\n", ctx);
+            // CO_O_DEBUG("co_condition_variable::wait_until with pred: ctx: %p\n", ctx);
             std::scoped_lock lk(cv_lock__);
             waiters__.push_back(ctx);
         }

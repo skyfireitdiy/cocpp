@@ -101,9 +101,11 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     constexpr auto max_size = MaxSize == 0 ? 1 : MaxSize;
     if constexpr (max_size > 0)
     {
-        if (data__.size() == MaxSize)
+        if (data__.size() == MaxSize) // Note: Is this condition correct ?
         {
+            CO_O_DEBUG("chan full, size: %lu", data__.size());
             cv_full__.wait(lock, [this] { return closed__ || data__.size() < max_size; });
+            CO_O_DEBUG("chan full end, size: %lu", data__.size());
             if (closed__)
             {
                 return false;
@@ -111,12 +113,17 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
         }
     }
 
+    CO_O_DEBUG("push: %d", value);
     data__.push_back(value);
+    CO_O_DEBUG("chan push end, size: %lu", data__.size());
+    CO_O_DEBUG("notify_one: cv_empty__");
     cv_empty__.notify_one();
 
     if constexpr (MaxSize == 0)
     {
+        CO_O_DEBUG("full wait");
         cv_full__.wait(lock, [this] { return closed__ || data__.empty(); });
+        CO_O_DEBUG("full wait end");
     }
 
     return true;
@@ -134,7 +141,9 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
         {
             return ret;
         }
+        CO_O_DEBUG("co_chan::pop: wait, size: %lu", data__.size());
         cv_empty__.wait(lock, [this] { return closed__ || !data__.empty(); });
+        CO_O_DEBUG("co_chan::pop: wait end, size: %lu", data__.size());
         if (data__.empty())
         {
             return ret;
@@ -143,6 +152,8 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
 
     ret = data__.front();
     data__.pop_front();
+    CO_O_DEBUG("co_chan::pop: pop, size: %lu", data__.size());
+    CO_O_DEBUG("notify_one: cv_full__");
     cv_full__.notify_one();
     return ret;
 }
