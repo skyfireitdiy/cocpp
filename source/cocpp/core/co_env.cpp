@@ -232,12 +232,17 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
     }
     else
     {
-        // 进入睡眠前需要解除调度锁，否则其他线程可能会被阻塞
+        // The scheduling lock needs to be unlocked before going to sleep, otherwise other threads may be blocked
         unlock_schedule();
-        sleep_if_need__([this] { return idle_ctx__->test_flag(CO_CTX_FLAG_WAITING); });
+        // Wake up when the current cooperative journey is not blocked (The current coroutine is the idle coroutine)
+        // The purpose of need_sleep__ is to prevent new coroutines from joining during sleep
+        sleep_if_need__([curr, this] {
+            return need_sleep__() && curr->test_flag(CO_CTX_FLAG_WAITING);
+        });
         lock_schedule();
     }
 
+    // no need to switch
     if (curr == next)
     {
         return false;
@@ -246,13 +251,12 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
     {
         update_ctx_state__(curr, next);
     }
+
     if (curr->test_flag(CO_CTX_FLAG_SHARED_STACK) || next->test_flag(CO_CTX_FLAG_SHARED_STACK))
     {
         shared_stack_switch_info__.from        = curr;
         shared_stack_switch_info__.to          = next;
         shared_stack_switch_info__.need_switch = true;
-
-        // CO_DEBUG("prepare from:%p to:%p", shared_stack_switch_context__.from, shared_stack_switch_context__.to);
 
         if (curr == idle_ctx__)
         {
@@ -260,7 +264,6 @@ bool co_env::prepare_to_switch(co_ctx*& from, co_ctx*& to)
         }
 
         next = idle_ctx__;
-        // CO_DEBUG("from %p to idle %p", curr, idle_ctx__);
     }
 
     from = curr;
@@ -368,13 +371,14 @@ void co_env::start_schedule_routine__()
             schedule_switch();
             lock_schedule();
 
-            // 切换回来检测是否需要执行共享栈切换
+            // Switch back to check if a shared stack switch needs to be performed
             if (shared_stack_switch_info__.need_switch)
             {
                 continue;
             }
 
-            set_state(co_env_state::idle); //  切换到idle协程，说明空闲了
+            // Switch to the idle coroutine, indicating that it is idle
+            set_state(co_env_state::idle);
             unlock_schedule();
             sleep_if_need__();
             lock_schedule();
@@ -497,6 +501,9 @@ bool co_env::is_blocked() const
 
 bool co_env::need_sleep__()
 {
+    // Hibernation requires the following conditions:
+    // 1. No schedulable coroutines
+    // 2. The destroy flag is not set
     return !can_schedule__() && state() != co_env_state::destorying;
 }
 

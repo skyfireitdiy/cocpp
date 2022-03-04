@@ -12,19 +12,16 @@ void co_spinlock::lock()
     {
         co_manager::instance()->current_env()->schedule_switch();
     }
-    // auto ctx = co_manager::instance()->current_env()->current_ctx();
-    // CO_O_DEBUG("lock by %p", ctx);
 }
 
 bool co_spinlock::try_lock()
 {
-    return locked__.test_and_set();
+    return !locked__.test_and_set();
 }
 
 void co_spinlock::unlock()
 {
     locked__.clear();
-    // CO_O_DEBUG("unlock");
 }
 
 CO_NAMESPACE_END
