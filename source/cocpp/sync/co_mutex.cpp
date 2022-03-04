@@ -12,8 +12,10 @@ CO_NAMESPACE_BEGIN
 
 void co_mutex::lock()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    CO_O_DEBUG("ctx %p lock spinlock %p", ctx, &spinlock__);
     std::scoped_lock lock(spinlock__);
+    CO_O_DEBUG("ctx %p unlock get spinlock__ %p", ctx, &spinlock__);
 
     using namespace std::chrono_literals;
     if (co_timed_call(10ms, [this, ctx] {
@@ -22,9 +24,11 @@ void co_mutex::lock()
                 owner__ = ctx;
                 return true;
             }
+            // CO_O_DEBUG("ctx %p unlock release spinlock__", ctx);
             spinlock__.unlock();
             co_manager::instance()->current_env()->schedule_switch();
             spinlock__.lock();
+            // CO_O_DEBUG("ctx %p unlock get spinlock__", ctx);
             return false;
         }))
     {
@@ -36,11 +40,14 @@ void co_mutex::lock()
     while (owner__ != ctx)
     {
         ctx->enter_wait_resource_state(co_waited_rc_type::mutex, this);
+        CO_O_DEBUG("ctx %p unlock release spinlock__ %p", ctx, &spinlock__);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
+        CO_O_DEBUG("ctx %p unlock get spinlock__ %p", ctx, &spinlock__);
     }
     owner__ = ctx;
+    CO_O_DEBUG("ctx %p unlock release spinlock__ %p", ctx, &spinlock__);
 }
 
 bool co_mutex::try_lock()
@@ -57,8 +64,10 @@ bool co_mutex::try_lock()
 
 void co_mutex::unlock()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    CO_O_DEBUG("ctx %p unlock, spinlock: %p", ctx, &spinlock__);
     std::scoped_lock lock(spinlock__);
+    CO_O_DEBUG("ctx %p unlock get spinlock__ %p", ctx, &spinlock__);
     if (owner__ != ctx)
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__);
@@ -68,6 +77,7 @@ void co_mutex::unlock()
     if (wait_deque__.empty())
     {
         owner__ = nullptr;
+        CO_O_DEBUG("ctx %p unlock release spinlock__ %p", ctx, &spinlock__);
         return;
     }
 
@@ -75,6 +85,7 @@ void co_mutex::unlock()
     wait_deque__.pop_front();
     owner__ = obj;
     obj->leave_wait_resource_state();
+    CO_O_DEBUG("ctx %p unlock release spinlock__ %p", ctx, &spinlock__);
 }
 
 CO_NAMESPACE_END

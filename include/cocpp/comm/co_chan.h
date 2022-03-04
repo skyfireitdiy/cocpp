@@ -103,6 +103,7 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     {
         if (data__.size() == MaxSize) // Note: Is this condition correct ?
         {
+            CO_O_DEBUG("co_chan::push: chan is full");
             cv_full__.wait(lock, [this] { return closed__ || data__.size() < max_size; });
             if (closed__)
             {

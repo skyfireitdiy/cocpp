@@ -52,32 +52,43 @@ public:
 template <typename Lock>
 void co_condition_variable_impl::wait(Lock& lock)
 {
+    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    CO_O_DEBUG("ctx %p wait", ctx);
     std::unique_lock lk(cv_lock__);
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
-
     ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
     waiters__.push_back(ctx);
-
+    CO_O_DEBUG("ctx %p unlock", ctx);
     lk.unlock();
     lock.unlock();
+    CO_O_DEBUG("ctx %p switch", ctx);
     co_manager::instance()->current_env()->schedule_switch();
+    CO_O_DEBUG("ctx %p lock", ctx);
     std::lock(lk, lock);
+    CO_O_DEBUG("ctx %p wait end", ctx);
 }
 
 template <typename Lock, typename Predicate>
 void co_condition_variable_impl::wait(Lock& lock, Predicate pred)
 {
+    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    CO_O_DEBUG("ctx %p wait", ctx);
     std::unique_lock lk(cv_lock__);
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
     do
     {
+        CO_O_DEBUG("ctx %p wait", ctx);
         ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
         waiters__.push_back(ctx);
+        CO_O_DEBUG("ctx %p unlock", ctx);
         lk.unlock();
+        CO_O_DEBUG("ctx %p lk unlock", ctx);
         lock.unlock();
+        CO_O_DEBUG("ctx %p switch", ctx);
         co_manager::instance()->current_env()->schedule_switch();
+        CO_O_DEBUG("ctx %p lock", ctx);
         std::lock(lk, lock);
+        CO_O_DEBUG("ctx %p judge", ctx);
     } while (!pred());
+    CO_O_DEBUG("ctx %p wait end", ctx);
 }
 
 template <typename Lock, typename Clock, typename Duration>
