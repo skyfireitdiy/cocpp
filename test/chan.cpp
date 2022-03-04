@@ -48,20 +48,22 @@ TEST(chan, buffered)
 {
     co_chan<int, 10> ch;
 
-    co  c1([&] {
+    // auto env = co::create_env(true);
+
+    co c1([&] {
         for (int i = 0; i < 10000; ++i)
         {
             ch.push(i);
         }
         ch.close();
     });
-    int t;
-    for (int i = 0; i < 10000; ++i)
-    {
-        t = ch.pop().value();
-        EXPECT_EQ(t, i);
-    }
-    EXPECT_FALSE(ch.pop());
+    [&] {
+        for (int i = 0; i < 10000; ++i)
+        {
+            EXPECT_EQ(ch.pop(), i);
+        }
+        EXPECT_FALSE(ch.pop());
+    }();
     c1.join();
 }
 
@@ -75,7 +77,7 @@ TEST(chan, no_limited)
             ch.push(i);
         }
         ch.close();
-    });
+     });
     int t;
     for (int i = 0; i < 10000; ++i)
     {
@@ -95,7 +97,7 @@ TEST(chan, no_buf)
             ch << i;
         }
         ch.close();
-    });
+                 });
 
     for (int i = 0; i < 10000; ++i)
     {
@@ -225,7 +227,7 @@ TEST(chan, pop_from_empty_chan_closed)
     co              c1([&] {
         this_co::sleep_for(1s);
         ch.close();
-    });
+                 });
     EXPECT_FALSE(ch.pop());
     c1.join();
 }
@@ -236,7 +238,7 @@ TEST(chan, pop_from_zero_chan_closed)
     co              c1([&] {
         this_co::sleep_for(1s);
         ch.close();
-    });
+                 });
     EXPECT_FALSE(ch.pop());
     c1.join();
 }
