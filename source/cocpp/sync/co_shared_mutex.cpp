@@ -40,6 +40,13 @@ void co_shared_mutex::lock()
         return;
     }
 
+    if (owners__.empty())
+    {
+        lock_type__ = lock_type::unique;
+        owners__.insert(ctx);
+        return;
+    }
+
     wait_deque__.push_back(shared_lock_context {
         .type = lock_type::unique,
         .ctx  = ctx });
@@ -111,6 +118,13 @@ void co_shared_mutex::lock_shared()
         return;
     }
 
+    if (lock_type__ == lock_type::shared || lock_type__ == lock_type::unlocked)
+    {
+        lock_type__ = lock_type::shared;
+        owners__.insert(ctx);
+        return;
+    }
+
     wait_deque__.push_back(shared_lock_context {
         .type = lock_type::shared,
         .ctx  = ctx });
@@ -178,7 +192,7 @@ void co_shared_mutex::wake_up_waiters__()
 
     auto iter   = std::remove_if(wait_deque__.begin(), wait_deque__.end(), [](auto& c) {
         return c.type == lock_type::shared;
-    });
+      });
     lock_type__ = lock_type::shared;
     std::transform(iter, wait_deque__.end(), std::inserter(owners__, owners__.begin()), [](auto& context) {
         context.ctx->leave_wait_resource_state();

@@ -38,12 +38,17 @@ void co_recursive_mutex::lock()
         return;
     }
 
-    wait_deque__.push_back(ctx);
+    if (owner__ == nullptr)
+    {
+        owner__ = ctx;
+        ++lock_count__;
+        return;
+    }
 
+    wait_deque__.push_back(ctx);
     while (owner__ != ctx)
     {
         ctx->enter_wait_resource_state(co_waited_rc_type::shared_mutex, this);
-
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();

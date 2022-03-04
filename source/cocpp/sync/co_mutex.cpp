@@ -5,6 +5,7 @@
 #include "cocpp/exception/co_error.h"
 #include "cocpp/utils/co_defer.h"
 #include "cocpp/utils/co_utils.h"
+#include <atomic>
 #include <chrono>
 #include <mutex>
 
@@ -13,41 +14,50 @@ CO_NAMESPACE_BEGIN
 void co_mutex::lock()
 {
     auto ctx = co_manager::instance()->current_env()->current_ctx();
-    CO_O_DEBUG("ctx %p lock spinlock %p", ctx, &spinlock__);
-    std::scoped_lock lock(spinlock__);
-    CO_O_DEBUG("ctx %p unlock get spinlock__ %p", ctx, &spinlock__);
 
+    std::scoped_lock lock(spinlock__);
+
+    // Try to get the lock by spin
     using namespace std::chrono_literals;
     if (co_timed_call(10ms, [this, ctx] {
+            // At this time, nullPTR is preempted because it is not in the wait queue
             if (owner__ == nullptr)
             {
                 owner__ = ctx;
                 return true;
             }
-            // CO_O_DEBUG("ctx %p unlock release spinlock__", ctx);
+
+            // Other coroutine unlocks require a spin lock
             spinlock__.unlock();
             co_manager::instance()->current_env()->schedule_switch();
             spinlock__.lock();
-            // CO_O_DEBUG("ctx %p unlock get spinlock__", ctx);
             return false;
         }))
     {
+
         return;
     }
 
+    // It's unlocked when you switch back
+    if (owner__ == nullptr)
+    {
+        owner__ = ctx;
+        return;
+    }
+
+    // If the lock is not obtained, the current coroutine is added to the wait queue
     wait_deque__.push_back(ctx);
 
     while (owner__ != ctx)
     {
+        // Set the wait state so that the scheduling module does not schedule this coroutine
         ctx->enter_wait_resource_state(co_waited_rc_type::mutex, this);
-        CO_O_DEBUG("ctx %p unlock release spinlock__ %p", ctx, &spinlock__);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
+
+        // This coroutine is rescheduled, so coroutine unlocking removes the wait flag for the current coroutine
         spinlock__.lock();
-        CO_O_DEBUG("ctx %p unlock get spinlock__ %p", ctx, &spinlock__);
     }
-    owner__ = ctx;
-    CO_O_DEBUG("ctx %p unlock release spinlock__ %p", ctx, &spinlock__);
 }
 
 bool co_mutex::try_lock()
@@ -64,28 +74,26 @@ bool co_mutex::try_lock()
 
 void co_mutex::unlock()
 {
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
-    CO_O_DEBUG("ctx %p unlock, spinlock: %p", ctx, &spinlock__);
+    auto             ctx = co_manager::instance()->current_env()->current_ctx();
     std::scoped_lock lock(spinlock__);
-    CO_O_DEBUG("ctx %p unlock get spinlock__ %p", ctx, &spinlock__);
     if (owner__ != ctx)
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__);
         throw co_error("ctx is not owner[", ctx, "]");
     }
 
+    // Wait queue is empty, return with owner set to nullptr
     if (wait_deque__.empty())
     {
         owner__ = nullptr;
-        CO_O_DEBUG("ctx %p unlock release spinlock__ %p", ctx, &spinlock__);
         return;
     }
 
+    // The wait queue is not empty, set owner to first in the wait queue, and wake up
     auto obj = wait_deque__.front();
     wait_deque__.pop_front();
     owner__ = obj;
     obj->leave_wait_resource_state();
-    CO_O_DEBUG("ctx %p unlock release spinlock__ %p", ctx, &spinlock__);
 }
 
 CO_NAMESPACE_END

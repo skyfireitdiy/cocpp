@@ -57,13 +57,13 @@ TEST(chan, buffered)
         }
         ch.close();
     });
-    [&] {
-        for (int i = 0; i < 10000; ++i)
-        {
-            EXPECT_EQ(ch.pop(), i);
-        }
-        EXPECT_FALSE(ch.pop());
-    }();
+
+    for (int i = 0; i < 10000; ++i)
+    {
+        EXPECT_EQ(ch.pop(), i);
+    }
+    EXPECT_FALSE(ch.pop());
+
     c1.join();
 }
 
