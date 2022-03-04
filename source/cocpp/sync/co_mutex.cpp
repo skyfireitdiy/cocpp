@@ -15,26 +15,6 @@ void co_mutex::lock()
     auto             ctx = co_manager::instance()->current_env()->current_ctx();
     std::scoped_lock lock(spinlock__);
 
-    if (owner__ == nullptr)
-    {
-        owner__ = ctx;
-        return;
-    }
-
-    using namespace std::chrono_literals;
-    auto deadline = std::chrono::steady_clock::now() + 10ms;
-    while (std::chrono::steady_clock::now() < deadline)
-    {
-        spinlock__.unlock();
-        co_manager::instance()->current_env()->schedule_switch();
-        spinlock__.lock();
-        if (owner__ == nullptr)
-        {
-            owner__ = ctx;
-            return;
-        }
-    }
-
     using namespace std::chrono_literals;
     if (co_timed_call(10ms, [this, ctx] {
             if (owner__ == nullptr)

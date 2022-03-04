@@ -8,20 +8,23 @@ CO_NAMESPACE_BEGIN
 
 void co_spinlock::lock()
 {
-    while (locked__.test_and_set(std::memory_order_acquire))
+    while (locked__.test_and_set())
     {
         co_manager::instance()->current_env()->schedule_switch();
     }
+    // auto ctx = co_manager::instance()->current_env()->current_ctx();
+    // CO_O_DEBUG("lock by %p", ctx);
 }
 
 bool co_spinlock::try_lock()
 {
-    return !locked__.test_and_set(std::memory_order_acquire);
+    return locked__.test_and_set();
 }
 
 void co_spinlock::unlock()
 {
-    locked__.clear(std::memory_order_release);
+    locked__.clear();
+    // CO_O_DEBUG("unlock");
 }
 
 CO_NAMESPACE_END
