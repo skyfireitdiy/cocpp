@@ -71,10 +71,8 @@ void co_condition_variable_impl::wait(Lock& lock, Predicate pred)
 
     do
     {
-
         {
             std::scoped_lock lk(cv_lock__);
-
             waiters__.push_back(ctx);
             lock.unlock();
             ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
@@ -83,7 +81,6 @@ void co_condition_variable_impl::wait(Lock& lock, Predicate pred)
         co_manager::instance()->current_env()->schedule_switch();
 
         lock.lock();
-
     } while (!pred());
 }
 

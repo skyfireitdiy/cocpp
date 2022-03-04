@@ -101,7 +101,7 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     constexpr auto max_size = MaxSize == 0 ? 1 : MaxSize;
     if constexpr (max_size > 0)
     {
-        if (data__.size() == MaxSize) // Note: Is this condition correct ?
+        if (data__.size() == max_size) // Note: Is this condition correct ?
         {
             cv_full__.wait(lock, [this] { return closed__ || data__.size() < max_size; });
             if (closed__)
