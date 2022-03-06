@@ -168,27 +168,32 @@ co_id co_ctx::id() const
     return reinterpret_cast<co_id>(this);
 }
 
-void co_ctx::enter_wait_resource_state(co_waited_rc_type rc_type, void* rc)
+void co_ctx::enter_wait_resource_state(void* rc)
 {
     {
         std::scoped_lock lock(wait_data__.mu);
-        wait_data__.type     = rc_type;
-        wait_data__.resource = rc;
+        wait_data__.resource.insert(rc);
         set_flag(CO_CTX_FLAG_WAITING);
     }
 
     env__->ctx_enter_wait_state(this);
 }
 
-void co_ctx::leave_wait_resource_state()
+void co_ctx::leave_wait_resource_state(void* rc)
 {
     {
         std::scoped_lock lock(wait_data__.mu);
-        reset_flag(CO_CTX_FLAG_WAITING);
+        wait_data__.resource.erase(rc);
+        if (wait_data__.resource.empty())
+        {
+            reset_flag(CO_CTX_FLAG_WAITING);
+        }
     }
-
-    env__->ctx_leave_wait_state(this);
-    env__->wake_up();
+    if (!test_flag(CO_CTX_FLAG_WAITING))
+    {
+        env__->ctx_leave_wait_state(this);
+        env__->wake_up();
+    }
 }
 
 void co_ctx::lock_finished_state()

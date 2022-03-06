@@ -53,7 +53,7 @@ void co_shared_mutex::lock()
 
     while (!owners__.contains(ctx))
     {
-        ctx->enter_wait_resource_state(co_waited_rc_type::shared_mutex, this);
+        ctx->enter_wait_resource_state(this);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
@@ -131,7 +131,7 @@ void co_shared_mutex::lock_shared()
 
     while (!owners__.contains(ctx))
     {
-        ctx->enter_wait_resource_state(co_waited_rc_type::shared_mutex, this);
+        ctx->enter_wait_resource_state(this);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
@@ -186,7 +186,7 @@ void co_shared_mutex::wake_up_waiters__()
         owners__.insert(obj.ctx);
         lock_type__ = lock_type::unique;
         wait_deque__.pop_front();
-        obj.ctx->leave_wait_resource_state();
+        obj.ctx->leave_wait_resource_state(this);
         return;
     }
 
@@ -194,8 +194,8 @@ void co_shared_mutex::wake_up_waiters__()
         return c.type == lock_type::shared;
       });
     lock_type__ = lock_type::shared;
-    std::transform(iter, wait_deque__.end(), std::inserter(owners__, owners__.begin()), [](auto& context) {
-        context.ctx->leave_wait_resource_state();
+    std::transform(iter, wait_deque__.end(), std::inserter(owners__, owners__.begin()), [this](auto& context) {
+        context.ctx->leave_wait_resource_state(this);
         return context.ctx;
     });
     wait_deque__.erase(iter, wait_deque__.end());

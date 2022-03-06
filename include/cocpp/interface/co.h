@@ -190,16 +190,14 @@ void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_ti
 {
     auto env   = co_manager::instance()->current_env();
     auto ctx   = env->current_ctx();
-    auto timer = co_timer::create([ctx] {
-        ctx->leave_wait_resource_state();
-    },
-                                  abs_time);
-
+    auto timer = co_timer::create(nullptr, abs_time);
+    timer->set_expire_callback([ctx] {
+        ctx->leave_wait_resource_state(ctx);
+    });
     env->lock_schedule();
-    ctx->enter_wait_resource_state(co_waited_rc_type::timer, nullptr);
+    ctx->enter_wait_resource_state(ctx);
     timer->start();
     env->unlock_schedule();
-
     yield();
 }
 

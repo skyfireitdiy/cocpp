@@ -51,7 +51,7 @@ void co_mutex::lock()
     while (owner__ != ctx)
     {
         // Set the wait state so that the scheduling module does not schedule this coroutine
-        ctx->enter_wait_resource_state(co_waited_rc_type::mutex, this);
+        ctx->enter_wait_resource_state(this);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
 
@@ -93,7 +93,7 @@ void co_mutex::unlock()
     auto obj = wait_deque__.front();
     wait_deque__.pop_front();
     owner__ = obj;
-    obj->leave_wait_resource_state();
+    obj->leave_wait_resource_state(this);
 }
 
 CO_NAMESPACE_END

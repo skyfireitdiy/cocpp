@@ -99,18 +99,18 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
     auto curr_ctx = current_ctx();
     if (ctx->state() != co_state::finished)
     {
-        curr_ctx->enter_wait_resource_state(co_waited_rc_type::finished, nullptr);
-
         auto timer = co_timer::create(
             nullptr,
             co_expire_type::once, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
-        auto handle = ctx->finished().sub([curr_ctx, timer] {
+        auto timer_id = timer.get();
+        curr_ctx->enter_wait_resource_state(timer_id);
+        auto handle = ctx->finished().sub([curr_ctx, timer, timer_id] {
             timer->stop(); // Handle delete callbacks first and wake up later to prevent timing problems
-            curr_ctx->leave_wait_resource_state();
+            curr_ctx->leave_wait_resource_state(timer_id);
         });
-        timer->set_expire_callback([curr_ctx, ctx, handle] {
+        timer->set_expire_callback([curr_ctx, ctx, handle, timer_id] {
             ctx->finished().unsub(handle); // Unsubscribe before wake up to prevent timing problems
-            curr_ctx->leave_wait_resource_state();
+            curr_ctx->leave_wait_resource_state(timer_id);
         });
         timer->start();
 
@@ -148,9 +148,9 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
     auto curr_ctx = current_ctx();
     if (ctx->state() != co_state::finished)
     {
-        curr_ctx->enter_wait_resource_state(co_waited_rc_type::finished, nullptr);
-        ctx->finished().sub([curr_ctx] {
-            curr_ctx->leave_wait_resource_state();
+        curr_ctx->enter_wait_resource_state(ctx);
+        ctx->finished().sub([curr_ctx, ctx] {
+            curr_ctx->leave_wait_resource_state(ctx);
         });
         unlock_schedule();
         ctx->unlock_finished_state();

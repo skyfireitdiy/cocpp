@@ -58,7 +58,7 @@ void co_condition_variable_impl::wait(Lock& lock)
 
         waiters__.push_back(ctx);
         lock.unlock();
-        ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
+        ctx->enter_wait_resource_state(this);
     }
     co_manager::instance()->current_env()->schedule_switch();
     lock.lock();
@@ -75,7 +75,7 @@ void co_condition_variable_impl::wait(Lock& lock, Predicate pred)
             std::scoped_lock lk(cv_lock__);
             waiters__.push_back(ctx);
             lock.unlock();
-            ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
+            ctx->enter_wait_resource_state(this);
         }
 
         co_manager::instance()->current_env()->schedule_switch();
@@ -94,7 +94,7 @@ bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_
         std::scoped_lock lk(cv_lock__);
         waiters__.remove(ctx);
         timeout__ = true;
-        ctx->leave_wait_resource_state();
+        ctx->leave_wait_resource_state(this);
     },
                                   abs_time);
     timer->start();
@@ -103,7 +103,7 @@ bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_
 
         waiters__.push_back(ctx);
         lock.unlock();
-        ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
+        ctx->enter_wait_resource_state(this);
     }
     co_manager::instance()->current_env()->unlock_schedule();
     co_manager::instance()->current_env()->schedule_switch();
@@ -128,7 +128,7 @@ bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_
         std::scoped_lock lk(cv_lock__);
         waiters__.remove(ctx);
         timeout__ = true;
-        ctx->leave_wait_resource_state();
+        ctx->leave_wait_resource_state(this);
     },
                                   abs_time);
     timer->start();
@@ -141,7 +141,7 @@ bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_
 
             waiters__.push_back(ctx);
             lock.unlock();
-            ctx->enter_wait_resource_state(co_waited_rc_type::condition_variable, this);
+            ctx->enter_wait_resource_state(this);
         }
         co_manager::instance()->current_env()->unlock_schedule();
         co_manager::instance()->current_env()->schedule_switch();
