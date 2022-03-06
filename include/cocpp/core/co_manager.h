@@ -30,7 +30,18 @@ class co_manager final : public co_singleton_static<co_manager>
     RegCoEvent(timing_routine_timout);
 
 private:
-    co_env_set env_set__ {
+    struct
+    {
+        std::set<co_env*>           normal_set;
+        std::recursive_mutex        normal_lock;
+        std::set<co_env*>           expired_set;
+        std::recursive_mutex        expired_lock;
+        std::condition_variable_any cv_expired_env;
+        unsigned int                normal_env_count;
+        std::recursive_mutex        mu_normal_env_count;
+        unsigned int                base_env_count;
+        unsigned int                max_env_count;
+    } env_set__ {
         .normal_env_count = 0,
         .base_env_count   = std::thread::hardware_concurrency(),
         .max_env_count    = std::thread::hardware_concurrency() * 2
