@@ -30,7 +30,11 @@ private:
     co_state_manager<co_state, co_state::suspended, co_state::finished> state_manager__;
     std::recursive_mutex                                                finish_lock__;
 
-    co_ctx_wait_data wait_data__ {};
+    struct
+    {
+        std::recursive_mutex mu;
+        std::set<void*>      resource;
+    } wait_data__ {};
 
     co_stack*     stack__ { nullptr };
     co_ctx_config config__ {};
@@ -56,6 +60,9 @@ private:
     co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(co_any&)> entry);
 
 public:
+    static constexpr long wait_type_sleep  = 1;
+    static constexpr long wait_type_finish = 2;
+
     void                         set_priority(int priority);
     size_t                       priority() const;
     bool                         can_schedule() const;
@@ -72,8 +79,8 @@ public:
     bool                         can_move() const;
     std::string                  name() const;
     co_id                        id() const;
-    void                         enter_wait_resource_state(co_waited_rc_type rc_type, void* rc);
-    void                         leave_wait_resource_state();
+    void                         enter_wait_resource_state(void* rc);
+    void                         leave_wait_resource_state(void* rc);
     std::function<void(co_any&)> entry() const;
     static void                  real_entry(co_ctx* ctx);
     void                         set_flag(size_t flag);

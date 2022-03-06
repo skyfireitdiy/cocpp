@@ -48,7 +48,7 @@ void co_recursive_mutex::lock()
     wait_deque__.push_back(ctx);
     while (owner__ != ctx)
     {
-        ctx->enter_wait_resource_state(co_waited_rc_type::shared_mutex, this);
+        ctx->enter_wait_resource_state(this);
         spinlock__.unlock();
         co_manager::instance()->current_env()->schedule_switch();
         spinlock__.lock();
@@ -94,7 +94,7 @@ void co_recursive_mutex::unlock()
     wait_deque__.pop_front();
     owner__ = obj;
     ++lock_count__;
-    obj->leave_wait_resource_state();
+    obj->leave_wait_resource_state(this);
 }
 
 CO_NAMESPACE_END

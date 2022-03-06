@@ -37,23 +37,6 @@ enum class co_env_state : unsigned char
     created,
 };
 
-enum class co_waited_rc_type : unsigned char
-{
-    mutex,
-    recursive_mutex,
-    shared_mutex,
-    timer,
-    finished,
-    condition_variable,
-};
-
-struct co_ctx_wait_data
-{
-    std::recursive_mutex mu;
-    co_waited_rc_type    type;
-    void*                resource;
-};
-
 struct co_env_set
 {
     std::set<co_env*>           normal_set;

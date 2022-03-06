@@ -17,7 +17,7 @@ void co_condition_variable_impl::notify_all()
     std::scoped_lock lk(cv_lock__);
     for (auto ctx : waiters__)
     {
-        ctx->leave_wait_resource_state();
+        ctx->leave_wait_resource_state(this);
     }
     waiters__.clear();
 }
@@ -31,7 +31,7 @@ void co_condition_variable_impl::notify_one()
     }
     auto ctx = waiters__.front();
     waiters__.pop_front();
-    ctx->leave_wait_resource_state();
+    ctx->leave_wait_resource_state(this);
 }
 
 CO_NAMESPACE_END
