@@ -116,27 +116,27 @@ void co_manager::create_background_task__()
 
 void co_manager::subscribe_manager_event__()
 {
-    // timing_routine_timout().sub([this] {
-    //     // 每两次超时重新分配一次
-    //     static bool double_timeout = false;
+    timing_routine_timout().sub([this] {
+        // 每两次超时重新分配一次
+        static bool double_timeout = false;
 
-    //     // FIXME: There are problems with external scheduling and it is difficult to determine the safety point
-    //     force_schedule__();
+        // FIXME: There are problems with external scheduling and it is difficult to determine the safety point
+        force_schedule__();
 
-    //     // If it's the second time out
-    //     if (double_timeout)
-    //     {
-    //         // 重新调度
-    //         redistribute_ctx__();
-    //         // 偷取ctx
-    //         steal_ctx_routine__();
-    //         // 销毁多余的env
-    //         destroy_redundant_env__();
-    //         // 释放内存
-    //         free_mem__();
-    //     }
-    //     double_timeout = !double_timeout;
-    // });
+        // If it's the second time out
+        if (double_timeout)
+        {
+            // 重新调度
+            redistribute_ctx__();
+            // 偷取ctx
+            steal_ctx_routine__();
+            // 销毁多余的env
+            destroy_redundant_env__();
+            // 释放内存
+            free_mem__();
+        }
+        double_timeout = !double_timeout;
+    });
 }
 
 void co_manager::free_mem__()
