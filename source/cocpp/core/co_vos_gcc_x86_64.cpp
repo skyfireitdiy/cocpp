@@ -188,6 +188,7 @@ void switch_from_outside(sigcontext_64* context)
             return;
         }
         printf("switch from outside\n");
+        
     }
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);

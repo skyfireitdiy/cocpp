@@ -31,13 +31,16 @@ template <class Lock>
 template <class Clock, class Duration>
 bool co_timed_addition<Lock>::try_lock_until(const std::chrono::time_point<Clock, Duration>& timeout_time)
 {
+    CoPreemptGuard();
     do
     {
         if (Lock::try_lock())
         {
             return true;
         }
+        CoEnablePreempt();
         CoYield();
+        CoDisablePreempt();
     } while (std::chrono::steady_clock::now() < timeout_time);
     return false;
 }

@@ -30,13 +30,16 @@ bool co_shared_timed_mutex::try_lock_shared_for(const std::chrono::duration<Rep,
 template <class Clock, class Duration>
 bool co_shared_timed_mutex::try_lock_shared_until(const std::chrono::time_point<Clock, Duration>& timeout_time)
 {
+    CoPreemptGuard();
     do
     {
         if (try_lock_shared())
         {
             return true;
         }
+        CoEnablePreempt();
         CoYield();
+        CoDisablePreempt();
     } while (std::chrono::steady_clock::now() < timeout_time);
     return false;
 }
