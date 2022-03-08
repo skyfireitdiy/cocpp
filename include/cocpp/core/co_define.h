@@ -122,3 +122,18 @@ CO_NAMESPACE_END
     {                                                               \
         return (member)->method(std::forward<Args>(args)...);       \
     }
+
+
+#define CoCurrentEnv() co_manager::instance()->current_env()
+#define CoCurrentCtx() CoCurrentEnv()->current_ctx()
+
+#define CoYield() CoCurrentEnv()->schedule_switch()
+
+#define CoScheduleGuard() co_schedule_guard __CoScheduleGuard__(CoCurrentEnv()->schedule_lock())
+#define CoLockSchedule() CoCurrentEnv()->schedule_lock().lock()
+#define CoUnlockSchedule() CoCurrentEnv()->schedule_lock().unlock()
+
+#define CoPreemptGuard() co_preempt_guard __CoPreemptGuard__(CoCurrentEnv()->schedule_lock())
+#define CoEnablePreempt() CoCurrentEnv()->schedule_lock().decreate_count()
+#define CoDisablePreempt() CoCurrentEnv()->schedule_lock().increate_count()
+

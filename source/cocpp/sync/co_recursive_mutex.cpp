@@ -11,7 +11,7 @@ CO_NAMESPACE_BEGIN
 
 void co_recursive_mutex::lock()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto             ctx = CoCurrentCtx();
     std::scoped_lock lock(spinlock__);
 
     if (owner__ == nullptr || owner__ == ctx)
@@ -30,7 +30,7 @@ void co_recursive_mutex::lock()
                 return true;
             }
             spinlock__.unlock();
-            co_manager::instance()->current_env()->schedule_switch();
+            CoYield();
             spinlock__.lock();
             return false;
         }))
@@ -50,14 +50,14 @@ void co_recursive_mutex::lock()
     {
         ctx->enter_wait_resource_state(this);
         spinlock__.unlock();
-        co_manager::instance()->current_env()->schedule_switch();
+        CoYield();
         spinlock__.lock();
     }
 }
 
 bool co_recursive_mutex::try_lock()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto             ctx = CoCurrentCtx();
     std::scoped_lock lock(spinlock__);
     if (owner__ != ctx && owner__ != nullptr)
     {
@@ -70,7 +70,7 @@ bool co_recursive_mutex::try_lock()
 
 void co_recursive_mutex::unlock()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto             ctx = CoCurrentCtx();
     std::scoped_lock lock(spinlock__);
     if (owner__ != ctx)
     {

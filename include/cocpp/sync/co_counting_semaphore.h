@@ -100,7 +100,7 @@ bool co_counting_semaphore<LeastMaxValue>::try_acquire_until(const std::chrono::
         {
             return true;
         }
-        co_manager::instance()->current_env()->schedule_switch();
+        CoYield();
     } while (std::chrono::steady_clock::now() < abs_time);
     return false;
 }

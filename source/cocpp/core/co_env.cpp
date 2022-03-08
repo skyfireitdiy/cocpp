@@ -671,17 +671,24 @@ bool co_env::can_force_schedule() const
     return schedule_lock__.count() == 0;
 }
 
-void co_env::recursive_mutex_with_count::lock()
+co_recursive_mutex_with_count& co_env::schedule_lock()
+{
+    return schedule_lock__;
+}
+
+void co_recursive_mutex_with_count::lock()
 {
     std::recursive_mutex::lock();
     ++count__;
 }
-void co_env::recursive_mutex_with_count::unlock()
+
+void co_recursive_mutex_with_count::unlock()
 {
     --count__;
     std::recursive_mutex::unlock();
 }
-bool co_env::recursive_mutex_with_count::try_lock()
+
+bool co_recursive_mutex_with_count::try_lock()
 {
     if (std::recursive_mutex::try_lock())
     {
@@ -690,19 +697,42 @@ bool co_env::recursive_mutex_with_count::try_lock()
     }
     return false;
 }
-size_t co_env::recursive_mutex_with_count::count() const
+
+size_t co_recursive_mutex_with_count::count() const
 {
     return count__;
 }
 
-void co_env::recursive_mutex_with_count::increate_count()
+void co_recursive_mutex_with_count::increate_count()
 {
     ++count__;
 }
 
-void co_env::recursive_mutex_with_count::decreate_count()
+void co_recursive_mutex_with_count::decreate_count()
 {
     --count__;
+}
+
+co_schedule_guard::co_schedule_guard(co_recursive_mutex_with_count& lk)
+    : lk__(lk)
+{
+    lk__.lock();
+}
+
+co_schedule_guard::~co_schedule_guard()
+{
+    lk__.unlock();
+}
+
+co_preempt_guard::co_preempt_guard(co_recursive_mutex_with_count& lk)
+    : lk__(lk)
+{
+    lk__.increate_count();
+}
+
+co_preempt_guard::~co_preempt_guard()
+{
+    lk__.decreate_count();
 }
 
 CO_NAMESPACE_END

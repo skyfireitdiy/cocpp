@@ -169,7 +169,7 @@ static void restore_context_from_ctx(sigcontext_64* context, co_ctx* ctx)
 
 void switch_from_outside(sigcontext_64* context)
 {
-    auto env = co_manager::instance()->current_env();
+    auto env = CoCurrentEnv();
 
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;

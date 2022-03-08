@@ -21,25 +21,45 @@ CO_NAMESPACE_BEGIN
 class co_ctx;
 class co_stack;
 
+class co_recursive_mutex_with_count : public std::recursive_mutex
+{
+private:
+    std::atomic<size_t> count__;
+
+public:
+    using std::recursive_mutex::recursive_mutex;
+    void   lock();
+    void   unlock();
+    bool   try_lock();
+    size_t count() const;
+    void   increate_count();
+    void   decreate_count();
+};
+
+class co_preempt_guard final : private co_noncopyable
+{
+private:
+    co_recursive_mutex_with_count& lk__;
+
+public:
+    co_preempt_guard(co_recursive_mutex_with_count& lk);
+    ~co_preempt_guard();
+};
+
+class co_schedule_guard final : private co_noncopyable
+{
+private:
+    co_recursive_mutex_with_count& lk__;
+
+public:
+    co_schedule_guard(co_recursive_mutex_with_count& lk);
+    ~co_schedule_guard();
+};
+
+
 class co_env final : private co_noncopyable
 {
     RegCoEvent(task_finished);
-
-private:
-    class recursive_mutex_with_count : public std::recursive_mutex
-    {
-    private:
-        std::atomic<size_t> count__;
-
-    public:
-        using std::recursive_mutex::recursive_mutex;
-        void   lock();
-        void   unlock();
-        bool   try_lock();
-        size_t count() const;
-        void   increate_count();
-        void   decreate_count();
-    };
 
 private:
     co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;
@@ -65,7 +85,7 @@ private:
 
     int                                min_priority__ = 0;
     mutable std::recursive_mutex       mu_min_priority__;
-    mutable recursive_mutex_with_count schedule_lock__;
+    mutable co_recursive_mutex_with_count schedule_lock__;
 
     std::condition_variable_any cv_sleep__;
 
@@ -129,6 +149,7 @@ public:
     size_t                         ctx_count() const;
     void                           wake_up();
     bool                           can_force_schedule() const;
+    co_recursive_mutex_with_count& schedule_lock();
 
     CoConstMemberMethodProxy(&state_manager__, state);
     CoConstMemberMethodProxy(&flag_manager__, test_flag);

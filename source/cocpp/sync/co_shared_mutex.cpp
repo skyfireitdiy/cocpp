@@ -12,7 +12,7 @@ CO_NAMESPACE_BEGIN
 
 void co_shared_mutex::lock()
 {
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    auto ctx = CoCurrentCtx();
 
     std::scoped_lock lock(spinlock__);
 
@@ -32,7 +32,7 @@ void co_shared_mutex::lock()
                 return true;
             }
             spinlock__.unlock();
-            co_manager::instance()->current_env()->schedule_switch();
+            CoYield();
             spinlock__.lock();
             return false;
         }))
@@ -55,14 +55,14 @@ void co_shared_mutex::lock()
     {
         ctx->enter_wait_resource_state(this);
         spinlock__.unlock();
-        co_manager::instance()->current_env()->schedule_switch();
+        CoYield();
         spinlock__.lock();
     }
 }
 
 bool co_shared_mutex::try_lock()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto             ctx = CoCurrentCtx();
     std::scoped_lock lock(spinlock__);
     while (!owners__.empty())
     {
@@ -75,7 +75,7 @@ bool co_shared_mutex::try_lock()
 
 void co_shared_mutex::unlock()
 {
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    auto ctx = CoCurrentCtx();
 
     std::scoped_lock lock(spinlock__);
 
@@ -90,7 +90,7 @@ void co_shared_mutex::unlock()
 
 void co_shared_mutex::lock_shared()
 {
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    auto ctx = CoCurrentCtx();
 
     std::scoped_lock lock(spinlock__);
 
@@ -110,7 +110,7 @@ void co_shared_mutex::lock_shared()
                 return true;
             }
             spinlock__.unlock();
-            co_manager::instance()->current_env()->schedule_switch();
+            CoYield();
             spinlock__.lock();
             return false;
         }))
@@ -133,14 +133,14 @@ void co_shared_mutex::lock_shared()
     {
         ctx->enter_wait_resource_state(this);
         spinlock__.unlock();
-        co_manager::instance()->current_env()->schedule_switch();
+        CoYield();
         spinlock__.lock();
     }
 }
 
 bool co_shared_mutex::try_lock_shared()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto             ctx = CoCurrentCtx();
     std::scoped_lock lock(spinlock__);
     if (lock_type__ != lock_type::shared && lock_type__ != lock_type::unlocked)
     {
@@ -153,7 +153,7 @@ bool co_shared_mutex::try_lock_shared()
 
 void co_shared_mutex::unlock_shared()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto             ctx = CoCurrentCtx();
     std::scoped_lock lock(spinlock__);
 
     if (lock_type__ != lock_type::shared || !owners__.contains(ctx))

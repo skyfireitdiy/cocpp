@@ -11,7 +11,7 @@ void co_spinlock::lock()
 {
     while (locked__.test_and_set(std::memory_order::acquire))
     {
-        co_manager::instance()->current_env()->schedule_switch();
+        CoYield();
     }
 }
 

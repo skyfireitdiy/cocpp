@@ -27,26 +27,26 @@ concept CoIsVoid = std::is_same_v < std::decay_t<T>,
 void > ;
 
 template <typename T>
-concept CoIsNotVoid = !std::is_same_v<std::decay_t<T>, void>;
+concept CoIsNotVoid = !
+std::is_same_v<std::decay_t<T>, void>;
 
 class co final : private co_noncopyable
 {
 private:
-    mutable co_ctx*           ctx__;
-    inline static co_manager* manager__ = co_manager::instance();
+    mutable co_ctx* ctx__;
     template <typename Func, typename... Args> //
     void init__(co_ctx_config config, Func&& func, Args&&... args);
 
 public:
-    CoMemberMethodProxyStatic(manager__, create_env);
-    CoMemberMethodProxyStatic(manager__, current_env);
-    CoMemberMethodProxyStatic(manager__, set_env_shared_stack_size);
-    CoMemberMethodProxyStatic(manager__, set_base_schedule_thread_count);
-    CoMemberMethodProxyStatic(manager__, set_max_schedule_thread_count);
-    CoMemberMethodProxyStatic(manager__, set_timer_tick_duration);
-    CoMemberMethodProxyStatic(manager__, timing_duration);
+    CoMemberMethodProxyStatic(co_manager::instance(), create_env);
+    CoMemberMethodProxyStatic(co_manager::instance(), current_env);
+    CoMemberMethodProxyStatic(co_manager::instance(), set_env_shared_stack_size);
+    CoMemberMethodProxyStatic(co_manager::instance(), set_base_schedule_thread_count);
+    CoMemberMethodProxyStatic(co_manager::instance(), set_max_schedule_thread_count);
+    CoMemberMethodProxyStatic(co_manager::instance(), set_timer_tick_duration);
+    CoMemberMethodProxyStatic(co_manager::instance(), timing_duration);
 
-    CoMemberMethodProxyStatic((manager__->current_env()), schedule_in_this_thread);
+    CoMemberMethodProxyStatic(CoCurrentEnv(), schedule_in_this_thread);
 
     CoMemberMethodProxyWithPrefix(ctx__, state, ctx_);
     CoMemberMethodProxyWithPrefix(ctx__, config, ctx_);
@@ -114,7 +114,7 @@ void co::init__(co_ctx_config config, Func&& func, Args&&... args)
         };
     }
 
-    ctx__ = manager__->create_and_schedule_ctx(config, entry, true);
+    ctx__ = co_manager::instance()->create_and_schedule_ctx(config, entry, true);
 }
 
 template <typename Func, typename... Args>
@@ -137,7 +137,7 @@ co::co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& f
 template <CoIsNotVoid Ret>
 Ret co::wait() const
 {
-    return manager__->current_env()->wait_ctx(ctx__);
+    return CoCurrentEnv()->wait_ctx(ctx__);
 }
 
 template <CoIsVoid Ret>
@@ -147,13 +147,13 @@ Ret co::wait() const
     {
         return;
     }
-    manager__->current_env()->wait_ctx(ctx__);
+    CoCurrentEnv()->wait_ctx(ctx__);
 }
 
 template <typename Rep, typename Period>
 std::optional<co_return_value> co::wait_for(const std::chrono::duration<Rep, Period>& wait_duration) const
 {
-    return manager__->current_env()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
+    return CoCurrentEnv()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
 }
 
 template <CoIsNotVoid Args, typename Result>
@@ -163,7 +163,7 @@ co co::then(std::function<Result(Args)> f) const
     ctx__    = nullptr;
     return co([ctx, f]() -> Result {
         CoDefer(ctx->unlock_destroy());
-        return f(manager__->current_env()->wait_ctx(ctx));
+        return f(CoCurrentEnv()->wait_ctx(ctx));
     });
 }
 
@@ -174,7 +174,7 @@ co co::then(std::function<Result()> f) const
     ctx__    = nullptr;
     return co([ctx, f]() -> Result {
         CoDefer(ctx->unlock_destroy());
-        manager__->current_env()->wait_ctx(ctx);
+        CoCurrentEnv()->wait_ctx(ctx);
         return f();
     });
 }
@@ -188,7 +188,7 @@ void this_co::sleep_for(const std::chrono::duration<Rep, Period>& sleep_duration
 template <class Clock, class Duration>
 void this_co::sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time)
 {
-    auto env   = co_manager::instance()->current_env();
+    auto env   = CoCurrentEnv();
     auto ctx   = env->current_ctx();
     auto timer = co_timer::create(nullptr, abs_time);
     timer->set_expire_callback([ctx] {

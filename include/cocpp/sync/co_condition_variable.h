@@ -52,7 +52,8 @@ public:
 template <typename Lock>
 void co_condition_variable_impl::wait(Lock& lock)
 {
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    CoPreemptGuard();
+    auto ctx = CoCurrentCtx();
     {
         std::scoped_lock lk(cv_lock__);
 
@@ -60,14 +61,15 @@ void co_condition_variable_impl::wait(Lock& lock)
         lock.unlock();
         ctx->enter_wait_resource_state(this);
     }
-    co_manager::instance()->current_env()->schedule_switch();
+    CoYield();
     lock.lock();
 }
 
 template <typename Lock, typename Predicate>
 void co_condition_variable_impl::wait(Lock& lock, Predicate pred)
 {
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    CoPreemptGuard();
+    auto ctx = CoCurrentCtx();
 
     do
     {
@@ -78,7 +80,7 @@ void co_condition_variable_impl::wait(Lock& lock, Predicate pred)
             ctx->enter_wait_resource_state(this);
         }
 
-        co_manager::instance()->current_env()->schedule_switch();
+        CoYield();
 
         lock.lock();
     } while (!pred());
@@ -87,8 +89,8 @@ void co_condition_variable_impl::wait(Lock& lock, Predicate pred)
 template <typename Lock, typename Clock, typename Duration>
 bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_point<Clock, Duration>& abs_time)
 {
-    co_manager::instance()->current_env()->lock_schedule();
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    CoScheduleGuard();
+    auto ctx = CoCurrentCtx();
 
     auto timer = co_timer::create([this, ctx] {
         std::scoped_lock lk(cv_lock__);
@@ -105,8 +107,9 @@ bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_
         lock.unlock();
         ctx->enter_wait_resource_state(this);
     }
-    co_manager::instance()->current_env()->unlock_schedule();
-    co_manager::instance()->current_env()->schedule_switch();
+    CoUnlockSchedule();
+    CoYield();
+    CoLockSchedule();
     lock.lock();
     timer->stop();
     return !timeout__;
@@ -122,8 +125,8 @@ template <typename Lock, typename Clock, typename Duration, typename Predicate>
 bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_point<Clock, Duration>& abs_time,
                                             Predicate pred)
 {
-    co_manager::instance()->current_env()->lock_schedule();
-    auto ctx   = co_manager::instance()->current_env()->current_ctx();
+    CoScheduleGuard();
+    auto ctx   = CoCurrentCtx();
     auto timer = co_timer::create([this, ctx] {
         std::scoped_lock lk(cv_lock__);
         waiters__.remove(ctx);
@@ -132,10 +135,8 @@ bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_
     },
                                   abs_time);
     timer->start();
-    co_manager::instance()->current_env()->unlock_schedule();
     do
     {
-        co_manager::instance()->current_env()->lock_schedule();
         {
             std::scoped_lock lk(cv_lock__);
 
@@ -143,8 +144,9 @@ bool co_condition_variable_impl::wait_until(Lock& lock, const std::chrono::time_
             lock.unlock();
             ctx->enter_wait_resource_state(this);
         }
-        co_manager::instance()->current_env()->unlock_schedule();
-        co_manager::instance()->current_env()->schedule_switch();
+        CoUnlockSchedule();
+        CoYield();
+        CoLockSchedule();
         lock.lock();
     } while (!timeout__ && !pred());
 

@@ -13,7 +13,7 @@ CO_NAMESPACE_BEGIN
 
 void co_mutex::lock()
 {
-    auto ctx = co_manager::instance()->current_env()->current_ctx();
+    auto ctx = CoCurrentCtx();
 
     std::scoped_lock lock(spinlock__);
 
@@ -29,7 +29,7 @@ void co_mutex::lock()
 
             // Other coroutine unlocks require a spin lock
             spinlock__.unlock();
-            co_manager::instance()->current_env()->schedule_switch();
+            CoYield();
             spinlock__.lock();
             return false;
         }))
@@ -53,7 +53,7 @@ void co_mutex::lock()
         // Set the wait state so that the scheduling module does not schedule this coroutine
         ctx->enter_wait_resource_state(this);
         spinlock__.unlock();
-        co_manager::instance()->current_env()->schedule_switch();
+        CoYield();
 
         // This coroutine is rescheduled, so coroutine unlocking removes the wait flag for the current coroutine
         spinlock__.lock();
@@ -62,7 +62,7 @@ void co_mutex::lock()
 
 bool co_mutex::try_lock()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto             ctx = CoCurrentCtx();
     std::scoped_lock lock(spinlock__);
     if (owner__ != nullptr)
     {
@@ -74,7 +74,7 @@ bool co_mutex::try_lock()
 
 void co_mutex::unlock()
 {
-    auto             ctx = co_manager::instance()->current_env()->current_ctx();
+    auto             ctx = CoCurrentCtx();
     std::scoped_lock lock(spinlock__);
     if (owner__ != ctx)
     {
