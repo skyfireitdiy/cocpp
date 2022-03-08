@@ -52,7 +52,7 @@ private:
     std::recursive_mutex clean_up_lock__;
 
     mutable std::recursive_mutex        mu_timer_duration__;
-    std::chrono::steady_clock::duration timer_duration__ { 100ns };
+    std::chrono::steady_clock::duration timer_duration__ { 1ns };
 
     std::function<bool()> need_free_mem_cb__ { [] { return false; } };
     std::recursive_mutex  need_free_mem_cb_lock__;

@@ -341,6 +341,7 @@ void co_env::start_schedule()
 
 void co_env::switch_shared_stack_ctx__()
 {
+    CoPreemptGuard();
     shared_stack_switch_info__.need_switch = false;
 
     if (shared_stack_switch_info__.from->test_flag(CO_CTX_FLAG_SHARED_STACK))
@@ -427,7 +428,6 @@ size_t co_env::get_valid_stack_size__(co_ctx* ctx)
 
 void co_env::save_shared_stack__(co_ctx* ctx)
 {
-
     auto stack_size = get_valid_stack_size__(ctx);
     auto tmp_stack  = co_stack_factory::instance()->create_stack(stack_size);
     memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
@@ -532,6 +532,7 @@ co_ctx* co_env::choose_ctx_from_normal_list__()
 
 std::list<co_ctx*> co_env::all_ctx__()
 {
+    CoPreemptGuard();
     std::scoped_lock   lock(mu_normal_ctx__);
     std::list<co_ctx*> ret;
     for (auto& lst : all_normal_ctx__)
@@ -645,6 +646,7 @@ bool co_env::exclusive() const
 
 void co_env::wake_up()
 {
+    CoPreemptGuard();
     std::scoped_lock lock(schedule_lock__);
     cv_sleep__.notify_one();
 }
