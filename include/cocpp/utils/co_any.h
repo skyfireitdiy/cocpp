@@ -7,7 +7,7 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-class co_any final 
+class co_any final
 {
 private:
     class base_type
@@ -29,8 +29,8 @@ private:
     std::shared_ptr<base_type> data__ { nullptr };
 
 public:
-    co_any()                    = default;
-    co_any(const co_any& value) = default;
+    co_any()                               = default;
+    co_any(const co_any& value)            = default;
     co_any& operator=(const co_any& value) = default;
     template <typename T>
     co_any(const T& value);
@@ -39,8 +39,6 @@ public:
     template <typename T>
     T& get();
 };
-
-
 
 template <typename T>
 T& co_any::real_type<T>::get()

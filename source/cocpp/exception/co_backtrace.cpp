@@ -5,16 +5,17 @@
 
 CO_NAMESPACE_BEGIN
 
-std::vector<std::string> backtrace(){
+std::vector<std::string> backtrace()
+{
     std::vector<void*> buffer(100);
-    int pointer_num = ::backtrace(buffer.data(), buffer.size());
-    char** string_buffer = ::backtrace_symbols(buffer.data(), pointer_num);
-    if(string_buffer == NULL)
+    int                pointer_num   = ::backtrace(buffer.data(), buffer.size());
+    char**             string_buffer = ::backtrace_symbols(buffer.data(), pointer_num);
+    if (string_buffer == NULL)
     {
         return {};
     }
     std::vector<std::string> ret(pointer_num);
-    for(int i = 0; i < pointer_num; i++)
+    for (int i = 0; i < pointer_num; i++)
     {
         ret[i] = string_buffer[i];
     }
@@ -22,10 +23,11 @@ std::vector<std::string> backtrace(){
     return ret;
 }
 
-
-void print_backtrace(){
+void print_backtrace()
+{
     auto bt = backtrace();
-    for(auto &b : bt) {
+    for (auto& b : bt)
+    {
         printf("%s\n", b.c_str());
     }
 }

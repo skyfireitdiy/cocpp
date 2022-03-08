@@ -6,7 +6,6 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-
 template <typename T>
 class co_singleton : private co_noncopyable
 {
@@ -14,12 +13,10 @@ private:
     co_singleton() = default;
 
 public:
-    
     static T*   instance();
     static void destroy_instance();
     friend T;
 };
-
 
 template <typename T>
 class co_singleton_static : private co_noncopyable
@@ -28,7 +25,6 @@ private:
     co_singleton_static() = default;
 
 public:
-    
     static T* instance();
     friend T;
 };

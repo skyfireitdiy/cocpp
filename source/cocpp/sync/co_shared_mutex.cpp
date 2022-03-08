@@ -206,7 +206,7 @@ void co_shared_mutex::wake_up_waiters__()
 
     auto iter   = std::remove_if(wait_deque__.begin(), wait_deque__.end(), [](auto& c) {
         return c.type == lock_type::shared;
-      });
+    });
     lock_type__ = lock_type::shared;
     std::transform(iter, wait_deque__.end(), std::inserter(owners__, owners__.begin()), [this](auto& context) {
         context.ctx->leave_wait_resource_state(this);

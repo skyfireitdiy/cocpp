@@ -123,7 +123,6 @@ CO_NAMESPACE_END
         return (member)->method(std::forward<Args>(args)...);       \
     }
 
-
 #define CoCurrentEnv() co_manager::instance()->current_env()
 #define CoCurrentCtx() CoCurrentEnv()->current_ctx()
 
@@ -136,4 +135,3 @@ CO_NAMESPACE_END
 #define CoPreemptGuard() co_preempt_guard __CoPreemptGuard__(CoCurrentEnv()->schedule_lock())
 #define CoEnablePreempt() CoCurrentEnv()->schedule_lock().decreate_count()
 #define CoDisablePreempt() CoCurrentEnv()->schedule_lock().increate_count()
-

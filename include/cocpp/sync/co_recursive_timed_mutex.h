@@ -6,6 +6,6 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-using co_recursive_timed_mutex = co_timed_addition<co_recursive_mutex>; 
+using co_recursive_timed_mutex = co_timed_addition<co_recursive_mutex>;
 
 CO_NAMESPACE_END
