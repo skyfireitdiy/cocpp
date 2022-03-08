@@ -56,7 +56,6 @@ public:
     ~co_schedule_guard();
 };
 
-
 class co_env final : private co_noncopyable
 {
     RegCoEvent(task_finished);
@@ -83,8 +82,8 @@ private:
     // Another thread will get current CTX from this ENV.
     std::atomic<co_ctx*> curr_ctx__ { nullptr };
 
-    int                                min_priority__ = 0;
-    mutable std::recursive_mutex       mu_min_priority__;
+    int                                   min_priority__ = 0;
+    mutable std::recursive_mutex          mu_min_priority__;
     mutable co_recursive_mutex_with_count schedule_lock__;
 
     std::condition_variable_any cv_sleep__;

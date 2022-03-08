@@ -3,6 +3,7 @@
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/core/co_timer.h"
@@ -650,6 +651,7 @@ void co_env::wake_up()
 
 void co_env::sleep_if_need__()
 {
+    CoPreemptGuard();
     std::unique_lock lock(schedule_lock__);
     while (need_sleep__())
     {
@@ -659,6 +661,7 @@ void co_env::sleep_if_need__()
 
 void co_env::sleep_if_need__(std::function<bool()> checker)
 {
+    CoPreemptGuard();
     std::unique_lock lock(schedule_lock__);
     while (checker())
     {
