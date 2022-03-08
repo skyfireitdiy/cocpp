@@ -1,4 +1,7 @@
 tasks:
   - name: gitpod init
-    before: bash ./gitpod_init.sh
-    init: bash ./build_3rd.sh
+    init: |
+      bash ./gitpod_init.sh
+      bash ./build_3rd.sh
+      source ~/.bashrc
+    command: fish
