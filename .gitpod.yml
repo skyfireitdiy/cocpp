@@ -1,0 +1,4 @@
+tasks:
+  - name: gitpod init
+    before: bash ./gitpod_init.sh
+    init: bash ./build_3rd.sh
