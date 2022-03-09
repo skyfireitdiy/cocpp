@@ -30,3 +30,7 @@ fish -c "abbr -a -U -- gl 'git lg'"
 fish -c "abbr -a -U -- gco 'git checkout'"
 fish -c "abbr -a -U -- gb 'git branch'"
 
+echo 'handle SIGUSR1 noprint nostop 
+set pagination off
+set print object on
+' > ~/.gdbinit
