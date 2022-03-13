@@ -10,6 +10,8 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
+using co_event_handle = unsigned long long;
+
 template <typename... Args>
 class co_event final : private co_noncopyable
 {
@@ -23,8 +25,6 @@ public:
     void            pub(Args... args) const;
     void            unsub(co_event_handle h);
 };
-
-
 
 template <typename... Args>
 co_event_handle co_event<Args...>::sub(std::function<void(Args... args)> cb)

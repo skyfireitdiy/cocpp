@@ -13,12 +13,10 @@ class co_timed_addition : public Lock
 {
 public:
     template <class Rep, class Period>
-    bool try_lock_for(const std::chrono::duration<Rep, Period>& timeout_duration); 
+    bool try_lock_for(const std::chrono::duration<Rep, Period>& timeout_duration);
     template <class Clock, class Duration>
-    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& timeout_time); 
+    bool try_lock_until(const std::chrono::time_point<Clock, Duration>& timeout_time);
 };
-
-
 
 template <class Lock>
 template <class Rep, class Period>
@@ -31,13 +29,16 @@ template <class Lock>
 template <class Clock, class Duration>
 bool co_timed_addition<Lock>::try_lock_until(const std::chrono::time_point<Clock, Duration>& timeout_time)
 {
+    CoPreemptGuard();
     do
     {
         if (Lock::try_lock())
         {
             return true;
         }
-        co_manager::instance()->current_env()->schedule_switch();
+        CoEnablePreempt();
+        CoYield();
+        CoDisablePreempt();
     } while (std::chrono::steady_clock::now() < timeout_time);
     return false;
 }

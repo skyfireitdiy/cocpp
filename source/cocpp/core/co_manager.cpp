@@ -121,7 +121,7 @@ void co_manager::subscribe_manager_event__()
         static bool double_timeout = false;
 
         // FIXME: There are problems with external scheduling and it is difficult to determine the safety point
-        // force_schedule__();
+        force_schedule__();
 
         // If it's the second time out
         if (double_timeout)

@@ -47,7 +47,7 @@ public:
 };
 
 template <typename ValueType, int MaxSize>
-bool operator<(co_chan<ValueType, MaxSize>& ch, ValueType value);
+bool operator<(co_chan<ValueType, MaxSize> & ch, ValueType value);
 
 template <typename ValueType, int MaxSize>
 bool operator>(co_chan<ValueType, MaxSize>& ch, ValueType& value);
@@ -59,7 +59,7 @@ template <typename ValueType, int MaxSize>
 co_chan<ValueType, MaxSize>& operator>>(co_chan<ValueType, MaxSize>& ch, ValueType& value);
 
 template <typename ValueType, int MaxSize>
-bool operator<(co_chan<ValueType, MaxSize>& ch, ValueType value)
+bool operator<(co_chan<ValueType, MaxSize> & ch, ValueType value)
 {
     return ch.push(value);
 }

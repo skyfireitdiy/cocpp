@@ -3,6 +3,7 @@
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/core/co_timer.h"
@@ -340,6 +341,7 @@ void co_env::start_schedule()
 
 void co_env::switch_shared_stack_ctx__()
 {
+    CoPreemptGuard();
     shared_stack_switch_info__.need_switch = false;
 
     if (shared_stack_switch_info__.from->test_flag(CO_CTX_FLAG_SHARED_STACK))
@@ -426,7 +428,6 @@ size_t co_env::get_valid_stack_size__(co_ctx* ctx)
 
 void co_env::save_shared_stack__(co_ctx* ctx)
 {
-
     auto stack_size = get_valid_stack_size__(ctx);
     auto tmp_stack  = co_stack_factory::instance()->create_stack(stack_size);
     memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
@@ -531,6 +532,7 @@ co_ctx* co_env::choose_ctx_from_normal_list__()
 
 std::list<co_ctx*> co_env::all_ctx__()
 {
+    CoPreemptGuard();
     std::scoped_lock   lock(mu_normal_ctx__);
     std::list<co_ctx*> ret;
     for (auto& lst : all_normal_ctx__)
@@ -644,12 +646,14 @@ bool co_env::exclusive() const
 
 void co_env::wake_up()
 {
+    CoPreemptGuard();
     std::scoped_lock lock(schedule_lock__);
     cv_sleep__.notify_one();
 }
 
 void co_env::sleep_if_need__()
 {
+    CoPreemptGuard();
     std::unique_lock lock(schedule_lock__);
     while (need_sleep__())
     {
@@ -659,6 +663,7 @@ void co_env::sleep_if_need__()
 
 void co_env::sleep_if_need__(std::function<bool()> checker)
 {
+    CoPreemptGuard();
     std::unique_lock lock(schedule_lock__);
     while (checker())
     {
@@ -671,17 +676,24 @@ bool co_env::can_force_schedule() const
     return schedule_lock__.count() == 0;
 }
 
-void co_env::recursive_mutex_with_count::lock()
+co_recursive_mutex_with_count& co_env::schedule_lock()
+{
+    return schedule_lock__;
+}
+
+void co_recursive_mutex_with_count::lock()
 {
     std::recursive_mutex::lock();
     ++count__;
 }
-void co_env::recursive_mutex_with_count::unlock()
+
+void co_recursive_mutex_with_count::unlock()
 {
     --count__;
     std::recursive_mutex::unlock();
 }
-bool co_env::recursive_mutex_with_count::try_lock()
+
+bool co_recursive_mutex_with_count::try_lock()
 {
     if (std::recursive_mutex::try_lock())
     {
@@ -690,19 +702,42 @@ bool co_env::recursive_mutex_with_count::try_lock()
     }
     return false;
 }
-size_t co_env::recursive_mutex_with_count::count() const
+
+size_t co_recursive_mutex_with_count::count() const
 {
     return count__;
 }
 
-void co_env::recursive_mutex_with_count::increate_count()
+void co_recursive_mutex_with_count::increate_count()
 {
     ++count__;
 }
 
-void co_env::recursive_mutex_with_count::decreate_count()
+void co_recursive_mutex_with_count::decreate_count()
 {
     --count__;
+}
+
+co_schedule_guard::co_schedule_guard(co_recursive_mutex_with_count& lk)
+    : lk__(lk)
+{
+    lk__.lock();
+}
+
+co_schedule_guard::~co_schedule_guard()
+{
+    lk__.unlock();
+}
+
+co_preempt_guard::co_preempt_guard(co_recursive_mutex_with_count& lk)
+    : lk__(lk)
+{
+    lk__.increate_count();
+}
+
+co_preempt_guard::~co_preempt_guard()
+{
+    lk__.decreate_count();
 }
 
 CO_NAMESPACE_END

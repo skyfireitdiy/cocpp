@@ -29,6 +29,7 @@ enum class co_timer_status
     running,
 };
 
+using co_timer_handle = unsigned long long;
 class co_timer final : private co_noncopyable,
                        public std::enable_shared_from_this<co_timer>
 {

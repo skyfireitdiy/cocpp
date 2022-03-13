@@ -5,6 +5,7 @@
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
+#include "cocpp/exception/co_backtrace.h"
 #include "cocpp/utils/co_defer.h"
 
 #include <mutex>
@@ -160,6 +161,7 @@ static void save_context_to_ctx(sigcontext_64* context, co_ctx* ctx)
     printf("rip: 0x%llx\n", context->ip);
     printf("rsp: 0x%llx\n", context->sp);
     printf("rbp: 0x%llx\n", context->bp);
+    print_backtrace();
 }
 
 static void restore_context_from_ctx(sigcontext_64* context, co_ctx* ctx)
@@ -169,7 +171,7 @@ static void restore_context_from_ctx(sigcontext_64* context, co_ctx* ctx)
 
 void switch_from_outside(sigcontext_64* context)
 {
-    auto env = co_manager::instance()->current_env();
+    auto env = CoCurrentEnv();
 
     co_ctx* curr = nullptr;
     co_ctx* next = nullptr;
@@ -182,6 +184,7 @@ void switch_from_outside(sigcontext_64* context)
         {
             return;
         }
+        printf("preempt count: %lu\n", env->schedule_lock().count());
         CoDefer(env->unlock_schedule());
         if (!env->prepare_to_switch(curr, next))
         {
