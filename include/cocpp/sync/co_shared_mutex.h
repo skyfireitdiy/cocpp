@@ -34,6 +34,9 @@ private:
     void                            wake_up_waiters__();
 
 public:
+    co_shared_mutex() = default;
+    co_shared_mutex(co_shared_mutex&& other) noexcept;
+    co_shared_mutex& operator=(co_shared_mutex&& other) noexcept;
     void lock();
     void unlock();
     bool try_lock();

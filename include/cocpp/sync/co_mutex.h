@@ -10,16 +10,20 @@ _Pragma("once");
 CO_NAMESPACE_BEGIN
 
 class co_ctx;
-class co_mutex : private co_noncopyable
+class co_mutex : private co_noncopyable_with_move
 {
+private:
     co_ctx*             owner__ { nullptr };
     co_spinlock         spinlock__;
     std::deque<co_ctx*> wait_deque__;
 
 public:
-    void lock();
-    void unlock();
-    bool try_lock();
+    co_mutex() = default;
+    co_mutex(co_mutex&& other) noexcept;
+    co_mutex& operator=(co_mutex&& other) noexcept;
+    void      lock();
+    void      unlock();
+    bool      try_lock();
 };
 
 CO_NAMESPACE_END

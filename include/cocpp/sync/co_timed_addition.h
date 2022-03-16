@@ -12,6 +12,9 @@ template <class Lock>
 class co_timed_addition : public Lock
 {
 public:
+    co_timed_addition()                                   = default;
+    co_timed_addition(co_timed_addition&& other) noexcept = default;
+    co_timed_addition& operator=(co_timed_addition&& other) noexcept = default;
     template <class Rep, class Period>
     bool try_lock_for(const std::chrono::duration<Rep, Period>& timeout_duration);
     template <class Clock, class Duration>

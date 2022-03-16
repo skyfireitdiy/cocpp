@@ -104,4 +104,25 @@ void co_recursive_mutex::unlock()
     obj->leave_wait_resource_state(this);
 }
 
+co_recursive_mutex::co_recursive_mutex(co_recursive_mutex&& other) noexcept
+    : spinlock__(std::move(other.spinlock__))
+    , owner__(other.owner__)
+    , wait_deque__(std::move(other.wait_deque__))
+    , lock_count__(other.lock_count__)
+{
+    other.owner__      = nullptr;
+    other.lock_count__ = 0;
+}
+
+co_recursive_mutex& co_recursive_mutex::operator=(co_recursive_mutex&& other) noexcept
+{
+    spinlock__         = std::move(other.spinlock__);
+    owner__            = other.owner__;
+    wait_deque__       = std::move(other.wait_deque__);
+    lock_count__       = other.lock_count__;
+    other.owner__      = nullptr;
+    other.lock_count__ = 0;
+    return *this;
+}
+
 CO_NAMESPACE_END

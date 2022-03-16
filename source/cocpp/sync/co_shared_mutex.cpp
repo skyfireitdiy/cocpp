@@ -206,13 +206,30 @@ void co_shared_mutex::wake_up_waiters__()
 
     auto iter   = std::remove_if(wait_deque__.begin(), wait_deque__.end(), [](auto& c) {
         return c.type == lock_type::shared;
-    });
+      });
     lock_type__ = lock_type::shared;
     std::transform(iter, wait_deque__.end(), std::inserter(owners__, owners__.begin()), [this](auto& context) {
         context.ctx->leave_wait_resource_state(this);
         return context.ctx;
     });
     wait_deque__.erase(iter, wait_deque__.end());
+}
+
+co_shared_mutex::co_shared_mutex(co_shared_mutex&& other) noexcept
+{
+    spinlock__ = std::move(other.spinlock__);
+    owners__.swap(other.owners__);
+    wait_deque__.swap(other.wait_deque__);
+    lock_type__ = other.lock_type__;
+}
+
+co_shared_mutex& co_shared_mutex::operator=(co_shared_mutex&& other) noexcept
+{
+    spinlock__ = std::move(other.spinlock__);
+    owners__.swap(other.owners__);
+    wait_deque__.swap(other.wait_deque__);
+    lock_type__ = other.lock_type__;
+    return *this;
 }
 
 CO_NAMESPACE_END

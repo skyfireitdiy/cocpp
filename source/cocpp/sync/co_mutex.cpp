@@ -104,4 +104,19 @@ void co_mutex::unlock()
     obj->leave_wait_resource_state(this);
 }
 
+co_mutex::co_mutex(co_mutex&& other) noexcept
+    : owner__(other.owner__)
+    , spinlock__(std::move(other.spinlock__))
+    , wait_deque__(std::move(other.wait_deque__))
+{
+}
+
+co_mutex& co_mutex::operator=(co_mutex&& other) noexcept
+{
+    spinlock__   = std::move(other.spinlock__);
+    owner__      = other.owner__;
+    wait_deque__ = std::move(other.wait_deque__);
+    return *this;
+}
+
 CO_NAMESPACE_END
