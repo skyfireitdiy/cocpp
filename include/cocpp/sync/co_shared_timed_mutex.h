@@ -13,9 +13,6 @@ CO_NAMESPACE_BEGIN
 class co_shared_timed_mutex : public co_timed_addition<co_shared_mutex>
 {
 public:
-    co_shared_timed_mutex()                                       = default;
-    co_shared_timed_mutex(co_shared_timed_mutex&& other) noexcept = default;
-    co_shared_timed_mutex& operator=(co_shared_timed_mutex&& other) noexcept = default;
     template <class Rep, class Period>
     bool try_lock_shared_for(const std::chrono::duration<Rep, Period>& timeout_duration);
     template <class Clock, class Duration>

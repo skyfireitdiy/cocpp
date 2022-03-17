@@ -12,7 +12,7 @@ _Pragma("once");
 CO_NAMESPACE_BEGIN
 
 template <std::ptrdiff_t LeastMaxValue>
-class co_counting_semaphore final : private co_noncopyable_with_move
+class co_counting_semaphore final : private co_noncopyable
 {
 private:
     co_mutex              mu__;
@@ -22,10 +22,6 @@ private:
     void                  release_one__();
 
 public:
-    co_counting_semaphore() = default;
-    co_counting_semaphore(co_counting_semaphore&& other);
-    co_counting_semaphore& operator=(co_counting_semaphore&& other);
-
     void acquire();
     void release(std::ptrdiff_t update = 1);
     bool try_acquire() noexcept;
@@ -36,23 +32,6 @@ public:
     constexpr explicit co_counting_semaphore(std::ptrdiff_t desired);
     static constexpr std::ptrdiff_t max() noexcept;
 };
-
-template <std::ptrdiff_t LeastMaxValue>
-co_counting_semaphore<LeastMaxValue>::co_counting_semaphore(co_counting_semaphore&& other)
-{
-    std::lock_guard<co_mutex> lock(other.mu__);
-    desired__       = other.desired__;
-    other.desired__ = 0;
-}
-
-template <std::ptrdiff_t LeastMaxValue>
-co_counting_semaphore<LeastMaxValue>& co_counting_semaphore<LeastMaxValue>::operator=(co_counting_semaphore&& other)
-{
-    std::lock_guard<co_mutex> lock(other.mu__);
-    desired__       = other.desired__;
-    other.desired__ = 0;
-    return *this;
-}
 
 template <std::ptrdiff_t LeastMaxValue>
 void co_counting_semaphore<LeastMaxValue>::acquire()

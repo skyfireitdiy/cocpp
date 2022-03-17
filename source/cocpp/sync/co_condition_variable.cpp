@@ -37,21 +37,4 @@ void co_condition_variable_impl::notify_one()
     ctx->leave_wait_resource_state(this);
 }
 
-co_condition_variable_impl::co_condition_variable_impl(co_condition_variable_impl&& other)
-    : cv_lock__(std::move(other.cv_lock__))
-    , waiters__(std::move(other.waiters__))
-    , timeout__(std::move(other.timeout__))
-{
-    other.timeout__ = false;
-}
-
-co_condition_variable_impl& co_condition_variable_impl::operator=(co_condition_variable_impl&& other)
-{
-    cv_lock__       = std::move(other.cv_lock__);
-    waiters__       = std::move(other.waiters__);
-    timeout__       = std::move(other.timeout__);
-    other.timeout__ = false;
-    return *this;
-}
-
 CO_NAMESPACE_END

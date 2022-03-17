@@ -22,7 +22,7 @@ using co_condition_variable = co_condition_variable_impl;
 
 void notify_all_at_co_exit(co_condition_variable& cond);
 
-class co_condition_variable_impl final : private co_noncopyable_with_move
+class co_condition_variable_impl final : private co_noncopyable
 {
 private:
     mutable co_spinlock cv_lock__;
@@ -30,9 +30,6 @@ private:
     bool                timeout__ { false };
 
 public:
-    co_condition_variable_impl() = default;
-    co_condition_variable_impl(co_condition_variable_impl&& other);
-    co_condition_variable_impl& operator=(co_condition_variable_impl&& other);
     template <typename Lock>
     void wait(Lock& lock);
     template <typename Lock, typename Predicate>

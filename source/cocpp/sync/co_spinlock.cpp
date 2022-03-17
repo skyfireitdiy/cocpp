@@ -25,22 +25,4 @@ void co_spinlock::unlock()
     locked__.clear(std::memory_order::release);
 }
 
-co_spinlock::co_spinlock(co_spinlock&& other) noexcept
-{
-    if (other.locked__.test_and_set(std::memory_order::acquire))
-    {
-        locked__.test_and_set(std::memory_order::acquire);
-    }
-    other.locked__.clear(std::memory_order::release);
-}
-co_spinlock& co_spinlock::operator=(co_spinlock&& other) noexcept
-{
-    if (other.locked__.test_and_set(std::memory_order::acquire))
-    {
-        locked__.test_and_set(std::memory_order::acquire);
-    }
-    other.locked__.clear(std::memory_order::release);
-    return *this;
-}
-
 CO_NAMESPACE_END
