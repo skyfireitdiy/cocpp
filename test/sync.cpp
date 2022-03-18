@@ -13,6 +13,7 @@
 #include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/mem/co_mem_pool.h"
+#include "cocpp/sync/co_barrier.h"
 #include "cocpp/sync/co_binary_semaphore.h"
 #include "cocpp/sync/co_call_once.h"
 #include "cocpp/sync/co_condition_variable.h"
@@ -122,7 +123,7 @@ TEST(sync, timed_mutex_lock_for)
         mu.lock();
         this_co::sleep_for(1s);
         mu.unlock();
-    });
+                });
     this_co::sleep_for(500ms);
     EXPECT_FALSE(mu.try_lock_for(100ms));
     EXPECT_TRUE(mu.try_lock_for(600ms));
@@ -338,4 +339,24 @@ TEST(sync, counting_semaphore_normal)
     });
     sem.release(10);
     c1.join();
+}
+
+TEST(sync, barrier)
+{
+    std::atomic<int> n = 0;
+    co_barrier       barrier(10);
+    std::vector<co>  cs;
+
+    for (int i = 0; i < 10; ++i)
+    {
+        cs.emplace_back([&] {
+            ++n;
+            barrier.arrive_and_wait();
+            EXPECT_EQ(n, 10);
+            barrier.arrive_and_wait();
+            ++n;
+            barrier.arrive_and_wait();
+            EXPECT_EQ(n, 20);
+        });
+    }
 }

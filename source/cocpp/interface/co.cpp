@@ -59,6 +59,23 @@ void co::join()
     }
 }
 
+co::co(co&& other) noexcept
+{
+    ctx__       = other.ctx__;
+    other.ctx__ = nullptr;
+}
+
+co& co::operator=(co&& other) noexcept
+{
+    if (this != &other)
+    {
+        join();
+        ctx__       = other.ctx__;
+        other.ctx__ = nullptr;
+    }
+    return *this;
+}
+
 namespace this_co
 {
 

@@ -1,5 +1,7 @@
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/core/co_define.h"
+#include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack.h"
 #include "cocpp/core/co_type.h"
 
@@ -18,6 +20,7 @@ co_stack* co_stack_factory::create_stack(size_t size)
 
 void co_stack_factory::destroy_stack(co_stack* stack)
 {
+    CoPreemptGuard();
     if (stack->stack_size() != 0)
     {
         mem_pool__.free_mem(stack->stack(), stack->stack_size());

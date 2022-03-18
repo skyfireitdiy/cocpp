@@ -1,5 +1,6 @@
 #include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_ctx.h"
+#include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/utils/co_any.h"
@@ -25,6 +26,7 @@ co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config, std::function<v
 
 void co_ctx_factory::destroy_ctx(co_ctx* ctx)
 {
+    CoPreemptGuard();
     assert(ctx != nullptr);
     auto stack = ctx->stack();
     ctx_pool__.destroy_obj(ctx);

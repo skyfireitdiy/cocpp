@@ -13,14 +13,16 @@ struct co_arrival_token
 {
     std::ptrdiff_t generation__;
     void*          barrier__;
+    std::ptrdiff_t n__;
 };
 
 class co_barrier final : private co_noncopyable
 {
 private:
-    const std::ptrdiff_t        expected__;
-    std::ptrdiff_t              generation__;
+    std::atomic<std::ptrdiff_t> expected__;
+    std::atomic<std::ptrdiff_t> generation__;
     std::atomic<std::ptrdiff_t> count__;
+    const std::ptrdiff_t        max__;
     co_mutex                    mutex__;
     co_condition_variable       cond__;
 

@@ -683,14 +683,14 @@ co_recursive_mutex_with_count& co_env::schedule_lock()
 
 void co_recursive_mutex_with_count::lock()
 {
-    std::recursive_mutex::lock();
     ++count__;
+    std::recursive_mutex::lock();
 }
 
 void co_recursive_mutex_with_count::unlock()
 {
-    --count__;
     std::recursive_mutex::unlock();
+    --count__;
 }
 
 bool co_recursive_mutex_with_count::try_lock()

@@ -27,15 +27,17 @@ concept CoIsVoid = std::is_same_v < std::decay_t<T>,
 void > ;
 
 template <typename T>
-concept CoIsNotVoid = !
-std::is_same_v<std::decay_t<T>, void>;
+concept CoIsNotVoid = !std::is_same_v<std::decay_t<T>, void>;
 
-class co final : private co_noncopyable
+class co final
 {
 private:
     mutable co_ctx* ctx__;
     template <typename Func, typename... Args> //
     void init__(co_ctx_config config, Func&& func, Args&&... args);
+
+    co(const co&) = delete;
+    co& operator=(const co&) = delete;
 
 public:
     CoMemberMethodProxyStatic(co_manager::instance(), create_env);
@@ -76,6 +78,9 @@ public:
     co then(std::function<Result(Args)> f) const;
     template <typename Result>
     co then(std::function<Result()> f) const;
+
+    co(co&& other) noexcept;
+    co& operator=(co&& other) noexcept;
 
     ~co();
 };
