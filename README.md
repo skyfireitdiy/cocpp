@@ -60,9 +60,7 @@ int main()
 - 用于通信的channel
 
 	和Go一样，具有用于协程通信的channel实现。
-- 事件
 
-	协程的各个阶段都可以注入处理函数，便于跟踪协程执行情况。
 - 共享栈
 
 	多个协程可以共用一个栈空间，以此减少内存使用（共享栈协程不支持迁移）。
@@ -75,7 +73,6 @@ int main()
 - 协程局部存储
 
 	方便的协程局部存储，让每个协程拥有自己的私有数据。
-
 
 
 ## 编译安装
@@ -135,7 +132,6 @@ xmake f --mode=release # 设置编译模式为release，也可以设置为debug
 xmake b cocpp # 编译cocpp
 ```
 
-
 #### test
 
 如果需要运行测试用例，需要先编译gtest与mockcpp：
@@ -150,7 +146,6 @@ xmake b cocpp # 编译cocpp
 ```Bash
 xmake f --mode=release # 设置编译模式为release，也可以设置为debug
 xmake b test # 编译并运行cocpp
-
 ```
 
 
