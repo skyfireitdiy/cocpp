@@ -24,16 +24,16 @@ class co_stack;
 class co_recursive_mutex_with_count : public std::recursive_mutex
 {
 private:
-    std::atomic<size_t> count__;
+    std::atomic<long long int> count__;
 
 public:
     using std::recursive_mutex::recursive_mutex;
-    void   lock();
-    void   unlock();
-    bool   try_lock();
-    size_t count() const;
-    void   increate_count();
-    void   decreate_count();
+    void          lock();
+    void          unlock();
+    bool          try_lock();
+    long long int count() const;
+    void          increate_count();
+    void          decreate_count();
 };
 
 class co_preempt_guard final : private co_noncopyable

@@ -7,6 +7,7 @@
 #include "cocpp/core/co_timer.h"
 #include "cocpp/core/co_vos.h"
 #include "cocpp/sync/co_spinlock.h"
+#include "cocpp/utils/co_defer.h"
 #include <cassert>
 #include <cstddef>
 #include <future>
@@ -89,9 +90,9 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     {
         env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
     }
-    std::scoped_lock lck(env_set__.normal_lock, env_set__.mu_normal_env_count);
+    std::scoped_lock lck(env_set__.normal_lock);
+
     env_set__.normal_set.insert(env);
-    ++env_set__.normal_env_count;
 
     return env;
 }
@@ -105,12 +106,21 @@ void co_manager::create_background_task__()
 {
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         clean_env_routine__();
+
+        // To prevent a new env from being created after setting the cleanup flag (it will not be added to normal_set), you need to cleanup this thread's env
+        // There are two cases:
+        // 1. Env has not been added to normal_set, so destroy is performed here
+        // 2. Env is added to normal_set and destroyed by the clean_env_routine__ thread.In this scenario, the current_env function would create a new env, which would then be destroyed by destroy_env, sacrificing only a bit of performance but not the correctness of the program
+
+        co_env_factory::instance()->destroy_env(current_env());
     }));
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         monitor_routine__();
+        co_env_factory::instance()->destroy_env(current_env());
     }));
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         timer_routine__();
+        co_env_factory::instance()->destroy_env(current_env());
     }));
 }
 
@@ -175,7 +185,7 @@ co_manager::co_manager()
 
 void co_manager::remove_env__(co_env* env)
 {
-    std::scoped_lock lock(env_set__.normal_lock, env_set__.expired_lock);
+    std::scoped_lock lock(env_set__.normal_lock);
     env_set__.normal_set.erase(env);
     env_set__.expired_set.insert(env);
     env_set__.cv_expired_env.notify_one();
@@ -183,13 +193,18 @@ void co_manager::remove_env__(co_env* env)
 
 void co_manager::create_env_from_this_thread__()
 {
-    std::scoped_lock lck(env_set__.normal_lock, env_set__.mu_normal_env_count);
+    std::scoped_lock lck(env_set__.normal_lock);
     current_env__ = co_env_factory::instance()->create_env_from_this_thread(default_shared_stack_size__);
+
+    printf("create env from this thread: %p\n", current_env__);
 
     subscribe_env_event__(current_env__);
 
-    env_set__.normal_set.insert(current_env__);
-    ++env_set__.normal_env_count;
+    // If clean_up__ is already set, do not add it to normal_set
+    if (!clean_up__)
+    {
+        env_set__.normal_set.insert(current_env__);
+    }
 }
 
 co_env* co_manager::current_env()
@@ -203,7 +218,7 @@ co_env* co_manager::current_env()
 
 void co_manager::set_clean_up__()
 {
-    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock, clean_up_lock__);
+    std::scoped_lock lock(env_set__.normal_lock);
     clean_up__       = true;
     auto backup_data = env_set__.normal_set;
     for (auto& env : backup_data)
@@ -222,19 +237,13 @@ void co_manager::set_clean_up__()
 
 void co_manager::clean_env_routine__()
 {
-    std::unique_lock lck(env_set__.expired_lock);
-    std::unique_lock clean_lock(clean_up_lock__);
-    while (!clean_up__ || env_set__.normal_env_count != 0)
+    std::unique_lock lck(env_set__.normal_lock);
+    while (!clean_up__ || !env_set__.normal_set.empty() || !env_set__.expired_set.empty())
     {
-        clean_lock.unlock();
         env_set__.cv_expired_env.wait(lck);
-
-        clean_lock.lock();
-        std::scoped_lock lock(env_set__.mu_normal_env_count);
         for (auto& p : env_set__.expired_set)
         {
             co_env_factory::instance()->destroy_env(p);
-            --env_set__.normal_env_count;
         }
         env_set__.expired_set.clear();
     }
@@ -260,7 +269,7 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
 
 void co_manager::force_schedule__()
 {
-    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock, clean_up_lock__);
+    std::scoped_lock lock(env_set__.normal_lock);
     if (clean_up__)
     {
         return;
@@ -279,7 +288,7 @@ void co_manager::force_schedule__()
 
 void co_manager::redistribute_ctx__()
 {
-    std::scoped_lock lock(env_set__.expired_lock, env_set__.normal_lock, clean_up_lock__);
+    std::scoped_lock lock(env_set__.normal_lock);
     if (clean_up__)
     {
         return;
@@ -293,6 +302,15 @@ void co_manager::redistribute_ctx__()
 
     for (auto& env : env_set__.normal_set)
     {
+        if (!env->try_lock_schedule())
+        {
+            continue;
+        }
+        CoDefer(env->unlock_schedule());
+        if (!env->can_force_schedule())
+        {
+            continue;
+        }
         // 如果检测到某个env被阻塞了，收集可转移的ctx
         if (env->is_blocked())
         {
@@ -341,7 +359,7 @@ void co_manager::destroy_redundant_env__()
 
 void co_manager::monitor_routine__()
 {
-    std::unique_lock lck(clean_up_lock__);
+    std::unique_lock lck(env_set__.normal_lock);
     while (!clean_up__)
     {
         lck.unlock();
@@ -471,12 +489,31 @@ void co_manager::steal_ctx_routine__()
     auto iter = env_set__.normal_set.begin();
     for (auto& env : idle_env_list)
     {
+        if (!env->try_lock_schedule())
+        {
+            continue;
+        }
+        CoDefer(env->unlock_schedule());
+        if (!env->can_force_schedule())
+        {
+            continue;
+        }
         for (; iter != env_set__.normal_set.end(); ++iter)
         {
             if ((*iter)->state() == co_env_state::idle)
             {
                 break;
             }
+            if (!(*iter)->try_lock_schedule())
+            {
+                continue;
+            }
+            CoDefer((*iter)->unlock_schedule());
+            if (!(*iter)->can_force_schedule())
+            {
+                continue;
+            }
+
             auto ctx = (*iter)->take_one_movable_ctx();
             if (ctx != nullptr)
             {
