@@ -27,6 +27,8 @@ co_env::co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_threa
     : shared_stack_size__(shared_stack_size)
     , idle_ctx__(idle_ctx)
 {
+    // Note: this value may be changed by start_schedule()
+    schedule_thread_tid__ = gettid();
     idle_ctx__->set_env(this);
     if (create_new_thread)
     {
@@ -684,6 +686,7 @@ co_recursive_mutex_with_count& co_env::schedule_lock()
 void co_recursive_mutex_with_count::lock()
 {
     ++count__;
+    assert(count__ > 0);
     std::recursive_mutex::lock();
 }
 
@@ -691,19 +694,22 @@ void co_recursive_mutex_with_count::unlock()
 {
     std::recursive_mutex::unlock();
     --count__;
+    assert(count__ >= 0);
 }
 
 bool co_recursive_mutex_with_count::try_lock()
 {
+    ++count__;
     if (std::recursive_mutex::try_lock())
     {
-        ++count__;
+        assert(count__ > 0);
         return true;
     }
+    --count__;
     return false;
 }
 
-size_t co_recursive_mutex_with_count::count() const
+long long int co_recursive_mutex_with_count::count() const
 {
     return count__;
 }
@@ -711,11 +717,13 @@ size_t co_recursive_mutex_with_count::count() const
 void co_recursive_mutex_with_count::increate_count()
 {
     ++count__;
+    assert(count__ > 0);
 }
 
 void co_recursive_mutex_with_count::decreate_count()
 {
     --count__;
+    assert(count__ >= 0);
 }
 
 co_schedule_guard::co_schedule_guard(co_recursive_mutex_with_count& lk)

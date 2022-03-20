@@ -1,6 +1,7 @@
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_state_manager.h"
 
@@ -63,6 +64,7 @@ void co_ctx::real_entry(co_ctx* ctx)
     {
         ctx->exception__ = std::current_exception();
     }
+    CoPreemptGuard();
     // CO_DEBUG("ctx %s %p finished", ctx->config().name.c_str(), ctx);
     ctx->lock_finished_state();
     ctx->set_state(co_state::finished);
