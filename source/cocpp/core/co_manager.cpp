@@ -106,21 +106,12 @@ void co_manager::create_background_task__()
 {
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         clean_env_routine__();
-
-        // To prevent a new env from being created after setting the cleanup flag (it will not be added to normal_set), you need to cleanup this thread's env
-        // There are two cases:
-        // 1. Env has not been added to normal_set, so destroy is performed here
-        // 2. Env is added to normal_set and destroyed by the clean_env_routine__ thread.In this scenario, the current_env function would create a new env, which would then be destroyed by destroy_env, sacrificing only a bit of performance but not the correctness of the program
-
-        co_env_factory::instance()->destroy_env(current_env());
     }));
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         monitor_routine__();
-        co_env_factory::instance()->destroy_env(current_env());
     }));
     background_task__.emplace_back(std::async(std::launch::async, [this]() {
         timer_routine__();
-        co_env_factory::instance()->destroy_env(current_env());
     }));
 }
 
@@ -200,11 +191,7 @@ void co_manager::create_env_from_this_thread__()
 
     subscribe_env_event__(current_env__);
 
-    // If clean_up__ is already set, do not add it to normal_set
-    if (!clean_up__)
-    {
-        env_set__.normal_set.insert(current_env__);
-    }
+    env_set__.normal_set.insert(current_env__);
 }
 
 co_env* co_manager::current_env()
@@ -238,9 +225,27 @@ void co_manager::set_clean_up__()
 void co_manager::clean_env_routine__()
 {
     std::unique_lock lck(env_set__.normal_lock);
-    while (!clean_up__ || !env_set__.normal_set.empty() || !env_set__.expired_set.empty())
+    while (!clean_up__ || !env_set__.normal_set.empty())
     {
-        env_set__.cv_expired_env.wait(lck);
+        if (clean_up__)
+        {
+            auto backup = env_set__.normal_set;
+            for (auto& env : backup)
+            {
+                if (env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
+                {
+                    // 对于没有调度线程的env，无法将自己加入销毁队列，需要由manager__加入
+                    remove_env__(env);
+                    continue;
+                }
+                env->stop_schedule(); // 注意：没有调度线程的env不能调用stop_schedule
+            }
+            env_set__.normal_set.clear();
+        }
+        else
+        {
+            env_set__.cv_expired_env.wait(lck);
+        }
         for (auto& p : env_set__.expired_set)
         {
             co_env_factory::instance()->destroy_env(p);
