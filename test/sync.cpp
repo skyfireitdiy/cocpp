@@ -23,6 +23,7 @@
 #include "cocpp/sync/co_shared_mutex.h"
 #include "cocpp/sync/co_shared_timed_mutex.h"
 #include "cocpp/sync/co_timed_mutex.h"
+#include "cocpp/sync/co_wait_group.h"
 #include "cocpp/utils/co_any.h"
 
 using namespace cocpp;
@@ -359,4 +360,25 @@ TEST(sync, barrier)
             EXPECT_EQ(n, 20);
         });
     }
+}
+
+TEST(sync, wait_group)
+{
+    std::atomic<int> n = 0;
+    co_wait_group    wg(10);
+    std::vector<co>  cs;
+
+    for (int i = 0; i < 10; ++i)
+    {
+        cs.emplace_back([&](int begin, int end) {
+            for (int i = begin; i < end; ++i)
+            {
+                n += i;
+            }
+            wg.done();
+        },
+                        i * 10, (i + 1) * 10);
+    }
+    wg.wait();
+    EXPECT_EQ(n, 4950);
 }
