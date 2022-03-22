@@ -362,23 +362,23 @@ TEST(sync, barrier)
     }
 }
 
-// TEST(sync, wait_group)
-// {
-//     std::atomic<int> n = 0;
-//     co_wait_group    wg(10);
-//     std::vector<co>  cs;
+TEST(sync, wait_group)
+{
+    std::atomic<int> n = 0;
+    co_wait_group    wg(10);
+    std::vector<co>  cs;
 
-//     for (int i = 0; i < 10; ++i)
-//     {
-//         cs.emplace_back([&](int begin, int end) {
-//             for (int i = begin; i < end; ++i)
-//             {
-//                 n += i;
-//             }
-//             wg.done();
-//         },
-//                         i * 10, (i + 1) * 10);
-//     }
-//     wg.wait();
-//     EXPECT_EQ(n, 4950);
-// }
+    for (int i = 0; i < 10; ++i)
+    {
+        cs.emplace_back([&](int begin, int end) {
+            for (int i = begin; i < end; ++i)
+            {
+                n += i;
+            }
+            wg.done();
+        },
+                        i * 10, (i + 1) * 10);
+    }
+    wg.wait();
+    EXPECT_EQ(n, 4950);
+}
