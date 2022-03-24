@@ -18,6 +18,7 @@
 #include "cocpp/sync/co_call_once.h"
 #include "cocpp/sync/co_condition_variable.h"
 #include "cocpp/sync/co_counting_semaphore.h"
+#include "cocpp/sync/co_latch.h"
 #include "cocpp/sync/co_mutex.h"
 #include "cocpp/sync/co_recursive_mutex.h"
 #include "cocpp/sync/co_shared_mutex.h"
@@ -381,4 +382,20 @@ TEST(sync, wait_group)
     }
     wg.wait();
     EXPECT_EQ(n, 4950);
+}
+
+TEST(sync, latch)
+{
+    std::atomic<int> n = 0;
+    co_latch         latch(10);
+    std::vector<co>  cs;
+
+    for (int i = 0; i < 10; ++i)
+    {
+        cs.emplace_back([&] {
+            ++n;
+            latch.arrive_and_wait();
+            EXPECT_EQ(n, 10);
+        });
+    }
 }
