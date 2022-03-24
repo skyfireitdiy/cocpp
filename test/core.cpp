@@ -7,6 +7,7 @@
 #include "cocpp/comm/co_chan.h"
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_ctx_factory.h"
+#include "cocpp/core/co_enum.h"
 #include "cocpp/core/co_env_factory.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
@@ -95,7 +96,7 @@ TEST(core, wait_timeout)
 {
     co   c1([]() {
         this_co::sleep_for(1s);
-    });
+      });
     auto ret = c1.wait_for(1ms);
     EXPECT_FALSE(ret);
     ret = c1.wait_for(10s);
@@ -107,7 +108,7 @@ TEST(core, this_co_id)
     co_id id;
     co    c1([&id]() {
         id = this_co::id();
-    });
+       });
     c1.wait<void>();
     EXPECT_EQ(c1.id(), id);
 }
@@ -207,4 +208,25 @@ TEST(core, exception)
 {
     auto c = co([] { throw 1; });
     EXPECT_THROW(c.wait<int>(), int);
+}
+
+ENUM_TYPE(Result);
+ENUM_ITEM(Ok);
+ENUM_ITEM(Err);
+
+Result func()
+{
+    return Ok(5);
+}
+
+TEST(core, enum)
+{
+    int n = 10;
+    func().$<Ok>([&](int a) {
+              n += a;
+          })
+        .$<Err>([&](int a) {
+            n += 20;
+        });
+    EXPECT_EQ(n, 15);
 }
