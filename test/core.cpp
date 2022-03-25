@@ -7,7 +7,6 @@
 #include "cocpp/comm/co_chan.h"
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_ctx_factory.h"
-#include "cocpp/core/co_enum.h"
 #include "cocpp/core/co_env_factory.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
@@ -208,25 +207,4 @@ TEST(core, exception)
 {
     auto c = co([] { throw 1; });
     EXPECT_THROW(c.wait<int>(), int);
-}
-
-ENUM_TYPE(Result);
-ENUM_ITEM(Ok);
-ENUM_ITEM(Err);
-
-Result func()
-{
-    return Ok(5);
-}
-
-TEST(core, enum)
-{
-    int n = 10;
-    func().$<Ok>([&](int a) {
-              n += a;
-          })
-        .$<Err>([&](int a) {
-            n += 20;
-        });
-    EXPECT_EQ(n, 15);
 }
