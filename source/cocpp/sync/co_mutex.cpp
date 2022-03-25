@@ -2,12 +2,12 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
-#include "cocpp/exception/co_error.h"
 #include "cocpp/utils/co_defer.h"
 #include "cocpp/utils/co_utils.h"
 #include <atomic>
 #include <chrono>
 #include <mutex>
+#include <stdexcept>
 
 CO_NAMESPACE_BEGIN
 
@@ -87,7 +87,7 @@ void co_mutex::unlock()
     if (owner__ != ctx)
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__);
-        throw co_error("ctx is not owner[", ctx, "]");
+        throw std::logic_error("ctx is not owner");
     }
 
     // Wait queue is empty, return with owner set to nullptr

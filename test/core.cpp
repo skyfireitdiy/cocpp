@@ -10,7 +10,6 @@
 #include "cocpp/core/co_env_factory.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
-#include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/sync/co_binary_semaphore.h"

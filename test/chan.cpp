@@ -10,7 +10,6 @@
 #include "cocpp/core/co_env_factory.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
-#include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/sync/co_binary_semaphore.h"
@@ -77,7 +76,7 @@ TEST(chan, no_limited)
             ch.push(i);
         }
         ch.close();
-    });
+     });
     int t;
     for (int i = 0; i < 10000; ++i)
     {
@@ -97,7 +96,7 @@ TEST(chan, no_buf)
             ch << i;
         }
         ch.close();
-    });
+                 });
 
     for (int i = 0; i < 10000; ++i)
     {
@@ -227,7 +226,7 @@ TEST(chan, pop_from_empty_chan_closed)
     co              c1([&] {
         this_co::sleep_for(1s);
         ch.close();
-    });
+                 });
     EXPECT_FALSE(ch.pop());
     c1.join();
 }
@@ -238,7 +237,7 @@ TEST(chan, pop_from_zero_chan_closed)
     co              c1([&] {
         this_co::sleep_for(1s);
         ch.close();
-    });
+                 });
     EXPECT_FALSE(ch.pop());
     c1.join();
 }

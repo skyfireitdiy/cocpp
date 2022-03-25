@@ -2,7 +2,6 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
-#include "cocpp/exception/co_error.h"
 #include "cocpp/utils/co_utils.h"
 
 #include <algorithm>
@@ -89,7 +88,7 @@ void co_shared_mutex::unlock()
     if (lock_type__ != lock_type::unique || !owners__.contains(ctx))
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-        throw co_error("ctx is not owner[", ctx, "]");
+        throw std::logic_error("ctx is not owner");
     }
     owners__.erase(ctx);
     wake_up_waiters__();
@@ -173,7 +172,7 @@ void co_shared_mutex::unlock_shared()
     if (lock_type__ != lock_type::shared || !owners__.contains(ctx))
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-        throw co_error("ctx is not owner[", ctx, "]");
+        throw std::logic_error("ctx is not owner");
     }
 
     owners__.erase(ctx);
@@ -206,7 +205,7 @@ void co_shared_mutex::wake_up_waiters__()
 
     auto iter   = std::remove_if(wait_deque__.begin(), wait_deque__.end(), [](auto& c) {
         return c.type == lock_type::shared;
-    });
+      });
     lock_type__ = lock_type::shared;
     std::transform(iter, wait_deque__.end(), std::inserter(owners__, owners__.begin()), [this](auto& context) {
         context.ctx->leave_wait_resource_state(this);

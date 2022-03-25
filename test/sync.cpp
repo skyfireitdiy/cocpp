@@ -10,7 +10,6 @@
 #include "cocpp/core/co_env_factory.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
-#include "cocpp/exception/co_error.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/sync/co_barrier.h"
@@ -93,7 +92,7 @@ TEST(sync, mutex_lock)
 TEST(sync, mutex_throw)
 {
     co_mutex mu;
-    EXPECT_THROW(mu.unlock(), co_error);
+    EXPECT_THROW(mu.unlock(), std::logic_error);
 }
 
 TEST(sync, recursive_mutex_lock)

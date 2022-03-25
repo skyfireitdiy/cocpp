@@ -41,12 +41,10 @@ void co_barrier::wait(co_arrival_token&& arrival)
         generation__++;
         count__    = max__;
         expected__ = max__;
-        printf("notify\n");
         cond__.notify_all();
     }
     else
     {
-        printf("wait\n");
         cond__.wait(lock);
     }
 }

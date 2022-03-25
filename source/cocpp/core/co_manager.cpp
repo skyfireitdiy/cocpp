@@ -186,11 +186,7 @@ void co_manager::create_env_from_this_thread__()
 {
     std::scoped_lock lck(env_set__.normal_lock);
     current_env__ = co_env_factory::instance()->create_env_from_this_thread(default_shared_stack_size__);
-
-    printf("create env from this thread: %p\n", current_env__);
-
     subscribe_env_event__(current_env__);
-
     env_set__.normal_set.insert(current_env__);
 }
 

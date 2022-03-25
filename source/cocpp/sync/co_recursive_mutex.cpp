@@ -2,7 +2,6 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
-#include "cocpp/exception/co_error.h"
 #include "cocpp/utils/co_utils.h"
 
 #include <cassert>
@@ -82,7 +81,7 @@ void co_recursive_mutex::unlock()
     if (owner__ != ctx)
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__);
-        throw co_error("ctx is not owner[", ctx, "]");
+        throw std::logic_error("ctx is not owner");
     }
 
     --lock_count__;

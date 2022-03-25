@@ -9,7 +9,6 @@
 #include "cocpp/core/co_timer.h"
 #include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
-#include "cocpp/exception/co_error.h"
 #include "cocpp/utils/co_defer.h"
 
 #include <cassert>
@@ -18,6 +17,7 @@
 #include <future>
 #include <iterator>
 #include <mutex>
+#include <stdexcept>
 
 CO_NAMESPACE_BEGIN
 
@@ -54,7 +54,7 @@ void co_env::add_ctx(co_ctx* ctx)
     assert(ctx != nullptr);
     if (state() == co_env_state::created || state() == co_env_state::destorying)
     {
-        throw co_error("env state error");
+        throw std::runtime_error("env state error");
     }
 
     auto is_shared_stack = ctx->test_flag(CO_CTX_FLAG_SHARED_STACK);
@@ -398,7 +398,7 @@ void co_env::schedule_in_this_thread()
 {
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
-        throw co_error("schedule_in_this_thread: already started");
+        throw std::runtime_error("schedule_in_this_thread: already started");
     }
     start_schedule_routine__();
 }

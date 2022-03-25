@@ -184,13 +184,11 @@ void switch_from_outside(sigcontext_64* context)
         {
             return;
         }
-        printf("preempt count: %lld\n", env->schedule_lock().count());
         CoDefer(env->unlock_schedule());
         if (!env->prepare_to_switch(curr, next))
         {
             return;
         }
-        printf("switch from outside\n");
     }
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);
