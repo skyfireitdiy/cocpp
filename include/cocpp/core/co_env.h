@@ -82,7 +82,7 @@ private:
     // Another thread will get current CTX from this ENV.
     std::atomic<co_ctx*> curr_ctx__ { nullptr };
 
-    int                                   min_priority__ = 0;
+    size_t                                min_priority__ = 0;
     mutable std::recursive_mutex          mu_min_priority__;
     mutable co_recursive_mutex_with_count schedule_lock__;
 
@@ -104,7 +104,7 @@ private:
     co_ctx*            choose_ctx_from_normal_list__();
     std::list<co_ctx*> all_ctx__();
     bool               can_schedule__() const;
-    void               update_min_priority__(int priority);
+    void               update_min_priority__(size_t priority);
     void               create_shared_stack__();
     static size_t      get_valid_stack_size__(co_ctx* ctx);
     static void        update_ctx_state__(co_ctx* curr, co_ctx* next);

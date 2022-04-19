@@ -11,12 +11,15 @@
 #include "cocpp/core/co_vos.h"
 #include "cocpp/utils/co_defer.h"
 
+#include <algorithm>
+#include <bits/ranges_algo.h>
 #include <cassert>
 #include <chrono>
 #include <cstring>
 #include <future>
 #include <iterator>
 #include <mutex>
+#include <ranges>
 #include <stdexcept>
 
 CO_NAMESPACE_BEGIN
@@ -185,14 +188,13 @@ void co_env::remove_detached_ctx__()
 {
     auto curr    = current_ctx();
     auto all_ctx = all_ctx__();
-    for (auto& ctx : all_ctx)
-    {
-        // 注意：此处不能删除当前的ctx，如果删除了，switch_to的当前上下文就没地方保存了
-        if (ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr)
-        {
+
+    std::ranges::for_each(
+        all_ctx
+            | std::views::filter([curr](co_ctx* ctx) { return ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr; }),
+        [this](co_ctx* ctx) {
             remove_ctx(ctx);
-        }
-    }
+        });
 }
 
 co_ctx* co_env::next_ctx__()
@@ -405,11 +407,9 @@ void co_env::schedule_in_this_thread()
 
 void co_env::remove_all_ctx__()
 {
-    auto all_ctx = all_ctx__();
-    for (auto& obj : all_ctx)
-    {
-        remove_ctx(obj);
-    }
+    std::ranges::for_each(all_ctx__(), [this](auto& ctx) {
+        remove_ctx(ctx);
+    });
 }
 
 void co_env::reset_scheduled_flag()
@@ -468,33 +468,26 @@ bool co_env::can_schedule_ctx() const
 void co_env::handle_priority_changed(int old, co_ctx* ctx)
 {
     std::scoped_lock lock(mu_normal_ctx__);
-    for (auto iter = all_normal_ctx__[old].begin(); iter != all_normal_ctx__[old].end(); ++iter)
-    {
-        if (*iter == ctx)
-        {
-            all_normal_ctx__[old].erase(iter);
-            all_normal_ctx__[ctx->priority()].push_back(ctx);
-            update_min_priority__(ctx->priority());
-            return;
-        }
-    }
-    assert(false);
+
+    auto target = std::ranges::find_if(all_normal_ctx__[old], [ctx](auto& iter) {
+        return iter == ctx;
+    });
+
+    all_normal_ctx__[old].erase(target);
+    all_normal_ctx__[ctx->priority()].push_back(ctx);
+    update_min_priority__(ctx->priority());
 }
 
 bool co_env::can_schedule__() const
 {
     std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
-    for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
-    {
-        for (auto& ctx : all_normal_ctx__[i])
-        {
-            if (ctx->can_schedule())
-            {
-                return true;
-            }
-        }
-    }
-    return false;
+
+    return std::ranges::any_of(std::views::iota(min_priority__, all_normal_ctx__.size()),
+                               [this](const auto& i) -> bool {
+                                   return std::ranges::any_of(all_normal_ctx__[i], [](auto& ctx) -> bool {
+                                       return ctx->can_schedule();
+                                   });
+                               });
 }
 
 bool co_env::is_blocked() const
@@ -513,6 +506,7 @@ bool co_env::need_sleep__()
 co_ctx* co_env::choose_ctx_from_normal_list__()
 {
     std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
+
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         for (auto& ctx : all_normal_ctx__[i])
@@ -535,13 +529,9 @@ co_ctx* co_env::choose_ctx_from_normal_list__()
 std::list<co_ctx*> co_env::all_ctx__()
 {
     CoPreemptGuard();
-    std::scoped_lock   lock(mu_normal_ctx__);
-    std::list<co_ctx*> ret;
-    for (auto& lst : all_normal_ctx__)
-    {
-        ret.insert(ret.end(), lst.begin(), lst.end());
-    }
-    return ret;
+    std::scoped_lock lock(mu_normal_ctx__);
+    auto             ret = all_normal_ctx__ | std::views::join;
+    return { ret.begin(), ret.end() };
 }
 
 void co_env::ctx_leave_wait_state(co_ctx* ctx)
@@ -600,7 +590,7 @@ co_ctx* co_env::take_one_movable_ctx()
     return nullptr;
 }
 
-void co_env::update_min_priority__(int priority)
+void co_env::update_min_priority__(size_t priority)
 {
     std::scoped_lock lock(mu_min_priority__);
     if (priority < min_priority__)
