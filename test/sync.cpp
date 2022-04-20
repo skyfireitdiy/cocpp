@@ -27,14 +27,15 @@
 #include "cocpp/utils/co_any.h"
 
 using namespace cocpp;
-using namespace std::chrono_literals;
+using namespace std;
+using namespace chrono_literals;
 
 TEST(sync, mutex_try_lock)
 {
     co_mutex mu;
 
     co c1([&]() {
-        std::scoped_lock lock(mu);
+        scoped_lock lock(mu);
         this_co::sleep_for(1s);
     });
 
@@ -52,7 +53,7 @@ TEST(sync, mutex_lock)
     co c1([&]() {
         for (int i = 0; i < 1000; ++i)
         {
-            std::scoped_lock lock(mu);
+            scoped_lock lock(mu);
             ret += i;
             this_co::yield();
         }
@@ -61,7 +62,7 @@ TEST(sync, mutex_lock)
         for (int i = 0; i < 1000; ++i)
         {
             {
-                std::scoped_lock lock(mu);
+                scoped_lock lock(mu);
                 ret += i;
             }
             this_co::yield();
@@ -70,14 +71,14 @@ TEST(sync, mutex_lock)
     co c3([&]() {
         for (int i = 0; i < 1000; ++i)
         {
-            std::scoped_lock lock(mu);
+            scoped_lock lock(mu);
             ret -= i;
             this_co::yield();
         }
     });
     for (int i = 0; i < 1000; ++i)
     {
-        std::scoped_lock lock(mu);
+        scoped_lock lock(mu);
         ret -= i;
         this_co::yield();
     }
@@ -92,7 +93,7 @@ TEST(sync, mutex_lock)
 TEST(sync, mutex_throw)
 {
     co_mutex mu;
-    EXPECT_THROW(mu.unlock(), std::logic_error);
+    EXPECT_THROW(mu.unlock(), logic_error);
 }
 
 TEST(sync, recursive_mutex_lock)
@@ -244,7 +245,7 @@ TEST(sync, condition_variable_notify_one)
     int                   n = 100;
 
     co c1([&] {
-        std::unique_lock lck(mu);
+        unique_lock lck(mu);
         cond.wait(lck);
         n -= 5;
     });
@@ -263,12 +264,12 @@ TEST(sync, condition_variable_notify_all)
     int                   n = 100;
 
     co c1([&] {
-        std::unique_lock lck(mu);
+        unique_lock lck(mu);
         cond.wait(lck);
         n -= 5;
     });
     co c2([&] {
-        std::unique_lock lck(mu);
+        unique_lock lck(mu);
         cond.wait(lck);
         n -= 10;
     });
@@ -294,15 +295,15 @@ TEST(sync, condition_variable_notify_at_co_exit)
     });
     c1.detach();
     EXPECT_EQ(n, 100);
-    std::unique_lock lck(mu);
+    unique_lock lck(mu);
     cond.wait(lck);
     EXPECT_EQ(n, 50);
 }
 
 TEST(sync, call_once)
 {
-    co_once_flag     flag;
-    std::atomic<int> n = 0;
+    co_once_flag flag;
+    atomic<int>  n = 0;
 
     auto f = [&](int t) {
         n += t;
@@ -336,7 +337,7 @@ TEST(sync, counting_semaphore_normal)
         sem.acquire();
         sem.acquire();
         EXPECT_FALSE(sem.try_acquire());
-        EXPECT_FALSE(sem.try_acquire_until(std::chrono::steady_clock::now() + 50ms));
+        EXPECT_FALSE(sem.try_acquire_until(chrono::steady_clock::now() + 50ms));
     });
     sem.release(10);
     c1.join();
@@ -344,9 +345,9 @@ TEST(sync, counting_semaphore_normal)
 
 TEST(sync, barrier)
 {
-    std::atomic<int> n = 0;
-    co_barrier       barrier(10);
-    std::vector<co>  cs;
+    atomic<int> n = 0;
+    co_barrier  barrier(10);
+    vector<co>  cs;
 
     for (int i = 0; i < 10; ++i)
     {
@@ -364,9 +365,9 @@ TEST(sync, barrier)
 
 TEST(sync, wait_group)
 {
-    std::atomic<int> n = 0;
-    co_wait_group    wg(10);
-    std::vector<co>  cs;
+    atomic<int>   n = 0;
+    co_wait_group wg(10);
+    vector<co>    cs;
 
     for (int i = 0; i < 10; ++i)
     {
@@ -385,9 +386,9 @@ TEST(sync, wait_group)
 
 TEST(sync, latch)
 {
-    std::atomic<int> n = 0;
-    co_latch         latch(10);
-    std::vector<co>  cs;
+    atomic<int> n = 0;
+    co_latch    latch(10);
+    vector<co>  cs;
 
     for (int i = 0; i < 10; ++i)
     {

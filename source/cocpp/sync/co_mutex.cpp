@@ -9,6 +9,8 @@
 #include <mutex>
 #include <stdexcept>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 void co_mutex::lock()
@@ -16,10 +18,10 @@ void co_mutex::lock()
     CoPreemptGuard();
     auto ctx = CoCurrentCtx();
 
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
 
     // Try to get the lock by spin
-    using namespace std::chrono_literals;
+    using namespace chrono_literals;
     if (co_timed_call(10ms, [this, ctx] {
             // At this time, nullPTR is preempted because it is not in the wait queue
             if (owner__ == nullptr)
@@ -70,7 +72,7 @@ bool co_mutex::try_lock()
 {
     CoPreemptGuard();
     auto             ctx = CoCurrentCtx();
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
     if (owner__ != nullptr)
     {
         return false;
@@ -83,11 +85,11 @@ void co_mutex::unlock()
 {
     CoPreemptGuard();
     auto             ctx = CoCurrentCtx();
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
     if (owner__ != ctx)
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__);
-        throw std::logic_error("ctx is not owner");
+        throw logic_error("ctx is not owner");
     }
 
     // Wait queue is empty, return with owner set to nullptr

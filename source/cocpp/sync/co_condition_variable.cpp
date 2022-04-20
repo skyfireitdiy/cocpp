@@ -3,6 +3,8 @@
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 void notify_all_at_co_exit(co_condition_variable& cond)
@@ -16,7 +18,7 @@ void notify_all_at_co_exit(co_condition_variable& cond)
 void co_condition_variable_impl::notify_all()
 {
     CoPreemptGuard();
-    std::scoped_lock lk(cv_lock__);
+    scoped_lock lk(cv_lock__);
     for (auto ctx : waiters__)
     {
         ctx->leave_wait_resource_state(this);
@@ -27,7 +29,7 @@ void co_condition_variable_impl::notify_all()
 void co_condition_variable_impl::notify_one()
 {
     CoPreemptGuard();
-    std::scoped_lock lk(cv_lock__);
+    scoped_lock lk(cv_lock__);
     if (waiters__.empty())
     {
         return;

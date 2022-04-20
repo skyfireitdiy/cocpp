@@ -24,12 +24,13 @@
 #include "cocpp/utils/co_any.h"
 
 using namespace cocpp;
-using namespace std::chrono_literals;
+using namespace std;
+using namespace chrono_literals;
 
 TEST(stl, vector)
 {
-    std::vector<int> v1;
-    std::vector<int> v2;
+    vector<int> v1;
+    vector<int> v2;
     co               c1([&] {
         for (auto i = 0; i < 10000; ++i)
         {

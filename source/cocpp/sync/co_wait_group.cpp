@@ -1,5 +1,7 @@
 #include "cocpp/sync/co_wait_group.h"
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 co_wait_group::co_wait_group(size_t count)
@@ -15,7 +17,7 @@ co_wait_group::~co_wait_group()
 
 void co_wait_group::done()
 {
-    std::scoped_lock lock(mutex__);
+    scoped_lock lock(mutex__);
     ++done__;
     assert(done__ <= count__);
     if (done__ == count__)
@@ -26,7 +28,7 @@ void co_wait_group::done()
 
 void co_wait_group::wait()
 {
-    std::unique_lock lock(mutex__);
+    unique_lock lock(mutex__);
     while (done__ < count__)
     {
         cond__.wait(lock);

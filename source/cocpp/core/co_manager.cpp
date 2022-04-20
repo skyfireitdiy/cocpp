@@ -13,18 +13,20 @@
 #include <future>
 #include <mutex>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 co_env* co_manager::get_best_env__()
 {
-    std::scoped_lock lck(env_set__.normal_lock);
+    scoped_lock lck(env_set__.normal_lock);
     if (env_set__.normal_set.empty())
     {
         return create_env(true);
     }
 
     co_env* best_env               = nullptr;
-    auto    min_workload           = std::numeric_limits<size_t>::max();
+    auto    min_workload           = numeric_limits<size_t>::max();
     size_t  can_schedule_env_count = 0;
     for (auto& env : env_set__.normal_set)
     {
@@ -90,7 +92,7 @@ co_env* co_manager::create_env(bool dont_auto_destory)
     {
         env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
     }
-    std::scoped_lock lck(env_set__.normal_lock);
+    scoped_lock lck(env_set__.normal_lock);
 
     env_set__.normal_set.insert(env);
 
@@ -104,13 +106,13 @@ void co_manager::set_env_shared_stack_size(size_t size)
 
 void co_manager::create_background_task__()
 {
-    background_task__.emplace_back(std::async(std::launch::async, [this]() {
+    background_task__.emplace_back(async(launch::async, [this]() {
         clean_env_routine__();
     }));
-    background_task__.emplace_back(std::async(std::launch::async, [this]() {
+    background_task__.emplace_back(async(launch::async, [this]() {
         monitor_routine__();
     }));
-    background_task__.emplace_back(std::async(std::launch::async, [this]() {
+    background_task__.emplace_back(async(launch::async, [this]() {
         timer_routine__();
     }));
 }
@@ -147,7 +149,7 @@ void co_manager::free_mem__()
     pass_tick_count = (pass_tick_count + 1) % TICKS_COUNT_OF_FREE_MEM;
     if (pass_tick_count == 0)
     {
-        std::scoped_lock lck(need_free_mem_cb_lock__);
+        scoped_lock lck(need_free_mem_cb_lock__);
         if (need_free_mem_cb__())
         {
             co_env_factory::instance()->free_obj_pool();
@@ -176,7 +178,7 @@ co_manager::co_manager()
 
 void co_manager::remove_env__(co_env* env)
 {
-    std::scoped_lock lock(env_set__.normal_lock);
+    scoped_lock lock(env_set__.normal_lock);
     env_set__.normal_set.erase(env);
     env_set__.expired_set.insert(env);
     env_set__.cv_expired_env.notify_one();
@@ -184,7 +186,7 @@ void co_manager::remove_env__(co_env* env)
 
 void co_manager::create_env_from_this_thread__()
 {
-    std::scoped_lock lck(env_set__.normal_lock);
+    scoped_lock lck(env_set__.normal_lock);
     current_env__ = co_env_factory::instance()->create_env_from_this_thread(default_shared_stack_size__);
     subscribe_env_event__(current_env__);
     env_set__.normal_set.insert(current_env__);
@@ -201,7 +203,7 @@ co_env* co_manager::current_env()
 
 void co_manager::set_clean_up__()
 {
-    std::scoped_lock lock(env_set__.normal_lock);
+    scoped_lock lock(env_set__.normal_lock);
     clean_up__       = true;
     auto backup_data = env_set__.normal_set;
     for (auto& env : backup_data)
@@ -220,7 +222,7 @@ void co_manager::set_clean_up__()
 
 void co_manager::clean_env_routine__()
 {
-    std::unique_lock lck(env_set__.normal_lock);
+    unique_lock lck(env_set__.normal_lock);
     while (!clean_up__ || !env_set__.normal_set.empty())
     {
         if (clean_up__)
@@ -270,7 +272,7 @@ void co_manager::set_max_schedule_thread_count(size_t max_thread_count)
 
 void co_manager::force_schedule__()
 {
-    std::scoped_lock lock(env_set__.normal_lock);
+    scoped_lock lock(env_set__.normal_lock);
     if (clean_up__)
     {
         return;
@@ -289,15 +291,15 @@ void co_manager::force_schedule__()
 
 void co_manager::redistribute_ctx__()
 {
-    std::scoped_lock lock(env_set__.normal_lock);
+    scoped_lock lock(env_set__.normal_lock);
     if (clean_up__)
     {
         return;
     }
 
-    std::list<co_ctx*> moved_ctx_list; // 需要被移动的ctx
+    list<co_ctx*> moved_ctx_list; // 需要被移动的ctx
 
-    auto merge_list = [](std::list<co_ctx*>& target, const std::list<co_ctx*>& src) {
+    auto merge_list = [](list<co_ctx*>& target, const list<co_ctx*>& src) {
         target.insert(target.end(), src.begin(), src.end());
     };
 
@@ -331,10 +333,10 @@ void co_manager::redistribute_ctx__()
 
 void co_manager::destroy_redundant_env__()
 {
-    std::scoped_lock lock(env_set__.normal_lock);
+    scoped_lock lock(env_set__.normal_lock);
     // 然后删除多余的处于idle状态的env
     size_t               can_schedule_env_count = 0;
-    std::vector<co_env*> idle_env_list;
+    vector<co_env*> idle_env_list;
     idle_env_list.reserve(env_set__.normal_set.size());
     for (auto& env : env_set__.normal_set)
     {
@@ -360,11 +362,11 @@ void co_manager::destroy_redundant_env__()
 
 void co_manager::monitor_routine__()
 {
-    std::unique_lock lck(env_set__.normal_lock);
+    unique_lock lck(env_set__.normal_lock);
     while (!clean_up__)
     {
         lck.unlock();
-        std::this_thread::sleep_for(timing_duration());
+        this_thread::sleep_for(timing_duration());
         timing_routine_timout().pub();
         lck.lock();
     }
@@ -372,7 +374,7 @@ void co_manager::monitor_routine__()
 
 void co_manager::timer_routine__()
 {
-    std::unique_lock lck(mu_timer_queue__);
+    unique_lock lck(mu_timer_queue__);
 
     while (!clean_up__)
     {
@@ -406,12 +408,12 @@ void co_manager::timer_routine__()
 }
 
 void co_manager::set_timer_tick_duration(
-    const std::chrono::steady_clock::duration& duration)
+    const chrono::steady_clock::duration& duration)
 {
-    std::scoped_lock lock(mu_timer_duration__);
-    if (duration < std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
+    scoped_lock lock(mu_timer_duration__);
+    if (duration < chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
     {
-        timer_duration__ = std::chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS);
+        timer_duration__ = chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS);
     }
     else
     {
@@ -419,9 +421,9 @@ void co_manager::set_timer_tick_duration(
     }
 }
 
-const std::chrono::steady_clock::duration& co_manager::timing_duration() const
+const chrono::steady_clock::duration& co_manager::timing_duration() const
 {
-    std::scoped_lock lock(mu_timer_duration__);
+    scoped_lock lock(mu_timer_duration__);
     return timer_duration__;
 }
 
@@ -447,7 +449,7 @@ void co_manager::wait_background_task__()
     }
 }
 
-co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, std::function<void(co_any&)> entry, bool lock_destroy)
+co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, function<void(co_any&)> entry, bool lock_destroy)
 {
     auto ctx = co_ctx_factory::instance()->create_ctx(config, entry);
     subscribe_ctx_event__(ctx);
@@ -467,16 +469,16 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, std::fu
     return ctx;
 }
 
-void co_manager::set_if_free_mem_callback(std::function<bool()> cb)
+void co_manager::set_if_free_mem_callback(function<bool()> cb)
 {
-    std::scoped_lock lck(need_free_mem_cb_lock__);
+    scoped_lock lck(need_free_mem_cb_lock__);
     need_free_mem_cb__ = cb;
 }
 
 void co_manager::steal_ctx_routine__()
 {
-    std::scoped_lock     lock(env_set__.normal_lock);
-    std::vector<co_env*> idle_env_list;
+    scoped_lock     lock(env_set__.normal_lock);
+    vector<co_env*> idle_env_list;
     idle_env_list.reserve(env_set__.normal_set.size());
     for (auto& env : env_set__.normal_set)
     {
@@ -525,16 +527,16 @@ void co_manager::steal_ctx_routine__()
     }
 }
 
-void co_manager::insert_timer_to_queue__(std::shared_ptr<co_timer> timer)
+void co_manager::insert_timer_to_queue__(shared_ptr<co_timer> timer)
 {
-    std::scoped_lock lock(mu_timer_queue__);
+    scoped_lock lock(mu_timer_queue__);
     timer_queue__.insert(timer);
     cv_timer_queue__.notify_one();
 }
 
-void co_manager::remove_timer_from_queue__(std::shared_ptr<co_timer> timer)
+void co_manager::remove_timer_from_queue__(shared_ptr<co_timer> timer)
 {
-    std::scoped_lock lock(mu_timer_queue__);
+    scoped_lock lock(mu_timer_queue__);
     timer_queue__.erase(timer);
     cv_timer_queue__.notify_one();
 }

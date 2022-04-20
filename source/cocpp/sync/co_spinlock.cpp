@@ -5,11 +5,13 @@
 #include <atomic>
 #include <thread>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 void co_spinlock::lock()
 {
-    while (locked__.test_and_set(std::memory_order::acquire))
+    while (locked__.test_and_set(memory_order::acquire))
     {
         CoYield();
     }
@@ -17,12 +19,12 @@ void co_spinlock::lock()
 
 bool co_spinlock::try_lock()
 {
-    return !locked__.test_and_set(std::memory_order::acquire);
+    return !locked__.test_and_set(memory_order::acquire);
 }
 
 void co_spinlock::unlock()
 {
-    locked__.clear(std::memory_order::release);
+    locked__.clear(memory_order::release);
 }
 
 CO_NAMESPACE_END

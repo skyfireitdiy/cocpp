@@ -1,9 +1,11 @@
 #include "cocpp/utils/co_defer.h"
 #include <functional>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
-co_defer::co_defer(std::function<void()> f)
+co_defer::co_defer(function<void()> f)
     : defer_func__(f)
 {
 }

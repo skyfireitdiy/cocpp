@@ -24,7 +24,8 @@
 #include "cocpp/utils/co_any.h"
 
 using namespace cocpp;
-using namespace std::chrono_literals;
+using namespace std;
+using namespace chrono_literals;
 
 TEST(chan, buffered_order)
 {
@@ -111,8 +112,8 @@ TEST(chan, no_buffered_iterator)
 {
     co_chan<int, 0> ch;
 
-    std::vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    std::vector<int> pop;
+    vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    vector<int> pop;
 
     co c1([&] {
         for (auto p : push)
@@ -133,8 +134,8 @@ TEST(chan, no_buffered_iterator)
 TEST(chan, buffered_empty_iterator)
 {
     co_chan<int, 10> ch;
-    std::vector<int> pop;
-    std::vector<int> push;
+    vector<int>      pop;
+    vector<int>      push;
 
     ch.close();
 
@@ -149,8 +150,8 @@ TEST(chan, no_buffered_operator_less)
 {
     co_chan<int, 0> ch;
 
-    std::vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    std::vector<int> pop;
+    vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    vector<int> pop;
 
     co c1([&] {
         for (auto p : push)
@@ -181,7 +182,7 @@ TEST(chan, no_buffered_operator_shift)
 {
     co_chan<int, 0> ch;
 
-    std::vector<int> pop;
+    vector<int> pop;
 
     co c1([&] {
         ch << 0 << 1 << 2 << 3 << 4;
