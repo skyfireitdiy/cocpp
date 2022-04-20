@@ -9,6 +9,8 @@
 #include <exception>
 #include <mutex>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 co_stack* co_ctx::stack() const
@@ -41,7 +43,7 @@ co_env* co_ctx::env() const
     return env__;
 }
 
-co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(co_any&)> entry)
+co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, function<void(co_any&)> entry)
     : stack__(stack)
     , config__(config)
     , entry__(entry)
@@ -49,7 +51,7 @@ co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(
     set_priority(config.priority);
 }
 
-std::function<void(co_any&)> co_ctx::entry() const
+function<void(co_any&)> co_ctx::entry() const
 {
     return entry__;
 }
@@ -62,7 +64,7 @@ void co_ctx::real_entry(co_ctx* ctx)
     }
     catch (...)
     {
-        ctx->exception__ = std::current_exception();
+        ctx->exception__ = current_exception();
     }
     CoPreemptGuard();
     // CO_DEBUG("ctx %s %p finished", ctx->config().name.c_str(), ctx);
@@ -76,7 +78,7 @@ void co_ctx::real_entry(co_ctx* ctx)
 
 size_t co_ctx::priority() const
 {
-    std::scoped_lock lock(priority_lock__);
+    scoped_lock lock(priority_lock__);
     return priority__;
 }
 
@@ -86,8 +88,8 @@ void co_ctx::set_priority(int priority)
     {
         return;
     }
-    std::unique_lock lock(priority_lock__);
-    int              old_priority = priority__;
+    unique_lock lock(priority_lock__);
+    int         old_priority = priority__;
     if (priority >= CO_MAX_PRIORITY)
     {
         priority = CO_MAX_PRIORITY - 1;
@@ -126,7 +128,7 @@ void co_ctx::check_and_rethrow_exception()
     {
         auto e      = exception__;
         exception__ = nullptr; // 仅第一次抛出异常
-        std::rethrow_exception(e);
+        rethrow_exception(e);
     }
 }
 
@@ -160,7 +162,7 @@ bool co_ctx::can_move() const
     return !(state() == co_state::running || state() == co_state::finished || test_flag(CO_CTX_FLAG_BIND) || test_flag(CO_CTX_FLAG_SHARED_STACK));
 }
 
-std::string co_ctx::name() const
+string co_ctx::name() const
 {
     return config().name;
 }
@@ -173,7 +175,7 @@ co_id co_ctx::id() const
 void co_ctx::enter_wait_resource_state(void* rc)
 {
     {
-        std::scoped_lock lock(wait_data__.mu);
+        scoped_lock lock(wait_data__.mu);
         wait_data__.resource.insert(rc);
         set_flag(CO_CTX_FLAG_WAITING);
     }
@@ -184,7 +186,7 @@ void co_ctx::enter_wait_resource_state(void* rc)
 void co_ctx::leave_wait_resource_state(void* rc)
 {
     {
-        std::scoped_lock lock(wait_data__.mu);
+        scoped_lock lock(wait_data__.mu);
         wait_data__.resource.erase(rc);
         if (wait_data__.resource.empty())
         {

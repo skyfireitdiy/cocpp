@@ -1,20 +1,22 @@
 #include "cocpp/sync/co_barrier.h"
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
-co_barrier::co_barrier(std::ptrdiff_t expected)
+co_barrier::co_barrier(ptrdiff_t expected)
     : expected__(expected)
     , count__(expected)
     , max__(expected)
 {
 }
 
-co_arrival_token co_barrier::arrive(std::ptrdiff_t n)
+co_arrival_token co_barrier::arrive(ptrdiff_t n)
 {
-    std::scoped_lock lock(mutex__);
+    scoped_lock lock(mutex__);
     if (expected__ - n < 0)
     {
-        throw std::logic_error("co_barrier::arrive: count < 0");
+        throw logic_error("co_barrier::arrive: count < 0");
     }
     expected__ -= n;
     return co_arrival_token {
@@ -26,14 +28,14 @@ co_arrival_token co_barrier::arrive(std::ptrdiff_t n)
 
 void co_barrier::wait(co_arrival_token&& arrival)
 {
-    std::unique_lock lock(mutex__);
+    unique_lock lock(mutex__);
     if (arrival.generation__ != generation__ || arrival.barrier__ != this)
     {
-        throw std::logic_error("co_barrier::wait: invalid token");
+        throw logic_error("co_barrier::wait: invalid token");
     }
     if (count__ - arrival.n__ < 0)
     {
-        throw std::logic_error("co_barrier::wait: count < 0");
+        throw logic_error("co_barrier::wait: count < 0");
     }
     count__ -= arrival.n__;
     if (count__ == 0)

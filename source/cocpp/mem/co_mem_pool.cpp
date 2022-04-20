@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <new>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 co_mem_pool::co_mem_pool(size_t min_zone, size_t zone_count, size_t max_cap)
@@ -19,9 +21,9 @@ co_mem_pool::co_mem_pool(size_t min_zone, size_t zone_count, size_t max_cap)
 
 unsigned long long co_mem_pool::align_2_zone_edge__(unsigned long long size)
 {
-    std::bitset<sizeof(size) * 8> bits(size);
-    int                           first_one = -1;
-    int                           last_one  = 0;
+    bitset<sizeof(size) * 8> bits(size);
+    int                      first_one = -1;
+    int                      last_one  = 0;
     for (size_t i = 0; i < sizeof(size) * 8; ++i)
     {
         if (bits.test(i))
@@ -57,13 +59,13 @@ co_byte* co_mem_pool::alloc_mem(size_t size)
     size_t zone_index = get_zone_index__(size);
     if (zone_index >= zone_count__)
     {
-        return reinterpret_cast<co_byte*>(std::aligned_alloc(sizeof(void*), align_size__(size)));
+        return reinterpret_cast<co_byte*>(aligned_alloc(sizeof(void*), align_size__(size)));
     }
 
-    std::scoped_lock lock(mu__);
+    scoped_lock lock(mu__);
     if (mem_pool__[zone_index].empty())
     {
-        return reinterpret_cast<co_byte*>(std::aligned_alloc(sizeof(void*), 1 << (zone_index + min_zone__)));
+        return reinterpret_cast<co_byte*>(aligned_alloc(sizeof(void*), 1 << (zone_index + min_zone__)));
     }
     auto ret = mem_pool__[zone_index].front();
     mem_pool__[zone_index].pop_front();
@@ -75,13 +77,13 @@ void co_mem_pool::free_mem(co_byte* ptr, size_t size)
     size_t zone_index = get_zone_index__(size);
     if (zone_index >= zone_count__)
     {
-        std::free(ptr);
+        free(ptr);
         return;
     }
-    std::scoped_lock lock(mu__);
+    scoped_lock lock(mu__);
     if (mem_pool__[zone_index].size() > max_cap__)
     {
-        std::free(ptr);
+        free(ptr);
     }
     else
     {
@@ -91,12 +93,12 @@ void co_mem_pool::free_mem(co_byte* ptr, size_t size)
 
 void co_mem_pool::free_pool()
 {
-    std::scoped_lock lock(mu__);
+    scoped_lock lock(mu__);
     for (auto& zone : mem_pool__)
     {
         for (auto& mem : zone)
         {
-            std::free(mem);
+            free(mem);
         }
         zone.clear();
     }

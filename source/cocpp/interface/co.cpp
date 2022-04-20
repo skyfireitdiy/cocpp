@@ -4,6 +4,8 @@
 #include <cassert>
 #include <thread>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 void co::detach()
@@ -17,7 +19,7 @@ void co::detach()
     ctx->unlock_destroy();
 }
 
-std::string co::name() const
+string co::name() const
 {
     if (ctx__ == nullptr)
     {
@@ -38,14 +40,14 @@ co_id co::id() const
 
 void co::join()
 {
-    std::exception_ptr e;
+    exception_ptr e;
     try
     {
         wait<void>();
     }
     catch (...)
     {
-        e = std::current_exception();
+        e = current_exception();
     }
     if (ctx__ != nullptr)
     {
@@ -55,7 +57,7 @@ void co::join()
     }
     if (e)
     {
-        std::rethrow_exception(e);
+        rethrow_exception(e);
     }
 }
 
@@ -89,7 +91,7 @@ co_id id()
     return reinterpret_cast<co_id>(co::current_env()->current_ctx());
 }
 
-std::string name()
+string name()
 {
     return co::current_env()->current_ctx()->config().name;
 }

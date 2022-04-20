@@ -1,11 +1,13 @@
 #include "cocpp/utils/co_utils.h"
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
-bool co_timed_call(std::chrono::steady_clock::duration timeout, std::function<bool()> func)
+bool co_timed_call(chrono::steady_clock::duration timeout, function<bool()> func)
 {
-    auto deadline = std::chrono::steady_clock::now() + timeout;
-    while (std::chrono::steady_clock::now() < deadline)
+    auto deadline = chrono::steady_clock::now() + timeout;
+    while (chrono::steady_clock::now() < deadline)
     {
         if (func())
         {

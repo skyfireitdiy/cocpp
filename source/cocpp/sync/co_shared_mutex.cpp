@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cassert>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 void co_shared_mutex::lock()
@@ -14,7 +16,7 @@ void co_shared_mutex::lock()
     CoPreemptGuard();
     auto ctx = CoCurrentCtx();
 
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
 
     if (owners__.empty())
     {
@@ -23,7 +25,7 @@ void co_shared_mutex::lock()
         return;
     }
 
-    using namespace std::chrono_literals;
+    using namespace chrono_literals;
     if (co_timed_call(10ms, [this, ctx] {
             if (owners__.empty())
             {
@@ -68,7 +70,7 @@ bool co_shared_mutex::try_lock()
 {
     CoPreemptGuard();
     auto             ctx = CoCurrentCtx();
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
     while (!owners__.empty())
     {
         return false;
@@ -83,12 +85,12 @@ void co_shared_mutex::unlock()
     CoPreemptGuard();
     auto ctx = CoCurrentCtx();
 
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
 
     if (lock_type__ != lock_type::unique || !owners__.contains(ctx))
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-        throw std::logic_error("ctx is not owner");
+        throw logic_error("ctx is not owner");
     }
     owners__.erase(ctx);
     wake_up_waiters__();
@@ -99,7 +101,7 @@ void co_shared_mutex::lock_shared()
     CoPreemptGuard();
     auto ctx = CoCurrentCtx();
 
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
 
     if (lock_type__ == lock_type::shared || lock_type__ == lock_type::unlocked)
     {
@@ -108,7 +110,7 @@ void co_shared_mutex::lock_shared()
         return;
     }
 
-    using namespace std::chrono_literals;
+    using namespace chrono_literals;
     if (co_timed_call(10ms, [this, ctx] {
             if (lock_type__ == lock_type::shared || lock_type__ == lock_type::unlocked)
             {
@@ -153,7 +155,7 @@ bool co_shared_mutex::try_lock_shared()
 {
     CoPreemptGuard();
     auto             ctx = CoCurrentCtx();
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
     if (lock_type__ != lock_type::shared && lock_type__ != lock_type::unlocked)
     {
         return false;
@@ -167,12 +169,12 @@ void co_shared_mutex::unlock_shared()
 {
     CoPreemptGuard();
     auto             ctx = CoCurrentCtx();
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
 
     if (lock_type__ != lock_type::shared || !owners__.contains(ctx))
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p", ctx);
-        throw std::logic_error("ctx is not owner");
+        throw logic_error("ctx is not owner");
     }
 
     owners__.erase(ctx);
@@ -203,11 +205,11 @@ void co_shared_mutex::wake_up_waiters__()
         return;
     }
 
-    auto iter   = std::remove_if(wait_deque__.begin(), wait_deque__.end(), [](auto& c) {
+    auto iter   = remove_if(wait_deque__.begin(), wait_deque__.end(), [](auto& c) {
         return c.type == lock_type::shared;
       });
     lock_type__ = lock_type::shared;
-    std::transform(iter, wait_deque__.end(), std::inserter(owners__, owners__.begin()), [this](auto& context) {
+    transform(iter, wait_deque__.end(), inserter(owners__, owners__.begin()), [this](auto& context) {
         context.ctx->leave_wait_resource_state(this);
         return context.ctx;
     });

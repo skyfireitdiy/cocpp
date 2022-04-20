@@ -6,13 +6,15 @@
 
 #include <cassert>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 void co_recursive_mutex::lock()
 {
     CoPreemptGuard();
     auto             ctx = CoCurrentCtx();
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
 
     if (owner__ == nullptr || owner__ == ctx)
     {
@@ -21,7 +23,7 @@ void co_recursive_mutex::lock()
         return;
     }
 
-    using namespace std::chrono_literals;
+    using namespace chrono_literals;
     if (co_timed_call(10ms, [this, ctx] {
             if (owner__ == nullptr)
             {
@@ -63,7 +65,7 @@ bool co_recursive_mutex::try_lock()
 {
     CoPreemptGuard();
     auto             ctx = CoCurrentCtx();
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
     if (owner__ != ctx && owner__ != nullptr)
     {
         return false;
@@ -77,11 +79,11 @@ void co_recursive_mutex::unlock()
 {
     CoPreemptGuard();
     auto             ctx = CoCurrentCtx();
-    std::scoped_lock lock(spinlock__);
+    scoped_lock lock(spinlock__);
     if (owner__ != ctx)
     {
         CO_O_ERROR("ctx is not owner, this ctx is %p, owner is %p", ctx, owner__);
-        throw std::logic_error("ctx is not owner");
+        throw logic_error("ctx is not owner");
     }
 
     --lock_count__;

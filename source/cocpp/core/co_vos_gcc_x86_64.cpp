@@ -8,7 +8,6 @@
 #include "cocpp/exception/co_backtrace.h"
 #include "cocpp/utils/co_defer.h"
 
-#include <mutex>
 #include <signal.h>
 #include <sys/syscall.h>
 #include <unistd.h>

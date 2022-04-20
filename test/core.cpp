@@ -23,8 +23,10 @@
 #include "cocpp/sync/co_timed_mutex.h"
 #include "cocpp/utils/co_any.h"
 
+
 using namespace cocpp;
-using namespace std::chrono_literals;
+using namespace std;
+using namespace chrono_literals;
 
 TEST(core, name)
 {
@@ -51,7 +53,7 @@ TEST(core, id)
 
 TEST(core, thread_convert)
 {
-    std::thread th([]() {
+    thread th([]() {
         printf("new thread: %u\n", gettid());
         co::schedule_in_this_thread();
     });
@@ -79,7 +81,7 @@ TEST(core, detach)
 TEST(core, ref)
 {
     int t = 20;
-    co  c1([](int& n) { n += 10; }, std::ref(t));
+    co  c1([](int& n) { n += 10; }, ref(t));
     c1.join();
     EXPECT_EQ(t, 30);
 }
@@ -166,13 +168,13 @@ TEST(core, co_shared_stack)
 TEST(core, co_local)
 {
     co c1([]() {
-        CoLocal(name, std::string) = "hello";
-        auto& value                = CoLocal(name, std::string);
+        CoLocal(name, string) = "hello";
+        auto& value                = CoLocal(name, string);
         EXPECT_EQ(value, "hello");
     });
 
     c1.join();
-    auto& value = CoLocal(name, std::string);
+    auto& value = CoLocal(name, string);
     EXPECT_EQ(value, "");
 }
 

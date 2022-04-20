@@ -22,6 +22,8 @@
 #include <ranges>
 #include <stdexcept>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 thread_local co_env* current_env__ = nullptr;
@@ -57,14 +59,14 @@ void co_env::add_ctx(co_ctx* ctx)
     assert(ctx != nullptr);
     if (state() == co_env_state::created || state() == co_env_state::destorying)
     {
-        throw std::runtime_error("env state error");
+        throw runtime_error("env state error");
     }
 
     auto is_shared_stack = ctx->test_flag(CO_CTX_FLAG_SHARED_STACK);
 
     if (is_shared_stack)
     {
-        std::call_once(shared_stack_once_flag__, [this] { create_shared_stack__(); });
+        call_once(shared_stack_once_flag__, [this] { create_shared_stack__(); });
     }
 
     init_ctx(is_shared_stack ? shared_stack__ : ctx->stack(), ctx); // 初始化ctx
@@ -80,7 +82,7 @@ void co_env::move_ctx_to_here(co_ctx* ctx)
     ctx->set_env(this);
 
     {
-        std::scoped_lock lock(mu_normal_ctx__);
+        scoped_lock lock(mu_normal_ctx__);
         all_normal_ctx__[ctx->priority()].push_back(ctx);
         ++ctx_count__;
     }
@@ -91,14 +93,14 @@ void co_env::move_ctx_to_here(co_ctx* ctx)
     wake_up();
 }
 
-std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::nanoseconds& timeout)
+optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const chrono::nanoseconds& timeout)
 {
     // Priority inversion prevents high priorities from being kept waiting and low priorities from being executed
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());
     CoDefer(current_ctx()->set_priority(old_priority));
 
-    std::optional<co_return_value> ret;
+    optional<co_return_value> ret;
 
     ctx->lock_finished_state();
     lock_schedule();
@@ -107,7 +109,7 @@ std::optional<co_return_value> co_env::wait_ctx(co_ctx* ctx, const std::chrono::
     {
         auto timer = co_timer::create(
             nullptr,
-            co_expire_type::once, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+            co_expire_type::once, chrono::duration_cast<chrono::milliseconds>(timeout).count());
         auto timer_id = timer.get();
         curr_ctx->enter_wait_resource_state(timer_id);
         auto handle = ctx->finished().sub([curr_ctx, timer, timer_id] {
@@ -174,13 +176,13 @@ co_return_value co_env::wait_ctx(co_ctx* ctx)
 
 size_t co_env::workload() const
 {
-    std::scoped_lock lock(mu_normal_ctx__);
+    scoped_lock lock(mu_normal_ctx__);
     return ctx_count__;
 }
 
 size_t co_env::ctx_count() const
 {
-    std::scoped_lock lock(mu_normal_ctx__);
+    scoped_lock lock(mu_normal_ctx__);
     return ctx_count__;
 }
 
@@ -189,9 +191,9 @@ void co_env::remove_detached_ctx__()
     auto curr    = current_ctx();
     auto all_ctx = all_ctx__();
 
-    std::ranges::for_each(
+    ranges::for_each(
         all_ctx
-            | std::views::filter([curr](co_ctx* ctx) { return ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr; }),
+            | views::filter([curr](co_ctx* ctx) { return ctx->state() == co_state::finished && ctx->can_destroy() && ctx != curr; }),
         [this](co_ctx* ctx) {
             remove_ctx(ctx);
         });
@@ -310,7 +312,7 @@ void co_env::schedule_switch()
 void co_env::remove_ctx(co_ctx* ctx)
 {
     {
-        std::scoped_lock lock(mu_normal_ctx__);
+        scoped_lock lock(mu_normal_ctx__);
         // 此处不能断言 curr__ != ctx，因为在最后清理所有的ctx的时候，可以删除当前ctx
         all_normal_ctx__[ctx->priority()].remove(ctx);
         --ctx_count__;
@@ -337,7 +339,7 @@ void co_env::stop_schedule()
 
 void co_env::start_schedule()
 {
-    worker__ = std::async(std::launch::async, [this]() {
+    worker__ = async(launch::async, [this]() {
         current_env__ = this;
         start_schedule_routine__();
     });
@@ -370,7 +372,7 @@ void co_env::start_schedule_routine__()
     reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
     {
-        std::scoped_lock lock(schedule_lock__);
+        scoped_lock lock(schedule_lock__);
         while (state() != co_env_state::destorying)
         {
             unlock_schedule();
@@ -400,14 +402,14 @@ void co_env::schedule_in_this_thread()
 {
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
-        throw std::runtime_error("schedule_in_this_thread: already started");
+        throw runtime_error("schedule_in_this_thread: already started");
     }
     start_schedule_routine__();
 }
 
 void co_env::remove_all_ctx__()
 {
-    std::ranges::for_each(all_ctx__(), [this](auto& ctx) {
+    ranges::for_each(all_ctx__(), [this](auto& ctx) {
         remove_ctx(ctx);
     });
 }
@@ -467,9 +469,9 @@ bool co_env::can_schedule_ctx() const
 
 void co_env::handle_priority_changed(int old, co_ctx* ctx)
 {
-    std::scoped_lock lock(mu_normal_ctx__);
+    scoped_lock lock(mu_normal_ctx__);
 
-    auto target = std::ranges::find_if(all_normal_ctx__[old], [ctx](auto& iter) {
+    auto target = ranges::find_if(all_normal_ctx__[old], [ctx](auto& iter) {
         return iter == ctx;
     });
 
@@ -480,14 +482,14 @@ void co_env::handle_priority_changed(int old, co_ctx* ctx)
 
 bool co_env::can_schedule__() const
 {
-    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
+    scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
 
-    return std::ranges::any_of(std::views::iota(min_priority__, all_normal_ctx__.size()),
-                               [this](const auto& i) -> bool {
-                                   return std::ranges::any_of(all_normal_ctx__[i], [](auto& ctx) -> bool {
-                                       return ctx->can_schedule();
-                                   });
-                               });
+    return ranges::any_of(views::iota(min_priority__, all_normal_ctx__.size()),
+                          [this](const auto& i) -> bool {
+                              return ranges::any_of(all_normal_ctx__[i], [](auto& ctx) -> bool {
+                                  return ctx->can_schedule();
+                              });
+                          });
 }
 
 bool co_env::is_blocked() const
@@ -505,7 +507,7 @@ bool co_env::need_sleep__()
 
 co_ctx* co_env::choose_ctx_from_normal_list__()
 {
-    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
+    scoped_lock lock(mu_normal_ctx__, mu_min_priority__);
 
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
@@ -526,11 +528,11 @@ co_ctx* co_env::choose_ctx_from_normal_list__()
     return nullptr;
 }
 
-std::list<co_ctx*> co_env::all_ctx__()
+list<co_ctx*> co_env::all_ctx__()
 {
     CoPreemptGuard();
-    std::scoped_lock lock(mu_normal_ctx__);
-    auto             ret = all_normal_ctx__ | std::views::join;
+    scoped_lock lock(mu_normal_ctx__);
+    auto        ret = all_normal_ctx__ | views::join;
     return { ret.begin(), ret.end() };
 }
 
@@ -551,10 +553,10 @@ void co_env::ctx_enter_wait_state(co_ctx* ctx)
     }
 }
 
-std::list<co_ctx*> co_env::take_all_movable_ctx()
+list<co_ctx*> co_env::take_all_movable_ctx()
 {
-    std::scoped_lock   lock(mu_normal_ctx__, mu_min_priority__, schedule_lock__);
-    std::list<co_ctx*> ret;
+    scoped_lock   lock(mu_normal_ctx__, mu_min_priority__, schedule_lock__);
+    list<co_ctx*> ret;
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         auto backup = all_normal_ctx__[i];
@@ -573,7 +575,7 @@ std::list<co_ctx*> co_env::take_all_movable_ctx()
 
 co_ctx* co_env::take_one_movable_ctx()
 {
-    std::scoped_lock lock(mu_normal_ctx__, mu_min_priority__, schedule_lock__);
+    scoped_lock lock(mu_normal_ctx__, mu_min_priority__, schedule_lock__);
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         auto backup = all_normal_ctx__[i];
@@ -592,7 +594,7 @@ co_ctx* co_env::take_one_movable_ctx()
 
 void co_env::update_min_priority__(size_t priority)
 {
-    std::scoped_lock lock(mu_min_priority__);
+    scoped_lock lock(mu_min_priority__);
     if (priority < min_priority__)
     {
         min_priority__ = priority;
@@ -601,7 +603,7 @@ void co_env::update_min_priority__(size_t priority)
 
 bool co_env::has_ctx() const
 {
-    std::scoped_lock lock(mu_normal_ctx__);
+    scoped_lock lock(mu_normal_ctx__);
     return ctx_count__ > 0;
 }
 
@@ -622,7 +624,7 @@ bool co_env::try_lock_schedule()
 
 void co_env::set_state(const co_env_state& state)
 {
-    std::scoped_lock lock(schedule_lock__);
+    scoped_lock lock(schedule_lock__);
     state_manager__.set_state(state);
 }
 
@@ -639,24 +641,24 @@ bool co_env::exclusive() const
 void co_env::wake_up()
 {
     CoPreemptGuard();
-    std::scoped_lock lock(schedule_lock__);
+    scoped_lock lock(schedule_lock__);
     cv_sleep__.notify_one();
 }
 
 void co_env::sleep_if_need__()
 {
     CoPreemptGuard();
-    std::unique_lock lock(schedule_lock__);
+    unique_lock lock(schedule_lock__);
     while (need_sleep__())
     {
         cv_sleep__.wait(lock);
     }
 }
 
-void co_env::sleep_if_need__(std::function<bool()> checker)
+void co_env::sleep_if_need__(function<bool()> checker)
 {
     CoPreemptGuard();
-    std::unique_lock lock(schedule_lock__);
+    unique_lock lock(schedule_lock__);
     while (checker())
     {
         cv_sleep__.wait(lock);
@@ -677,12 +679,12 @@ void co_recursive_mutex_with_count::lock()
 {
     ++count__;
     assert(count__ > 0);
-    std::recursive_mutex::lock();
+    recursive_mutex::lock();
 }
 
 void co_recursive_mutex_with_count::unlock()
 {
-    std::recursive_mutex::unlock();
+    recursive_mutex::unlock();
     --count__;
     assert(count__ >= 0);
 }
@@ -690,7 +692,7 @@ void co_recursive_mutex_with_count::unlock()
 bool co_recursive_mutex_with_count::try_lock()
 {
     ++count__;
-    if (std::recursive_mutex::try_lock())
+    if (recursive_mutex::try_lock())
     {
         assert(count__ > 0);
         return true;

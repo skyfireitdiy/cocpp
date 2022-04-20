@@ -5,6 +5,8 @@
 #include <cassert>
 #include <utility>
 
+using namespace std;
+
 CO_NAMESPACE_BEGIN
 
 co_env* co_env_factory::create_env(size_t stack_size)
