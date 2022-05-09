@@ -186,24 +186,6 @@ TEST(core, zone_edge)
     EXPECT_EQ(co_mem_pool::align_2_zone_edge__(4), 2ULL);
 }
 
-TEST(core, normal_then)
-{
-    int  p = 100;
-    auto c = co([](int a, int b) { return a + b; }, 10, 20)
-                 .then<int, int>([](int a) { return a - 40; })
-                 .then<int, int*>([&p](int a) -> int* { p -= a; return &p; });
-    *c.wait<int*>() += 200;
-    EXPECT_EQ(p, 310);
-}
-
-TEST(core, void_then)
-{
-    auto c = co([] { printf("hello world %lld\n", this_co::id()); })
-                 .then<void>([] { printf("hahaha %lld\n", this_co::id()); })
-                 .then<int>([] { return 5; });
-    EXPECT_EQ(c.wait<int>(), 5);
-}
-
 TEST(core, exception)
 {
     auto c = co([] { throw 1; });

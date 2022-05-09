@@ -74,11 +74,6 @@ public:
     void                           detach();
     void                           join();
 
-    template <CoIsNotVoid Args, typename Result>
-    co then(std::function<Result(Args)> f) const;
-    template <typename Result>
-    co then(std::function<Result()> f) const;
-
     co(co&& other) noexcept;
     co& operator=(co&& other) noexcept;
 
@@ -159,29 +154,6 @@ template <typename Rep, typename Period>
 std::optional<co_return_value> co::wait_for(const std::chrono::duration<Rep, Period>& wait_duration) const
 {
     return CoCurrentEnv()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
-}
-
-template <CoIsNotVoid Args, typename Result>
-co co::then(std::function<Result(Args)> f) const
-{
-    auto ctx = ctx__;
-    ctx__    = nullptr;
-    return co([ctx, f]() -> Result {
-        CoDefer(ctx->unlock_destroy());
-        return f(CoCurrentEnv()->wait_ctx(ctx));
-    });
-}
-
-template <typename Result>
-co co::then(std::function<Result()> f) const
-{
-    auto ctx = ctx__;
-    ctx__    = nullptr;
-    return co([ctx, f]() -> Result {
-        CoDefer(ctx->unlock_destroy());
-        CoCurrentEnv()->wait_ctx(ctx);
-        return f();
-    });
 }
 
 template <class Rep, class Period>
