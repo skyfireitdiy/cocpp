@@ -33,7 +33,7 @@ public:
         ValueType& operator*();
         ValueType* operator->();
         bool       operator==(const iterator& other);
-        bool       operator!=(const iterator& other);
+        // bool       operator!=(const iterator& other);
     };
 
     iterator begin();
@@ -215,11 +215,11 @@ bool co_chan<ValueType, MaxSize>::iterator::operator==(const iterator& other)
     return false;
 }
 
-template <typename ValueType, int MaxSize>
-bool co_chan<ValueType, MaxSize>::iterator::operator!=(const iterator& other)
-{
-    return !(*this == other);
-}
+// template <typename ValueType, int MaxSize>
+// bool co_chan<ValueType, MaxSize>::iterator::operator!=(const iterator& other)
+// {
+//     return !(*this == other);
+// }
 
 template <typename ValueType, int MaxSize>
 typename co_chan<ValueType, MaxSize>::iterator co_chan<ValueType, MaxSize>::begin()
