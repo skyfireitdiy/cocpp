@@ -202,9 +202,9 @@ TEST(core, pipeline)
                    }
                    return std::nullopt;
                })
-               | std::function<int(const int&)>([](int n) -> int {
-                     return n * 2;
-                 }))
+                   | [](int n) -> int {
+                  return n * 2;
+              })
                   .chan();
     for (auto p : ch)
     {

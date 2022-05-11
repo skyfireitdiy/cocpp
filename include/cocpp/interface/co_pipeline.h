@@ -1,6 +1,7 @@
 #include "cocpp/comm/co_chan.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/utils/co_noncopyable.h"
+#include <type_traits>
 
 CO_NAMESPACE_BEGIN
 
@@ -14,8 +15,10 @@ private:
 public:
     co_pipeline(std::function<std::optional<ItemType>()> init_func);
 
-    template <typename RetType>
-    co_pipeline<RetType, ChanSize> operator|(std::function<RetType(const ItemType&)> func);
+    template <typename FuncType>
+    // requires std::common_with<FuncType, std::function<RetType(const ItemType&)>>
+    co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>
+    operator|(FuncType func);
 
     co_chan<ItemType, ChanSize> chan();
 };
@@ -41,10 +44,12 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(std::function<std::optional<ItemTyp
 }
 
 template <typename ItemType, int ChanSize>
-template <typename RetType>
-co_pipeline<RetType, ChanSize> co_pipeline<ItemType, ChanSize>::operator|(std::function<RetType(const ItemType&)> func)
+template <typename FuncType>
+// requires std::common_with<FuncType, std::function<RetType(const ItemType&)>>
+co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>
+co_pipeline<ItemType, ChanSize>::operator|(FuncType func)
 {
-    return co_pipeline<RetType, ChanSize>([ch = channel__, func]() mutable -> std::optional<RetType> {
+    return co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>([ch = channel__, func]() mutable -> std::optional<std::invoke_result_t<FuncType, ItemType>> {
         auto item = ch.pop();
         if (!item)
         {
