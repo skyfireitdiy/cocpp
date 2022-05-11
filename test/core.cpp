@@ -11,6 +11,7 @@
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/interface/co.h"
+#include "cocpp/interface/co_pipeline.h"
 #include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/sync/co_binary_semaphore.h"
 #include "cocpp/sync/co_call_once.h"
@@ -188,4 +189,25 @@ TEST(core, exception)
 {
     auto c = co([] { throw 1; });
     EXPECT_THROW(c.wait<int>(), int);
+}
+
+int nnnn = 0;
+
+TEST(core, pipeline)
+{
+    auto ch = (co_pipeline<int, 1>([]() -> std::optional<int> {
+                   if (nnnn < 5)
+                   {
+                       return nnnn++;
+                   }
+                   return std::nullopt;
+               })
+               | std::function<int(const int&)>([](int n) -> int {
+                     return n * 2;
+                 }))
+                  .chan();
+    for (auto p : ch)
+    {
+        fprintf(stderr, "pipeline : %d\n", p);
+    }
 }
