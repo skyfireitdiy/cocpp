@@ -19,12 +19,24 @@ struct to_t
 {
 };
 
-template <typename T>
+template <typename F>
 struct filter_t
 {
-    std::function<bool(T)> filter;
-    filter_t(std::function<bool(T)> f)
+    F filter;
+    filter_t(F f)
         : filter(f)
+    {
+    }
+};
+
+template <typename ItemType, typename ResultType>
+struct reduce_t
+{
+    std::function<ResultType(const ResultType&, const ItemType&)> reducer__;
+    ResultType                                                    init__;
+    reduce_t(std::function<ResultType(const ResultType&, const ItemType&)> r, ResultType init)
+        : reducer__(r)
+        , init__(init)
     {
     }
 };
@@ -41,10 +53,16 @@ constexpr to_t<T> to()
     return to_t<T> {};
 }
 
-template <typename T>
-filter_t<T> filter(std::function<bool(T)> f)
+template <typename F>
+filter_t<F> filter(F f)
 {
-    return filter_t<T>(std::function<bool(T)>(f));
+    return filter_t<F>(f);
+}
+
+template <typename ItemType, typename ResultType>
+reduce_t<ItemType, ResultType> reduce(std::function<ResultType(const ResultType&, const ItemType&)> r, ResultType init)
+{
+    return reduce_t<ItemType, ResultType>(std::function<ResultType(const ResultType&, const ItemType&)>(r), init);
 }
 
 }
@@ -73,7 +91,11 @@ private:
     std::shared_ptr<co>         co__;
     co_chan<ItemType, ChanSize> channel__;
 
-    co_pipeline(co_chan<ItemType, ChanSize> ch, std::function<bool(const ItemType&)> filter);
+    template <typename F>
+    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<F>& filter);
+
+    template <typename SrcType>
+    co_pipeline(co_chan<SrcType, ChanSize> ch, const pipeline::reduce_t<SrcType, ItemType>& reducer);
 
 public:
     template <typename FuncType>
@@ -98,8 +120,13 @@ public:
         CollectionType
         operator|(const pipeline::to_t<CollectionType>&);
 
+    template <typename F>
     co_pipeline<ItemType, ChanSize>
-    operator|(const pipeline::filter_t<ItemType>&);
+    operator|(const pipeline::filter_t<F>&);
+
+    template <typename ResultType>
+    co_pipeline<ResultType, ChanSize>
+    operator|(const pipeline::reduce_t<ItemType, ResultType>&);
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -197,12 +224,13 @@ co_chan<ItemType, ChanSize> co_pipeline<ItemType, ChanSize>::operator|(const pip
 }
 
 template <typename ItemType, int ChanSize>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, std::function<bool(const ItemType&)> filter)
+template <typename F>
+co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<F>& filter)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, filter]() mutable {
         for (const auto& item : ch)
         {
-            if (filter(item))
+            if (filter.filter(item))
             {
                 this_ch.push(item);
             }
@@ -214,10 +242,35 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, std
 }
 
 template <typename ItemType, int ChanSize>
+template <typename F>
 co_pipeline<ItemType, ChanSize>
-co_pipeline<ItemType, ChanSize>::operator|(const pipeline::filter_t<ItemType>& filter)
+co_pipeline<ItemType, ChanSize>::operator|(const pipeline::filter_t<F>& filter)
 {
-    return co_pipeline<ItemType, ChanSize>(channel__, filter.filter);
+    return co_pipeline<ItemType, ChanSize>(channel__, filter);
+}
+
+template <typename ItemType, int ChanSize>
+template <typename ResultType>
+co_pipeline<ResultType, ChanSize>
+co_pipeline<ItemType, ChanSize>::operator|(const pipeline::reduce_t<ItemType, ResultType>& reducer)
+{
+    return co_pipeline<ResultType, ChanSize>(channel__, reducer);
+}
+
+template <typename ItemType, int ChanSize>
+template <typename SrcType>
+co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<SrcType, ChanSize> ch, const pipeline::reduce_t<SrcType, ItemType>& reducer)
+{
+    co__ = std::make_shared<co>([this_ch = channel__, ch, reducer]() mutable {
+        auto result = reducer.init__;
+        for (const auto& item : ch)
+        {
+            result = reducer.reducer__(result, item);
+        }
+        this_ch.push(result);
+        this_ch.close();
+    });
+    co__->detach();
 }
 
 CO_NAMESPACE_END

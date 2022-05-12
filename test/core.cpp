@@ -205,7 +205,7 @@ TEST(core, pipeline)
                    | [](int n) -> int {
                   return n * 2;
               })
-              | pipeline::filter<int>([](int n) { return n % 3 == 0; })
+              | pipeline::filter([](int n) { return n % 3 == 0; })
               | pipeline::chan();
     for (auto p : ch)
     {
