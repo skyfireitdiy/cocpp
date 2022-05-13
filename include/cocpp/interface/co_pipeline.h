@@ -22,23 +22,28 @@ struct to_t
 template <typename FilterType>
 struct filter_t
 {
-    FilterType filter;
+    FilterType filter__;
     filter_t(FilterType f)
-        : filter(f)
+        : filter__(f)
     {
     }
 };
 
-template <typename ItemType, typename ResultType>
+template <typename ReduceType, typename InitType>
 struct reduce_t
 {
-    std::function<ResultType(const ResultType&, const ItemType&)> reducer__;
-    ResultType                                                    init__;
-    reduce_t(std::function<ResultType(const ResultType&, const ItemType&)> r, ResultType init)
-        : reducer__(r)
+    ReduceType reducer__;
+    InitType   init__;
+    reduce_t(ReduceType reducer, InitType init)
+        : reducer__(reducer)
         , init__(init)
     {
     }
+};
+
+template <int Size>
+struct pipe_t
+{
 };
 
 constexpr chan_t
@@ -59,11 +64,14 @@ filter_t<FilterType> filter(FilterType f)
     return filter_t<FilterType>(f);
 }
 
-template <typename ItemType, typename ResultType>
-reduce_t<ItemType, ResultType> reduce(std::function<ResultType(const ResultType&, const ItemType&)> r, ResultType init)
+template <typename ReduceType, typename InitType>
+reduce_t<ReduceType, InitType> reduce(ReduceType reducer, InitType init)
 {
-    return reduce_t<ItemType, ResultType>(std::function<ResultType(const ResultType&, const ItemType&)>(r), init);
+    return reduce_t<ReduceType, InitType>(reducer, init);
 }
+
+template <int Size>
+constexpr pipe_t<Size> pipe() { return pipe_t<Size> {}; }
 
 }
 
@@ -94,8 +102,8 @@ private:
     template <typename FilterType>
     co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<FilterType>& filter);
 
-    template <typename SrcType>
-    co_pipeline(co_chan<SrcType, ChanSize> ch, const pipeline::reduce_t<SrcType, ItemType>& reducer);
+    template <typename ReduceType, typename InitType>
+    co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer);
 
 public:
     template <typename FuncType>
@@ -124,10 +132,16 @@ public:
     co_pipeline<ItemType, ChanSize>
     operator|(const pipeline::filter_t<FilterType>&);
 
-    template <typename ResultType>
-    co_pipeline<ResultType, ChanSize>
-    operator|(const pipeline::reduce_t<ItemType, ResultType>&);
+    template <typename ReduceType, typename InitType>
+    co_pipeline<InitType, ChanSize>
+    operator|(const pipeline::reduce_t<ReduceType, InitType>&);
 };
+
+template <typename CollectionType, int Size>
+co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size> operator|(const CollectionType& c, const pipeline::pipe_t<Size>& p)
+{
+    return co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size>(c);
+}
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -230,7 +244,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
     co__ = std::make_shared<co>([this_ch = channel__, ch, filter]() mutable {
         for (const auto& item : ch)
         {
-            if (filter.filter(item))
+            if (filter.filter__(item))
             {
                 this_ch.push(item);
             }
@@ -250,16 +264,16 @@ co_pipeline<ItemType, ChanSize>::operator|(const pipeline::filter_t<FilterType>&
 }
 
 template <typename ItemType, int ChanSize>
-template <typename ResultType>
-co_pipeline<ResultType, ChanSize>
-co_pipeline<ItemType, ChanSize>::operator|(const pipeline::reduce_t<ItemType, ResultType>& reducer)
+template <typename ReduceType, typename InitType>
+co_pipeline<InitType, ChanSize>
+co_pipeline<ItemType, ChanSize>::operator|(const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
-    return co_pipeline<ResultType, ChanSize>(channel__, reducer);
+    return co_pipeline<InitType, ChanSize>(channel__, reducer);
 }
 
 template <typename ItemType, int ChanSize>
-template <typename SrcType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<SrcType, ChanSize> ch, const pipeline::reduce_t<SrcType, ItemType>& reducer)
+template <typename ReduceType, typename InitType>
+co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, reducer]() mutable {
         auto result = reducer.init__;

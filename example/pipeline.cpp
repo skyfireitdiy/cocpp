@@ -10,7 +10,8 @@ int nnnn = 0;
 
 int main()
 {
-    auto ch = co_pipeline({ 0, 1, 2, 3, 4, 5 })
+    auto ch = std::list({ 0, 1, 2, 3, 4, 5 })
+              | pipeline::pipe<1>()
               | [](int a) {
                     this_co::sleep_for(10ms);
                     return a + 1;
@@ -19,7 +20,7 @@ int main()
                     this_co::sleep_for(10ms);
                     return a * 2;
                 }
-              | pipeline::filter([](int n) { return n % 3 == 0; }) | pipeline::reduce<int, int>([](int a, int b) { return a * b; }, 1) | pipeline::to<vector<int>>();
+              | pipeline::filter([](int n) { return n % 3 == 0; }) | pipeline::reduce([](int a, int b) { return a * b; }, 1) | pipeline::to<vector<int>>();
 
     for (auto t : ch)
     {
