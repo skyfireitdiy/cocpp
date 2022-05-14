@@ -11,7 +11,7 @@ int nnnn = 0;
 int main()
 {
     auto ch = std::list({ 0, 1, 2, 3, 4, 5 })
-              | pipeline::pipe<1>()
+              | pipeline::stream<1>()
               | [](int a) {
                     this_co::sleep_for(10ms);
                     return a + 1;

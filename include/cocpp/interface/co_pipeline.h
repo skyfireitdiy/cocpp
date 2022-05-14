@@ -42,7 +42,7 @@ struct reduce_t
 };
 
 template <int Size>
-struct pipe_t
+struct stream_t
 {
 };
 
@@ -71,7 +71,7 @@ reduce_t<ReduceType, InitType> reduce(ReduceType reducer, InitType init)
 }
 
 template <int Size>
-constexpr pipe_t<Size> pipe() { return pipe_t<Size> {}; }
+constexpr stream_t<Size> stream() { return stream_t<Size> {}; }
 
 }
 
@@ -138,7 +138,7 @@ public:
 };
 
 template <typename CollectionType, int Size>
-co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size> operator|(const CollectionType& c, const pipeline::pipe_t<Size>& p)
+co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size> operator|(const CollectionType& c, const pipeline::stream_t<Size>& p)
 {
     return co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size>(c);
 }
