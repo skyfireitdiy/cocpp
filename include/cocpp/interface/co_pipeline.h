@@ -206,6 +206,12 @@ co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Siz
     return co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size>(c);
 }
 
+template <Array ArrayType, int Size>
+co_pipeline<std::decay_t<decltype(*std::begin(std::declval<ArrayType>()))>, Size> operator|(const ArrayType& a, const pipeline::stream_t<Size>& p)
+{
+    return co_pipeline<std::decay_t<decltype(*std::begin(std::declval<ArrayType>()))>, Size>(a);
+}
+
 ////////////////////////////////////////////////////////////////////////////
 
 template <typename FuncType>
