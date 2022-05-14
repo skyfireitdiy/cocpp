@@ -16,17 +16,17 @@ concept Iterable = requires(CollectionType c)
 };
 
 template <typename FuncType, typename ItemType>
-concept PipelineInitFuncType = requires(FuncType f, ItemType i)
+concept PipelineInitFunc = requires(FuncType f, ItemType i)
 {
     requires std::invocable<FuncType>;
     requires std::same_as<std::invoke_result_t<FuncType>, std::optional<ItemType>>;
 };
 
 template <typename ItemType, typename CollectionType>
-concept CanTo = std::is_same_v<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, ItemType>;
+concept To = std::is_same_v<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, ItemType>;
 
 template <typename CollectionType>
-concept IsCollection = requires(CollectionType c)
+concept Collection = requires(CollectionType c)
 {
     c.begin();
     c.end();
@@ -34,7 +34,7 @@ concept IsCollection = requires(CollectionType c)
 };
 
 template <typename FilterType, typename ItemType>
-concept IsFilterOfType = requires(FilterType f, ItemType i)
+concept FilterFunc = requires(FilterType f, ItemType i)
 {
     requires std::invocable<FilterType, ItemType>;
     requires std::same_as < std::invoke_result_t<FilterType, ItemType>,
@@ -42,7 +42,7 @@ concept IsFilterOfType = requires(FilterType f, ItemType i)
 };
 
 template <typename ReduceType, typename InitType, typename ItemType>
-concept IsReduceOfType = requires(ReduceType r, InitType i, ItemType it)
+concept ReduceFunc = requires(ReduceType r, InitType i, ItemType it)
 {
     requires std::invocable<ReduceType, InitType, ItemType>;
     requires std::same_as<std::invoke_result_t<ReduceType, InitType, ItemType>, InitType>;
@@ -56,7 +56,7 @@ concept ReturnIsNotVoid = requires(FuncType f, ItemType i)
 };
 
 template <typename IterType>
-concept IsIterator = requires(IterType i)
+concept Iterator = requires(IterType i)
 {
     i.operator*();
     i.operator++();
@@ -64,14 +64,14 @@ concept IsIterator = requires(IterType i)
 };
 
 template <typename ArrayType>
-concept IsArray = requires(ArrayType a)
+concept Array = requires(ArrayType a)
 {
     {
         std::begin(a)
-        } -> IsIterator;
+        } -> Iterator;
     {
         std::end(a)
-        } -> IsIterator;
+        } -> Iterator;
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ namespace pipeline
     {
     };
 
-    template <IsCollection Type>
+    template <Collection Type>
     struct to_t
     {
     };
@@ -152,27 +152,27 @@ private:
     co_chan<ItemType, ChanSize> channel__;
 
     template <typename FilterType>
-    requires IsFilterOfType<FilterType, ItemType>
+    requires FilterFunc<FilterType, ItemType>
     co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<FilterType>& filter);
 
     template <typename ReduceType, typename InitType>
-    requires IsReduceOfType<ReduceType, InitType, ItemType>
+    requires ReduceFunc<ReduceType, InitType, ItemType>
     co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer);
 
 public : template <typename FuncType>
-    requires PipelineInitFuncType<FuncType, ItemType>
+    requires PipelineInitFunc<FuncType, ItemType>
     co_pipeline(FuncType init_func);
 
     template <typename CollectionType>
     requires Iterable<CollectionType>
     co_pipeline(const CollectionType& col);
 
-    template <IsArray ArrayType>
+    template <Array ArrayType>
     co_pipeline(const ArrayType& arr);
 
     co_pipeline(const std::initializer_list<ItemType>& col);
 
-    template <IsIterator IterType>
+    template <Iterator IterType>
     co_pipeline(IterType begin, IterType end);
 
     template <typename FuncType>
@@ -183,24 +183,24 @@ public : template <typename FuncType>
     co_chan<ItemType, ChanSize> operator|(const pipeline::chan_t&);
 
     template <typename CollectionType>
-    requires CanTo<ItemType, CollectionType>
+    requires To<ItemType, CollectionType>
         CollectionType
         operator|(const pipeline::to_t<CollectionType>&);
 
     template <typename FilterType>
-    requires IsFilterOfType<FilterType, ItemType>
+    requires FilterFunc<FilterType, ItemType>
         co_pipeline<ItemType, ChanSize>
         operator|(const pipeline::filter_t<FilterType>&);
 
     template <typename ReduceType, typename InitType>
-    requires IsReduceOfType<ReduceType, InitType, ItemType>
+    requires ReduceFunc<ReduceType, InitType, ItemType>
         co_pipeline<InitType, ChanSize>
         operator|(const pipeline::reduce_t<ReduceType, InitType>&);
 };
 
 ////////////////////////////////////////////////////////////////////////////
 
-template <IsCollection CollectionType, int Size>
+template <Collection CollectionType, int Size>
 co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size> operator|(const CollectionType& c, const pipeline::stream_t<Size>& p)
 {
     return co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size>(c);
@@ -219,7 +219,7 @@ co_pipeline(const CollectionType&)
 ->co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, -1>;
 
 template <typename ItemType, int ChanSize>
-template <IsIterator IterType>
+template <Iterator IterType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(IterType begin, IterType end)
 {
     co__ = std::make_shared<co>([ch = channel__, begin, end]() mutable {
@@ -232,7 +232,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(IterType begin, IterType end)
 }
 
 template <typename ItemType, int ChanSize>
-template <IsArray ArrayType>
+template <Array ArrayType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(const ArrayType& arr)
     : co_pipeline<ItemType, ChanSize>(std::begin(arr), std::end(arr))
 {
@@ -240,7 +240,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(const ArrayType& arr)
 
 template <typename ItemType, int ChanSize>
 template <typename FuncType>
-requires PipelineInitFuncType<FuncType, ItemType>
+requires PipelineInitFunc<FuncType, ItemType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(FuncType init_func)
 {
     co__ = std::make_shared<co>([ch = channel__, init_func]() mutable {
@@ -260,7 +260,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(FuncType init_func)
 
 template <typename ItemType, int ChanSize>
 template <typename CollectionType>
-requires CanTo<ItemType, CollectionType>
+requires To<ItemType, CollectionType>
     CollectionType
     co_pipeline<ItemType, ChanSize>::operator|(const pipeline::to_t<CollectionType>&)
 {
@@ -322,7 +322,7 @@ co_chan<ItemType, ChanSize> co_pipeline<ItemType, ChanSize>::operator|(const pip
 
 template <typename ItemType, int ChanSize>
 template <typename FilterType>
-requires IsFilterOfType<FilterType, ItemType>
+requires FilterFunc<FilterType, ItemType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<FilterType>& filter)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, filter]() mutable {
@@ -341,7 +341,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
 
 template <typename ItemType, int ChanSize>
 template <typename FilterType>
-requires IsFilterOfType<FilterType, ItemType>
+requires FilterFunc<FilterType, ItemType>
     co_pipeline<ItemType, ChanSize>
     co_pipeline<ItemType, ChanSize>::operator|(const pipeline::filter_t<FilterType>& filter)
 {
@@ -350,7 +350,7 @@ requires IsFilterOfType<FilterType, ItemType>
 
 template <typename ItemType, int ChanSize>
 template <typename ReduceType, typename InitType>
-requires IsReduceOfType<ReduceType, InitType, ItemType>
+requires ReduceFunc<ReduceType, InitType, ItemType>
     co_pipeline<InitType, ChanSize>
     co_pipeline<ItemType, ChanSize>::operator|(const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
@@ -359,7 +359,7 @@ requires IsReduceOfType<ReduceType, InitType, ItemType>
 
 template <typename ItemType, int ChanSize>
 template <typename ReduceType, typename InitType>
-requires IsReduceOfType<ReduceType, InitType, ItemType>
+requires ReduceFunc<ReduceType, InitType, ItemType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, reducer]() mutable {
