@@ -8,6 +8,9 @@
 
 CO_NAMESPACE_BEGIN
 
+namespace pipeline
+{
+
 template <typename CollectionType>
 concept Iterable = requires(CollectionType c)
 {
@@ -73,72 +76,73 @@ concept Array = requires(ArrayType a)
         std::end(a)
         } -> Iterator;
 };
+}
 
 ///////////////////////////////////////////////////////////////////////
 namespace pipeline
 {
-    struct chan_t
-    {
-    };
+struct chan_t
+{
+};
 
-    template <Collection Type>
-    struct to_t
-    {
-    };
+template <Collection Type>
+struct to_t
+{
+};
 
-    template <typename FilterType>
-    struct filter_t
+template <typename FilterType>
+struct filter_t
+{
+    FilterType filter__;
+    filter_t(FilterType f)
+        : filter__(f)
     {
-        FilterType filter__;
-        filter_t(FilterType f)
-            : filter__(f)
-        {
-        }
-    };
-
-    template <typename ReduceType, typename InitType>
-    struct reduce_t
-    {
-        ReduceType reducer__;
-        InitType   init__;
-        reduce_t(ReduceType reducer, InitType init)
-            : reducer__(reducer)
-            , init__(init)
-        {
-        }
-    };
-
-    template <int Size>
-    struct stream_t
-    {
-    };
-
-    constexpr chan_t
-    chan()
-    {
-        return chan_t {};
-    };
-
-    template <typename Type>
-    constexpr to_t<Type> to()
-    {
-        return to_t<Type> {};
     }
+};
 
-    template <typename FilterType>
-    filter_t<FilterType> filter(FilterType f)
+template <typename ReduceType, typename InitType>
+struct reduce_t
+{
+    ReduceType reducer__;
+    InitType   init__;
+    reduce_t(ReduceType reducer, InitType init)
+        : reducer__(reducer)
+        , init__(init)
     {
-        return filter_t<FilterType>(f);
     }
+};
 
-    template <typename ReduceType, typename InitType>
-    reduce_t<ReduceType, InitType> reduce(ReduceType reducer, InitType init)
-    {
-        return reduce_t<ReduceType, InitType>(reducer, init);
-    }
+template <int Size>
+struct stream_t
+{
+};
 
-    template <int Size>
-    constexpr stream_t<Size> stream() { return stream_t<Size> {}; }
+constexpr chan_t
+chan()
+{
+    return chan_t {};
+};
+
+template <typename Type>
+constexpr to_t<Type> to()
+{
+    return to_t<Type> {};
+}
+
+template <typename FilterType>
+filter_t<FilterType> filter(FilterType f)
+{
+    return filter_t<FilterType>(f);
+}
+
+template <typename ReduceType, typename InitType>
+reduce_t<ReduceType, InitType> reduce(ReduceType reducer, InitType init)
+{
+    return reduce_t<ReduceType, InitType>(reducer, init);
+}
+
+template <int Size>
+constexpr stream_t<Size> stream() { return stream_t<Size> {}; }
 
 }
 
@@ -152,61 +156,61 @@ private:
     co_chan<ItemType, ChanSize> channel__;
 
     template <typename FilterType>
-    requires FilterFunc<FilterType, ItemType>
+    requires pipeline::FilterFunc<FilterType, ItemType>
     co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<FilterType>& filter);
 
     template <typename ReduceType, typename InitType>
-    requires ReduceFunc<ReduceType, InitType, ItemType>
+    requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
     co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer);
 
 public : template <typename FuncType>
-    requires PipelineInitFunc<FuncType, ItemType>
+    requires pipeline::PipelineInitFunc<FuncType, ItemType>
     co_pipeline(FuncType init_func);
 
     template <typename CollectionType>
-    requires Iterable<CollectionType>
+    requires pipeline::Iterable<CollectionType>
     co_pipeline(const CollectionType& col);
 
-    template <Array ArrayType>
+    template <pipeline::Array ArrayType>
     co_pipeline(const ArrayType& arr);
 
     co_pipeline(const std::initializer_list<ItemType>& col);
 
-    template <Iterator IterType>
+    template <pipeline::Iterator IterType>
     co_pipeline(IterType begin, IterType end);
 
     template <typename FuncType>
-    requires ReturnIsNotVoid<FuncType, ItemType>
+    requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
         co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>
         operator|(FuncType func);
 
     co_chan<ItemType, ChanSize> operator|(const pipeline::chan_t&);
 
     template <typename CollectionType>
-    requires To<ItemType, CollectionType>
+    requires pipeline::To<ItemType, CollectionType>
         CollectionType
         operator|(const pipeline::to_t<CollectionType>&);
 
     template <typename FilterType>
-    requires FilterFunc<FilterType, ItemType>
+    requires pipeline::FilterFunc<FilterType, ItemType>
         co_pipeline<ItemType, ChanSize>
         operator|(const pipeline::filter_t<FilterType>&);
 
     template <typename ReduceType, typename InitType>
-    requires ReduceFunc<ReduceType, InitType, ItemType>
+    requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
         co_pipeline<InitType, ChanSize>
         operator|(const pipeline::reduce_t<ReduceType, InitType>&);
 };
 
 ////////////////////////////////////////////////////////////////////////////
 
-template <Collection CollectionType, int Size>
+template <pipeline::Collection CollectionType, int Size>
 co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size> operator|(const CollectionType& c, const pipeline::stream_t<Size>& p)
 {
     return co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size>(c);
 }
 
-template <Array ArrayType, int Size>
+template <pipeline::Array ArrayType, int Size>
 co_pipeline<std::decay_t<decltype(*std::begin(std::declval<ArrayType>()))>, Size> operator|(const ArrayType& a, const pipeline::stream_t<Size>& p)
 {
     return co_pipeline<std::decay_t<decltype(*std::begin(std::declval<ArrayType>()))>, Size>(a);
@@ -220,12 +224,12 @@ co_pipeline(FuncType)
 ->co_pipeline<std::decay_t<decltype(*std::declval<std::invoke_result_t<FuncType>>())>, -1>;
 
 template <typename CollectionType>
-requires Iterable<CollectionType>
+requires pipeline::Iterable<CollectionType>
 co_pipeline(const CollectionType&)
 ->co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, -1>;
 
 template <typename ItemType, int ChanSize>
-template <Iterator IterType>
+template <pipeline::Iterator IterType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(IterType begin, IterType end)
 {
     co__ = std::make_shared<co>([ch = channel__, begin, end]() mutable {
@@ -238,7 +242,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(IterType begin, IterType end)
 }
 
 template <typename ItemType, int ChanSize>
-template <Array ArrayType>
+template <pipeline::Array ArrayType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(const ArrayType& arr)
     : co_pipeline<ItemType, ChanSize>(std::begin(arr), std::end(arr))
 {
@@ -246,7 +250,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(const ArrayType& arr)
 
 template <typename ItemType, int ChanSize>
 template <typename FuncType>
-requires PipelineInitFunc<FuncType, ItemType>
+requires pipeline::PipelineInitFunc<FuncType, ItemType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(FuncType init_func)
 {
     co__ = std::make_shared<co>([ch = channel__, init_func]() mutable {
@@ -266,7 +270,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(FuncType init_func)
 
 template <typename ItemType, int ChanSize>
 template <typename CollectionType>
-requires To<ItemType, CollectionType>
+requires pipeline::To<ItemType, CollectionType>
     CollectionType
     co_pipeline<ItemType, ChanSize>::operator|(const pipeline::to_t<CollectionType>&)
 {
@@ -280,7 +284,7 @@ requires To<ItemType, CollectionType>
 
 template <typename ItemType, int ChanSize>
 template <typename CollectionType>
-requires Iterable<CollectionType>
+requires pipeline::Iterable<CollectionType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(const CollectionType& col)
 {
     co__ = std::make_shared<co>([ch = channel__, col]() mutable {
@@ -306,7 +310,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(const std::initializer_list<ItemTyp
 
 template <typename ItemType, int ChanSize>
 template <typename FuncType>
-requires ReturnIsNotVoid<FuncType, ItemType>
+requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
     co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>
     co_pipeline<ItemType, ChanSize>::operator|(FuncType func)
 {
@@ -328,7 +332,7 @@ co_chan<ItemType, ChanSize> co_pipeline<ItemType, ChanSize>::operator|(const pip
 
 template <typename ItemType, int ChanSize>
 template <typename FilterType>
-requires FilterFunc<FilterType, ItemType>
+requires pipeline::FilterFunc<FilterType, ItemType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<FilterType>& filter)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, filter]() mutable {
@@ -347,7 +351,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
 
 template <typename ItemType, int ChanSize>
 template <typename FilterType>
-requires FilterFunc<FilterType, ItemType>
+requires pipeline::FilterFunc<FilterType, ItemType>
     co_pipeline<ItemType, ChanSize>
     co_pipeline<ItemType, ChanSize>::operator|(const pipeline::filter_t<FilterType>& filter)
 {
@@ -356,7 +360,7 @@ requires FilterFunc<FilterType, ItemType>
 
 template <typename ItemType, int ChanSize>
 template <typename ReduceType, typename InitType>
-requires ReduceFunc<ReduceType, InitType, ItemType>
+requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
     co_pipeline<InitType, ChanSize>
     co_pipeline<ItemType, ChanSize>::operator|(const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
@@ -365,7 +369,7 @@ requires ReduceFunc<ReduceType, InitType, ItemType>
 
 template <typename ItemType, int ChanSize>
 template <typename ReduceType, typename InitType>
-requires ReduceFunc<ReduceType, InitType, ItemType>
+requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, reducer]() mutable {
