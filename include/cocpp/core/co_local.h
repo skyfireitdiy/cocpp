@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
+#include <concepts>
 
 CO_NAMESPACE_BEGIN
 
@@ -10,7 +11,7 @@ public:
     virtual ~co_local_base() = default;
 };
 
-template <typename T>
+template <std::default_initializable T>
 class co_local : public co_local_base
 {
 private:
@@ -20,7 +21,7 @@ public:
     T& get();
 };
 
-template <typename T>
+template <std::default_initializable T>
 T& co_local<T>::get()
 {
     return local_data__;
