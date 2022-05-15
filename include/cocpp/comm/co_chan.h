@@ -3,13 +3,19 @@ _Pragma("once");
 #include "cocpp/core/co_define.h"
 #include "cocpp/sync/co_condition_variable.h"
 #include "cocpp/sync/co_mutex.h"
+#include <concepts>
 #include <deque>
 #include <mutex>
 #include <optional>
 
 CO_NAMESPACE_BEGIN
 
-template <typename ValueType, int MaxSize>
+namespace chan
+{
+
+};
+
+template <std::copyable ValueType, int MaxSize>
 class co_chan final
 {
 private:
@@ -46,25 +52,25 @@ public:
     bool                     empty() const;
 };
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 bool operator<(co_chan<ValueType, MaxSize>& ch, ValueType value);
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 bool operator>(co_chan<ValueType, MaxSize>& ch, ValueType& value);
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 co_chan<ValueType, MaxSize>& operator<<(co_chan<ValueType, MaxSize>& ch, ValueType value);
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 co_chan<ValueType, MaxSize>& operator>>(co_chan<ValueType, MaxSize>& ch, ValueType& value);
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 bool operator<(co_chan<ValueType, MaxSize>& ch, ValueType value)
 {
     return ch.push(value);
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 bool operator>(co_chan<ValueType, MaxSize>& ch, ValueType& value)
 {
     auto ret = ch.pop();
@@ -76,21 +82,21 @@ bool operator>(co_chan<ValueType, MaxSize>& ch, ValueType& value)
     return true;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 co_chan<ValueType, MaxSize>& operator<<(co_chan<ValueType, MaxSize>& ch, ValueType value)
 {
     ch.push(value);
     return ch;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 co_chan<ValueType, MaxSize>& operator>>(co_chan<ValueType, MaxSize>& ch, ValueType& value)
 {
     value = ch.pop().value();
     return ch;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 bool co_chan<ValueType, MaxSize>::push(ValueType value)
 {
     std::unique_lock lock(*mu__);
@@ -122,7 +128,7 @@ bool co_chan<ValueType, MaxSize>::push(ValueType value)
     return true;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
 {
     std::optional<ValueType> ret;
@@ -149,7 +155,7 @@ std::optional<ValueType> co_chan<ValueType, MaxSize>::pop()
     return ret;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 void co_chan<ValueType, MaxSize>::close()
 {
     std::scoped_lock lock(*mu__);
@@ -158,47 +164,47 @@ void co_chan<ValueType, MaxSize>::close()
     cv_empty__->notify_all();
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 bool co_chan<ValueType, MaxSize>::closed() const
 {
     std::scoped_lock lock(*mu__);
     return *closed__;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 bool co_chan<ValueType, MaxSize>::empty() const
 {
     std::scoped_lock lock(*mu__);
     return data__->empty();
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 co_chan<ValueType, MaxSize>::iterator::iterator(co_chan<ValueType, MaxSize>* ch)
     : ch__(ch)
 {
     ++*this;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 typename co_chan<ValueType, MaxSize>::iterator co_chan<ValueType, MaxSize>::iterator::operator++()
 {
     value__ = ch__->pop();
     return *this;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 ValueType& co_chan<ValueType, MaxSize>::iterator::operator*()
 {
     return *value__;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 ValueType* co_chan<ValueType, MaxSize>::iterator::operator->()
 {
     return &*value__;
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 bool co_chan<ValueType, MaxSize>::iterator::operator==(const iterator& other)
 {
     if (ch__ == other.ch__)
@@ -215,19 +221,19 @@ bool co_chan<ValueType, MaxSize>::iterator::operator==(const iterator& other)
     return false;
 }
 
-// template <typename ValueType, int MaxSize>
+// template <std::copyable ValueType, int MaxSize>
 // bool co_chan<ValueType, MaxSize>::iterator::operator!=(const iterator& other)
 // {
 //     return !(*this == other);
 // }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 typename co_chan<ValueType, MaxSize>::iterator co_chan<ValueType, MaxSize>::begin()
 {
     return co_chan<ValueType, MaxSize>::iterator(this);
 }
 
-template <typename ValueType, int MaxSize>
+template <std::copyable ValueType, int MaxSize>
 typename co_chan<ValueType, MaxSize>::iterator co_chan<ValueType, MaxSize>::end()
 {
     return co_chan<ValueType, MaxSize>::iterator();

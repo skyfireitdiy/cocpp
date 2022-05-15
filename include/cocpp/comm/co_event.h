@@ -4,6 +4,7 @@ _Pragma("once");
 #include "cocpp/core/co_type.h"
 #include "cocpp/utils/co_noncopyable.h"
 
+#include <concepts>
 #include <functional>
 #include <map>
 #include <mutex>
@@ -12,7 +13,7 @@ CO_NAMESPACE_BEGIN
 
 using co_event_handle = unsigned long long;
 
-template <typename... Args>
+template <std::copyable... Args>
 class co_event final : private co_noncopyable
 {
 private:
@@ -26,7 +27,7 @@ public:
     void            unsub(co_event_handle h);
 };
 
-template <typename... Args>
+template <std::copyable... Args>
 co_event_handle co_event<Args...>::sub(std::function<void(Args... args)> cb)
 {
     std::scoped_lock lck(mu_cb_list__);
@@ -34,14 +35,14 @@ co_event_handle co_event<Args...>::sub(std::function<void(Args... args)> cb)
     return current_handler__++;
 }
 
-template <typename... Args>
+template <std::copyable... Args>
 void co_event<Args...>::unsub(co_event_handle h)
 {
     std::scoped_lock lck(mu_cb_list__);
     cb_list__.erase(h);
 }
 
-template <typename... Args>
+template <std::copyable... Args>
 void co_event<Args...>::pub(Args... args) const
 {
     std::scoped_lock lck(mu_cb_list__);
