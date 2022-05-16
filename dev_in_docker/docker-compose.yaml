@@ -1,0 +1,19 @@
+version: '3'
+services:
+  cocpp:
+    container_name: cocpp-dev
+    build:
+      context: .
+      dockerfile: dockerfile
+    image: cocpp-dev
+    volumes: 
+      - $PWD/..:/code/cocpp
+      - $HOME/.ssh:/root/.ssh
+    working_dir: /code/cocpp
+    environment:
+      - XMAKE_ROOT=y
+      - PATH:/root/.local/bin:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    entrypoint:
+      - bash
+      - "-c"
+      - "while true; do sleep 1; done"
