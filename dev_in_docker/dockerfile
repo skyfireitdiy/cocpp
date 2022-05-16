@@ -1,2 +1,2 @@
-from gcc:latest
-run curl -fsSL https://xmake.io/shget.text | bash -
+FROM gcc:latest
+RUN curl -fsSL https://xmake.io/shget.text | bash -
