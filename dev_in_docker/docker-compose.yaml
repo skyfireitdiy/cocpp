@@ -5,7 +5,12 @@ services:
     build:
       context: .
       dockerfile: dockerfile
-    image: cocpp-dev
+      args: 
+        USERNAME: ${USERNAME}
+        USERID: ${USERID}
+        GROUPID: ${GROUPID}
+        GROUPNAME: ${GROUPNAME}
+        HOME: ${HOME}
     volumes: 
       - $PWD/..:/code/cocpp
       - $HOME/.ssh:/root/.ssh

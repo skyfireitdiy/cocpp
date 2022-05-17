@@ -1,2 +1,11 @@
 FROM gcc:latest
-RUN curl -fsSL https://xmake.io/shget.text | bash -
+ARG USERID=1001
+ARG USERNAME=test
+ARG GROUPID=1001
+ARG GROUPNAME=test
+ARG HOME=/home/$USERNAME
+RUN apt update && apt install -y fish cmake
+RUN echo userid = $USERID
+RUN groupadd -g $GROUPID -f $GROUPNAME
+RUN useradd -u $USERID -d $HOME -g $GROUPID $USERNAME -s /usr/bin/fish
+RUN runuser -u $USERNAME -g $GROUPNAME -c 'curl -fsSL https://xmake.io/shget.text | bash -'
