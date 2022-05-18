@@ -8,4 +8,5 @@ RUN apt update && apt install -y fish cmake
 RUN echo userid = $USERID
 RUN groupadd -g $GROUPID -f $GROUPNAME
 RUN useradd -u $USERID -d $HOME -g $GROUPID $USERNAME -s /usr/bin/fish
-RUN runuser -u $USERNAME -g $GROUPNAME -c 'curl -fsSL https://xmake.io/shget.text | bash -'
+RUN runuser -u $USERNAME bash -c 'curl -fsSL https://xmake.io/shget.text | bash -'
+USER $USERNAME
