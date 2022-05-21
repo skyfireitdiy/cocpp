@@ -511,7 +511,7 @@ co_ctx* co_env::choose_ctx_from_normal_list__()
 
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
-        for (auto& ctx : all_normal_ctx__[i])
+        for (auto&& ctx : all_normal_ctx__[i])
         {
             if (ctx->can_schedule())
             {
@@ -560,7 +560,7 @@ list<co_ctx*> co_env::take_all_movable_ctx()
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         auto backup = all_normal_ctx__[i];
-        for (auto& ctx : backup)
+        for (auto&& ctx : backup)
         {
             if (ctx->can_move())
             {
@@ -579,7 +579,7 @@ co_ctx* co_env::take_one_movable_ctx()
     for (unsigned int i = min_priority__; i < all_normal_ctx__.size(); ++i)
     {
         auto backup = all_normal_ctx__[i];
-        for (auto& ctx : backup)
+        for (auto&& ctx : backup)
         {
             if (ctx->can_move())
             {

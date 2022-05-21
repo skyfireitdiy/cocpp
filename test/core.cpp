@@ -24,7 +24,6 @@
 #include "cocpp/sync/co_timed_mutex.h"
 #include "cocpp/utils/co_any.h"
 
-
 using namespace cocpp;
 using namespace std;
 using namespace chrono_literals;
@@ -170,7 +169,7 @@ TEST(core, co_local)
 {
     co c1([]() {
         CoLocal(name, string) = "hello";
-        auto& value                = CoLocal(name, string);
+        auto& value           = CoLocal(name, string);
         EXPECT_EQ(value, "hello");
     });
 
@@ -193,14 +192,13 @@ TEST(core, exception)
     EXPECT_THROW(c.wait<int>(), int);
 }
 
-int nnnn = 0;
-
 TEST(core, pipeline)
 {
-    auto ch = (co_pipeline<int, 1>([]() -> std::optional<int> {
-                   if (nnnn < 5)
+    int  source = 0;
+    auto ch     = (co_pipeline<int, 1>([&source]() -> std::optional<int> {
+                   if (source < 5)
                    {
-                       return nnnn++;
+                       return source++;
                    }
                    return std::nullopt;
                })
@@ -208,9 +206,7 @@ TEST(core, pipeline)
                   return n * 2;
               })
               | pipeline::filter([](int n) { return n % 3 == 0; })
+              | pipeline::reduce([](int n, int m) { return n + m; }, 0)
               | pipeline::chan();
-    for (auto p : ch)
-    {
-        fprintf(stderr, "pipeline : %d\n", p);
-    }
+    EXPECT_EQ(ch.pop(), 6);
 }

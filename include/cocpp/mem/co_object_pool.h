@@ -71,7 +71,7 @@ template <typename ObjectType>
 void co_object_pool<ObjectType>::clear_free_object()
 {
     std::scoped_lock lck(mu__);
-    for (auto& obj : pool__)
+    for (auto&& obj : pool__)
     {
         free(obj);
     }

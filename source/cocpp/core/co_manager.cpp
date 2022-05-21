@@ -28,7 +28,7 @@ co_env* co_manager::get_best_env__()
     co_env* best_env               = nullptr;
     auto    min_workload           = numeric_limits<size_t>::max();
     size_t  can_schedule_env_count = 0;
-    for (auto& env : env_set__.normal_set)
+    for (auto&& env : env_set__.normal_set)
     {
         if (env->state() == co_env_state::idle)
         {
@@ -206,7 +206,7 @@ void co_manager::set_clean_up__()
     scoped_lock lock(env_set__.normal_lock);
     clean_up__       = true;
     auto backup_data = env_set__.normal_set;
-    for (auto& env : backup_data)
+    for (auto&& env : backup_data)
     {
         if (env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
         {
@@ -228,7 +228,7 @@ void co_manager::clean_env_routine__()
         if (clean_up__)
         {
             auto backup = env_set__.normal_set;
-            for (auto& env : backup)
+            for (auto&& env : backup)
             {
                 if (env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
                 {
@@ -244,7 +244,7 @@ void co_manager::clean_env_routine__()
         {
             env_set__.cv_expired_env.wait(lck);
         }
-        for (auto& p : env_set__.expired_set)
+        for (auto&& p : env_set__.expired_set)
         {
             co_env_factory::instance()->destroy_env(p);
         }
@@ -277,7 +277,7 @@ void co_manager::force_schedule__()
     {
         return;
     }
-    for (auto& env : env_set__.normal_set)
+    for (auto&& env : env_set__.normal_set)
     {
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
         if (env->is_blocked() && env->ctx_count() > 1)
@@ -303,7 +303,7 @@ void co_manager::redistribute_ctx__()
         target.insert(target.end(), src.begin(), src.end());
     };
 
-    for (auto& env : env_set__.normal_set)
+    for (auto&& env : env_set__.normal_set)
     {
         if (!env->try_lock_schedule())
         {
@@ -325,7 +325,7 @@ void co_manager::redistribute_ctx__()
         env->reset_scheduled_flag();
     }
     // 重新选择合适的env进行调度
-    for (auto& ctx : moved_ctx_list)
+    for (auto&& ctx : moved_ctx_list)
     {
         get_best_env__()->move_ctx_to_here(ctx);
     }
@@ -335,10 +335,10 @@ void co_manager::destroy_redundant_env__()
 {
     scoped_lock lock(env_set__.normal_lock);
     // 然后删除多余的处于idle状态的env
-    size_t               can_schedule_env_count = 0;
+    size_t          can_schedule_env_count = 0;
     vector<co_env*> idle_env_list;
     idle_env_list.reserve(env_set__.normal_set.size());
-    for (auto& env : env_set__.normal_set)
+    for (auto&& env : env_set__.normal_set)
     {
         if (env->can_schedule_ctx())
         {
@@ -443,7 +443,7 @@ void co_manager::destroy_all_factory__()
 
 void co_manager::wait_background_task__()
 {
-    for (auto& task : background_task__)
+    for (auto&& task : background_task__)
     {
         task.wait();
     }
@@ -480,7 +480,7 @@ void co_manager::steal_ctx_routine__()
     scoped_lock     lock(env_set__.normal_lock);
     vector<co_env*> idle_env_list;
     idle_env_list.reserve(env_set__.normal_set.size());
-    for (auto& env : env_set__.normal_set)
+    for (auto&& env : env_set__.normal_set)
     {
         // 空闲非独占的env可以去其他的env中偷取ctx
         if (env->state() == co_env_state::idle && !env->test_flag(CO_ENV_FLAG_EXCLUSIVE))
@@ -490,7 +490,7 @@ void co_manager::steal_ctx_routine__()
     }
 
     auto iter = env_set__.normal_set.begin();
-    for (auto& env : idle_env_list)
+    for (auto&& env : idle_env_list)
     {
         if (!env->try_lock_schedule())
         {

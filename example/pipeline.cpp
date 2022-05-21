@@ -6,8 +6,6 @@
 using namespace cocpp;
 using namespace std;
 
-int nnnn = 0;
-
 int main()
 {
     auto ch = std::list({ 0, 1, 2, 3, 4, 5 })
