@@ -19,7 +19,7 @@ void co_condition_variable_impl::notify_all()
 {
     CoPreemptGuard();
     scoped_lock lk(cv_lock__);
-    for (auto ctx : waiters__)
+    for (auto &&ctx : waiters__)
     {
         ctx->leave_wait_resource_state(this);
     }

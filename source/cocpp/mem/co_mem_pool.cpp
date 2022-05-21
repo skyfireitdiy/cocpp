@@ -94,9 +94,9 @@ void co_mem_pool::free_mem(co_byte* ptr, size_t size)
 void co_mem_pool::free_pool()
 {
     scoped_lock lock(mu__);
-    for (auto& zone : mem_pool__)
+    for (auto&& zone : mem_pool__)
     {
-        for (auto& mem : zone)
+        for (auto&& mem : zone)
         {
             free(mem);
         }

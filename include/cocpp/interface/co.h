@@ -127,7 +127,7 @@ template <typename Func, typename... Args>
 co::co(std::initializer_list<std::function<void(co_ctx_config&)>> opts, Func&& func, Args&&... args)
 {
     co_ctx_config config;
-    for (auto& cb : opts)
+    for (auto&& cb : opts)
     {
         cb(config);
     }

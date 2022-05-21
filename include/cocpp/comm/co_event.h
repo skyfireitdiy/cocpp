@@ -46,7 +46,7 @@ template <std::copyable... Args>
 void co_event<Args...>::pub(Args... args) const
 {
     std::scoped_lock lck(mu_cb_list__);
-    for (auto& [_, cb] : cb_list__)
+    for (auto&& [_, cb] : cb_list__)
     {
         cb(args...);
     }

@@ -116,14 +116,14 @@ TEST(chan, no_buffered_iterator)
     vector<int> pop;
 
     co c1([&] {
-        for (auto p : push)
+        for (auto &&p : push)
         {
             ch.push(p);
         }
         ch.close();
     });
 
-    for (auto& p : ch)
+    for (auto&& p : ch)
     {
         pop.push_back(p);
     }
@@ -139,7 +139,7 @@ TEST(chan, buffered_empty_iterator)
 
     ch.close();
 
-    for (auto& p : ch)
+    for (auto&& p : ch)
     {
         pop.push_back(p);
     }
@@ -154,7 +154,7 @@ TEST(chan, no_buffered_operator_less)
     vector<int> pop;
 
     co c1([&] {
-        for (auto p : push)
+        for (auto &&p : push)
         {
             [[maybe_unused]] auto ret = ch < p;
         }

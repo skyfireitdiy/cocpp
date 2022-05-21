@@ -28,7 +28,7 @@ vector<string> backtrace()
 void print_backtrace()
 {
     auto bt = backtrace();
-    for (auto& b : bt)
+    for (auto&& b : bt)
     {
         printf("%s\n", b.c_str());
     }
