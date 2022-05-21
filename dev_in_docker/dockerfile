@@ -4,9 +4,40 @@ ARG USERNAME=test
 ARG GROUPID=1001
 ARG GROUPNAME=test
 ARG HOME=/home/$USERNAME
-RUN apt update && apt install -y fish cmake
-RUN echo userid = $USERID
+ARG GITNAME=git
+ARG GITEMAIL=git@gmail.com
+RUN apt update && apt install -y lcov clangd clang llvm bear cmake fish
 RUN groupadd -g $GROUPID -f $GROUPNAME
 RUN useradd -u $USERID -d $HOME -g $GROUPID $USERNAME -s /usr/bin/fish
-RUN runuser -u $USERNAME bash -c 'curl -fsSL https://xmake.io/shget.text | bash -'
+RUN mkdir -p $HOME
+RUN chown -R $USERNAME:$GROUPNAME $HOME
+RUN runuser -u ${USERNAME} -- bash -c 'curl -fsSL https://xmake.io/shget.text | bash -'
+RUN runuser -u ${USERNAME} -- git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
+RUN runuser -u ${USERNAME} -- git config --global alias.br branch
+RUN runuser -u ${USERNAME} -- git config --global alias.bra branch -a
+RUN runuser -u ${USERNAME} -- git config --global alias.co checkout
+RUN runuser -u ${USERNAME} -- git config --global alias.mg merge
+RUN runuser -u ${USERNAME} -- git config --global alias.cp cherry-pick
+RUN runuser -u ${USERNAME} -- git config --global alias.rb rebase
+RUN runuser -u ${USERNAME} -- git config --global pull.rebase true
+RUN runuser -u ${USERNAME} -- git config --global user.name $GITNAME
+RUN runuser -u ${USERNAME} -- git config --global user.email $GITEMAIL
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- a 'abbr -a'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- g git"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- gpl 'git pull'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- gps 'git push'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- gs 'git status'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- xm xmake"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- yi 'sudo apt install -y'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- yu 'sudo apt update'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- ga 'git add -u'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- gc 'git commit'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- gl 'git lg'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- gco 'git checkout'"
+RUN runuser -u ${USERNAME} -- fish -c "abbr -a -U -- gb 'git branch'"
+RUN runuser -u ${USERNAME} -- echo 'handle SIGUSR1 noprint nostop' > $HOME/.gdbinit
+RUN runuser -u ${USERNAME} -- echo 'set pagination off' >> $HOME/.gdbinit
+RUN runuser -u ${USERNAME} -- echo 'set print object on' >> $HOME/.gdbinit
+RUN runuser -u ${USERNAME} -- mkdir -p $HOME/.config/fish
+RUN runuser -u ${USERNAME} -- echo "set -x PATH $HOME/.local/bin \$PATH" >> $HOME/.config/fish/config.fish
 USER $USERNAME

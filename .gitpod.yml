@@ -1,7 +1,4 @@
 tasks:
   - name: gitpod init
     command: |
-      bash ./gitpod_init.sh
-      bash ./build_3rd.sh
-      source ~/.bashrc
-      fish
+      bash ./dev_in_docker_start.sh

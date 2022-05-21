@@ -11,13 +11,12 @@ services:
         GROUPID: ${GROUPID}
         GROUPNAME: ${GROUPNAME}
         HOME: ${HOME}
+        GITNAME: skyfire
+        GITEMAIL: skyfireitdiy@hotmail.com
     volumes: 
       - $PWD/..:/code/cocpp
-      - $HOME/.ssh:/root/.ssh
+      - $HOME/.ssh:${HOME}/.ssh
     working_dir: /code/cocpp
-    environment:
-      - XMAKE_ROOT=y
-      - PATH:/root/.local/bin:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     entrypoint:
       - bash
       - "-c"
