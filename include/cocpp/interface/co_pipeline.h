@@ -117,32 +117,33 @@ struct stream_t
 {
 };
 
-constexpr chan_t
-chan()
+///////////////////////////////////////////////////////////////////////
+
+constexpr auto chan()
 {
     return chan_t {};
 };
 
 template <typename Type>
-constexpr to_t<Type> to()
+constexpr auto to()
 {
     return to_t<Type> {};
 }
 
 template <typename FilterType>
-filter_t<FilterType> filter(FilterType f)
+auto filter(FilterType f)
 {
     return filter_t<FilterType>(f);
 }
 
 template <typename ReduceType, typename InitType>
-reduce_t<ReduceType, InitType> reduce(ReduceType reducer, InitType init)
+auto reduce(ReduceType reducer, InitType init)
 {
     return reduce_t<ReduceType, InitType>(reducer, init);
 }
 
 template <int Size>
-constexpr stream_t<Size> stream() { return stream_t<Size> {}; }
+constexpr auto stream() { return stream_t<Size> {}; }
 
 }
 
@@ -181,37 +182,33 @@ public : template <typename FuncType>
 
     template <typename FuncType>
     requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
-        co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>
-        operator|(FuncType func);
+    auto operator|(FuncType func);
 
-    co_chan<ItemType, ChanSize> operator|(const pipeline::chan_t&);
+    auto operator|(const pipeline::chan_t&);
 
     template <typename CollectionType>
     requires pipeline::To<ItemType, CollectionType>
-        CollectionType
-        operator|(const pipeline::to_t<CollectionType>&);
+    auto operator|(const pipeline::to_t<CollectionType>&);
 
     template <typename FilterType>
     requires pipeline::FilterFunc<FilterType, ItemType>
-        co_pipeline<ItemType, ChanSize>
-        operator|(const pipeline::filter_t<FilterType>&);
+    auto operator|(const pipeline::filter_t<FilterType>&);
 
     template <typename ReduceType, typename InitType>
     requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
-        co_pipeline<InitType, ChanSize>
-        operator|(const pipeline::reduce_t<ReduceType, InitType>&);
+    auto operator|(const pipeline::reduce_t<ReduceType, InitType>&);
 };
 
 ////////////////////////////////////////////////////////////////////////////
 
 template <pipeline::Collection CollectionType, int Size>
-co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size> operator|(const CollectionType& c, const pipeline::stream_t<Size>& p)
+auto operator|(const CollectionType& c, const pipeline::stream_t<Size>& p)
 {
     return co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size>(c);
 }
 
 template <pipeline::Array ArrayType, int Size>
-co_pipeline<std::decay_t<decltype(*std::begin(std::declval<ArrayType>()))>, Size> operator|(const ArrayType& a, const pipeline::stream_t<Size>& p)
+auto operator|(const ArrayType& a, const pipeline::stream_t<Size>& p)
 {
     return co_pipeline<std::decay_t<decltype(*std::begin(std::declval<ArrayType>()))>, Size>(a);
 }
@@ -271,8 +268,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(FuncType init_func)
 template <typename ItemType, int ChanSize>
 template <typename CollectionType>
 requires pipeline::To<ItemType, CollectionType>
-    CollectionType
-    co_pipeline<ItemType, ChanSize>::operator|(const pipeline::to_t<CollectionType>&)
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::to_t<CollectionType>&)
 {
     CollectionType ret;
     for (const auto& t : channel__)
@@ -311,8 +307,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(const std::initializer_list<ItemTyp
 template <typename ItemType, int ChanSize>
 template <typename FuncType>
 requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
-    co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>
-    co_pipeline<ItemType, ChanSize>::operator|(FuncType func)
+auto co_pipeline<ItemType, ChanSize>::operator|(FuncType func)
 {
     return co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>([ch = channel__, func]() mutable -> std::optional<std::invoke_result_t<FuncType, ItemType>> {
         auto item = ch.pop();
@@ -325,7 +320,7 @@ requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
 }
 
 template <typename ItemType, int ChanSize>
-co_chan<ItemType, ChanSize> co_pipeline<ItemType, ChanSize>::operator|(const pipeline::chan_t&)
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::chan_t&)
 {
     return channel__;
 }
@@ -352,8 +347,7 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
 template <typename ItemType, int ChanSize>
 template <typename FilterType>
 requires pipeline::FilterFunc<FilterType, ItemType>
-    co_pipeline<ItemType, ChanSize>
-    co_pipeline<ItemType, ChanSize>::operator|(const pipeline::filter_t<FilterType>& filter)
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::filter_t<FilterType>& filter)
 {
     return co_pipeline<ItemType, ChanSize>(channel__, filter);
 }
@@ -361,8 +355,7 @@ requires pipeline::FilterFunc<FilterType, ItemType>
 template <typename ItemType, int ChanSize>
 template <typename ReduceType, typename InitType>
 requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
-    co_pipeline<InitType, ChanSize>
-    co_pipeline<ItemType, ChanSize>::operator|(const pipeline::reduce_t<ReduceType, InitType>& reducer)
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
     return co_pipeline<InitType, ChanSize>(channel__, reducer);
 }
