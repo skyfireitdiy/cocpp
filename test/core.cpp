@@ -195,18 +195,25 @@ TEST(core, exception)
 TEST(core, pipeline)
 {
     int  source = 0;
-    auto ch     = (co_pipeline<int, 1>([&source]() -> std::optional<int> {
-                   if (source < 5)
-                   {
-                       return source++;
-                   }
-                   return std::nullopt;
-               })
-                   | [](int n) -> int {
-                  return n * 2;
+    auto ch     = co_pipeline<int, 1>([&source]() -> std::optional<int> {
+                  if (source < 100)
+                  {
+                      return source++;
+                  }
+                  return std::nullopt;
               })
-              | pipeline::filter([](int n) { return n % 3 == 0; })
-              | pipeline::reduce([](int n, int m) { return n + m; }, 0)
-              | pipeline::chan();
-    EXPECT_EQ(ch.pop(), 6);
+              | pipeline::left(20)
+              | pipeline::not_left(10)
+              | [](int n) -> int {
+        return n * 2;
+    }
+                                 | pipeline::filter([](int n) { return n % 3 == 0; })
+                                 | pipeline::reduce([](int n, int m) { return n + m; }, 0)
+                                 | pipeline::chan();
+
+    // for (auto&& p : ch)
+    // {
+    //     cout << p << endl;
+    // }
+    EXPECT_EQ(ch.pop(), 90);
 }

@@ -94,10 +94,6 @@ template <typename FilterType>
 struct filter_t
 {
     FilterType filter__;
-    filter_t(FilterType f)
-        : filter__(f)
-    {
-    }
 };
 
 template <typename ReduceType, typename InitType>
@@ -105,16 +101,21 @@ struct reduce_t
 {
     ReduceType reducer__;
     InitType   init__;
-    reduce_t(ReduceType reducer, InitType init)
-        : reducer__(reducer)
-        , init__(init)
-    {
-    }
 };
 
 template <int Size>
 struct stream_t
 {
+};
+
+struct left_t
+{
+    size_t left__;
+};
+
+struct not_left_t
+{
+    size_t not_left__;
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -133,18 +134,21 @@ constexpr auto to()
 template <typename FilterType>
 auto filter(FilterType f)
 {
-    return filter_t<FilterType>(f);
+    return filter_t<FilterType> { .filter__ = f };
 }
 
 template <typename ReduceType, typename InitType>
 auto reduce(ReduceType reducer, InitType init)
 {
-    return reduce_t<ReduceType, InitType>(reducer, init);
+    return reduce_t<ReduceType, InitType> { .reducer__ = reducer, .init__ = init };
 }
 
 template <int Size>
 constexpr auto stream() { return stream_t<Size> {}; }
 
+left_t left(size_t n);
+
+not_left_t not_left(size_t n);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -164,7 +168,12 @@ private:
     requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
     co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer);
 
-public : template <typename FuncType>
+    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::left_t& left);
+
+    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::not_left_t& not_left);
+
+public:
+    template <typename FuncType>
     requires pipeline::PipelineInitFunc<FuncType, ItemType>
     co_pipeline(FuncType init_func);
 
@@ -197,6 +206,10 @@ public : template <typename FuncType>
     template <typename ReduceType, typename InitType>
     requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
     auto operator|(const pipeline::reduce_t<ReduceType, InitType>&);
+
+    auto operator|(const pipeline::left_t& left);
+
+    auto operator|(const pipeline::not_left_t& not_left);
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -372,6 +385,62 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<InitType, ChanSize> ch, con
             result = reducer.reducer__(result, item);
         }
         this_ch.push(result);
+        this_ch.close();
+    });
+    co__->detach();
+}
+
+template <typename ItemType, int ChanSize>
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::left_t& left)
+{
+    return co_pipeline<ItemType, ChanSize>(channel__, left);
+}
+
+template <typename ItemType, int ChanSize>
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::not_left_t& not_left)
+{
+    return co_pipeline<ItemType, ChanSize>(channel__, not_left);
+}
+
+template <typename ItemType, int ChanSize>
+co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::left_t& left)
+{
+    co__ = std::make_shared<co>([this_ch = channel__, ch, left]() mutable {
+        for (size_t index = 0; index < left.left__; ++index)
+        {
+            auto result = ch.pop();
+            if (result)
+            {
+                this_ch.push(*result);
+            }
+            else
+            {
+                break;
+            }
+        }
+        this_ch.close();
+        for (auto&& p [[maybe_unused]] : ch)
+            ; // 取出所有元素
+    });
+    co__->detach();
+}
+
+template <typename ItemType, int ChanSize>
+co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::not_left_t& not_left)
+{
+    co__ = std::make_shared<co>([this_ch = channel__, ch, not_left]() mutable {
+        for (size_t index = 0; index < not_left.not_left__; ++index)
+        {
+            auto result = ch.pop();
+            if (!result)
+            {
+                break;
+            }
+        }
+        for (auto&& p : ch)
+        {
+            this_ch.push(p);
+        }
         this_ch.close();
     });
     co__->detach();
