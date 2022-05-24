@@ -196,24 +196,24 @@ TEST(core, pipeline)
 {
     int  source = 0;
     auto ch     = co_pipeline<int, 1>([&source]() -> std::optional<int> {
-                  if (source < 100)
+                  if (source < 10000)
                   {
                       return source++;
                   }
                   return std::nullopt;
               })
-              | pipeline::left(20)
-              | pipeline::not_left(10)
-              | [](int n) -> int {
-        return n * 2;
-    }
-                                 | pipeline::filter([](int n) { return n % 3 == 0; })
-                                 | pipeline::reduce([](int n, int m) { return n + m; }, 0)
-                                 | pipeline::chan();
+              | pipeline::left(2000)
+              | pipeline::not_left(1000)
+              | pipeline::fork(10, [](int n) -> int {
+                    return n * 2;
+                })
+              | pipeline::filter([](int n) { return n % 3 == 0; })
+              //   | pipeline::reduce([](int n, int m) { return n + m; }, 0)
+              | pipeline::chan();
 
-    // for (auto&& p : ch)
-    // {
-    //     cout << p << endl;
-    // }
-    EXPECT_EQ(ch.pop(), 90);
+    for (auto&& p : ch)
+    {
+        cout << p << endl;
+    }
+    // EXPECT_EQ(ch.pop(), 90);
 }

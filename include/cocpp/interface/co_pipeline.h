@@ -5,6 +5,7 @@
 #include <iterator>
 #include <ranges>
 #include <type_traits>
+#include <vector>
 
 CO_NAMESPACE_BEGIN
 
@@ -118,6 +119,13 @@ struct not_left_t
     size_t not_left__;
 };
 
+template <typename FuncType>
+struct fork_t
+{
+    size_t   fork_count__;
+    FuncType func__;
+};
+
 ///////////////////////////////////////////////////////////////////////
 
 constexpr auto chan()
@@ -149,6 +157,17 @@ constexpr auto stream() { return stream_t<Size> {}; }
 left_t left(size_t n);
 
 not_left_t not_left(size_t n);
+
+template <typename FuncType>
+auto fork(size_t n, FuncType f)
+{
+    if (n == 0)
+    {
+        n = 1;
+    }
+    return fork_t<FuncType> { .fork_count__ = n, .func__ = f };
+}
+
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -172,8 +191,11 @@ private:
 
     co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::not_left_t& not_left);
 
-public:
-    template <typename FuncType>
+    template <typename FuncType, typename OldType>
+    requires pipeline::ReturnIsNotVoid<FuncType, OldType>
+    co_pipeline(co_chan<OldType, ChanSize> ch, const pipeline::fork_t<FuncType>& fork);
+
+public : template <typename FuncType>
     requires pipeline::PipelineInitFunc<FuncType, ItemType>
     co_pipeline(FuncType init_func);
 
@@ -210,6 +232,10 @@ public:
     auto operator|(const pipeline::left_t& left);
 
     auto operator|(const pipeline::not_left_t& not_left);
+
+    template <typename FuncType>
+    requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
+    auto operator|(const pipeline::fork_t<FuncType>& fork);
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -330,6 +356,44 @@ auto co_pipeline<ItemType, ChanSize>::operator|(FuncType func)
         }
         return func(*item);
     });
+}
+
+template <typename ItemType, int ChanSize>
+template <typename FuncType, typename OldType>
+requires pipeline::ReturnIsNotVoid<FuncType, OldType>
+co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<OldType, ChanSize> ch, const pipeline::fork_t<FuncType>& fork)
+{
+    co__ = std::make_shared<co>([this_ch = channel__, ch, fork]() mutable {
+        std::vector<std::shared_ptr<co>> co_list(fork.fork_count__);
+        for (auto&& c : co_list)
+        {
+            c = std::make_shared<co>([this_ch, ch, fork]() mutable {
+                while (true)
+                {
+                    auto item = ch.pop();
+                    if (!item)
+                    {
+                        break;
+                    }
+                    this_ch.push(fork.func__(*item));
+                }
+            });
+        }
+        for (auto&& c : co_list)
+        {
+            c->join();
+        }
+        this_ch.close();
+    });
+    co__->detach();
+}
+
+template <typename ItemType, int ChanSize>
+template <typename FuncType>
+requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::fork_t<FuncType>& fork)
+{
+    return co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>(channel__, fork);
 }
 
 template <typename ItemType, int ChanSize>
