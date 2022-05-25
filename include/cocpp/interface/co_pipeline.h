@@ -482,9 +482,11 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
                 break;
             }
         }
-        this_ch.close();
+
+        // FIXME: 如果先关闭this_ch，数据会发生错误
         for (auto&& p [[maybe_unused]] : ch)
             ; // 取出所有元素
+        this_ch.close();
     });
     co__->detach();
 }
