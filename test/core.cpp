@@ -207,13 +207,11 @@ TEST(core, pipeline)
               | pipeline::fork(10, [](int n) -> int {
                     return n * 2;
                 })
-              | pipeline::filter([](int n) { return n % 3 == 0; })
-              //   | pipeline::reduce([](int n, int m) { return n + m; }, 0)
-              | pipeline::chan();
+              | pipeline::filter([](int n) { return n % 3 == 0; }) | pipeline::reduce([](int n, int m) { return n + m; }, 0) | pipeline::chan();
 
-    for (auto&& p : ch)
-    {
-        cout << p << endl;
-    }
-    // EXPECT_EQ(ch.pop(), 90);
+    // for (auto&& p : ch)
+    // {
+    //     cout << p << endl;
+    // }
+    EXPECT_EQ(ch.pop(), 999000);
 }
