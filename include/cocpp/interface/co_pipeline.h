@@ -2,6 +2,7 @@
 #include "cocpp/interface/co.h"
 #include "cocpp/utils/co_noncopyable.h"
 #include <algorithm>
+#include <cstdio>
 #include <iterator>
 #include <ranges>
 #include <type_traits>
@@ -77,6 +78,18 @@ concept Array = requires(ArrayType a)
         std::end(a)
         } -> Iterator;
 };
+
+template <typename ItemType, typename IncrementType>
+concept Incrementable = requires(const ItemType& i, const IncrementType& inc)
+{
+    {
+        i + inc
+        } -> std::same_as<ItemType>;
+    {
+        i == i
+        } -> std::same_as<bool>;
+};
+
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -211,6 +224,10 @@ public : template <typename FuncType>
     template <pipeline::Iterator IterType>
     co_pipeline(IterType begin, IterType end);
 
+    template <typename IncrementType>
+    requires pipeline::Incrementable<ItemType, IncrementType>
+    co_pipeline(const ItemType& begin, const ItemType& end, const IncrementType& inc);
+
     template <typename FuncType>
     requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
     auto operator|(FuncType func);
@@ -254,6 +271,24 @@ auto operator|(const ArrayType& a, const pipeline::stream_t<Size>& p)
 
 ////////////////////////////////////////////////////////////////////////////
 
+template <typename ItemType, int ChanSize>
+template <typename IncrementType>
+requires pipeline::Incrementable<ItemType, IncrementType>
+co_pipeline<ItemType, ChanSize>::co_pipeline(const ItemType& begin, const ItemType& end, const IncrementType& inc)
+{
+    co__ = std::make_shared<co>([ch = channel__, begin, end, inc]() mutable {
+        for (auto i = begin; i != end; i += inc)
+        {
+            if (!ch.push(i))
+            {
+                break;
+            }
+        }
+        ch.close();
+    });
+    co__->detach();
+}
+
 template <typename FuncType>
 requires std::invocable<FuncType>
 co_pipeline(FuncType)
@@ -269,9 +304,13 @@ template <pipeline::Iterator IterType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(IterType begin, IterType end)
 {
     co__ = std::make_shared<co>([ch = channel__, begin, end]() mutable {
-        std::for_each(begin, end, [ch](auto& item) mutable {
-            ch.push(item);
-        });
+        for (auto i = begin; i != end; ++i)
+        {
+            if (!ch.push(*i))
+            {
+                break;
+            }
+        }
         ch.close();
     });
     co__->detach();
@@ -290,16 +329,19 @@ requires pipeline::PipelineInitFunc<FuncType, ItemType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(FuncType init_func)
 {
     co__ = std::make_shared<co>([ch = channel__, init_func]() mutable {
-        while (true)
+        for (;;)
         {
             auto item = init_func();
             if (!item)
             {
-                ch.close();
                 break;
             }
-            ch.push(*item);
+            if (!ch.push(*item))
+            {
+                break;
+            }
         }
+        ch.close();
     });
     co__->detach();
 }
@@ -323,9 +365,13 @@ requires pipeline::Iterable<CollectionType>
 co_pipeline<ItemType, ChanSize>::co_pipeline(const CollectionType& col)
 {
     co__ = std::make_shared<co>([ch = channel__, col]() mutable {
-        std::ranges::for_each(col, [ch](auto& item) mutable {
-            ch.push(item);
-        });
+        for (const auto& t : col)
+        {
+            if (!ch.push(t))
+            {
+                break;
+            }
+        }
         ch.close();
     });
     co__->detach();
@@ -335,9 +381,13 @@ template <typename ItemType, int ChanSize>
 co_pipeline<ItemType, ChanSize>::co_pipeline(const std::initializer_list<ItemType>& col)
 {
     co__ = std::make_shared<co>([ch = channel__, col]() mutable {
-        std::ranges::for_each(col, [ch](auto& item) mutable {
-            ch.push(item);
-        });
+        for (const auto& t : col)
+        {
+            if (!ch.push(t))
+            {
+                break;
+            }
+        }
         ch.close();
     });
     co__->detach();
@@ -375,7 +425,10 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<OldType, ChanSize> ch, cons
                     {
                         break;
                     }
-                    this_ch.push(fork.func__(*item));
+                    if (!this_ch.push(fork.func__(*item)))
+                    {
+                        break;
+                    }
                 }
             });
         }
@@ -412,7 +465,10 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
         {
             if (filter.filter__(item))
             {
-                this_ch.push(item);
+                if (!this_ch.push(item))
+                {
+                    break;
+                }
             }
         }
 
@@ -475,7 +531,10 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
             auto result = ch.pop();
             if (result)
             {
-                this_ch.push(*result);
+                if (!this_ch.push(*result))
+                {
+                    break;
+                }
             }
             else
             {
@@ -483,10 +542,8 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
             }
         }
 
-        // FIXME: 如果先关闭this_ch，数据会发生错误
-        for (auto&& p [[maybe_unused]] : ch)
-            ; // 取出所有元素
         this_ch.close();
+        ch.close();
     });
     co__->detach();
 }
@@ -505,7 +562,10 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
         }
         for (auto&& p : ch)
         {
-            this_ch.push(p);
+            if (!this_ch.push(p))
+            {
+                break;
+            }
         }
         this_ch.close();
     });

@@ -196,7 +196,7 @@ TEST(core, pipeline)
 {
     int  source = 0;
     auto ch     = co_pipeline<int, 1>([&source]() -> std::optional<int> {
-                  if (source < 10000)
+                  if (source < 1000000)
                   {
                       return source++;
                   }
