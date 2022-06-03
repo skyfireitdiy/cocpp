@@ -85,6 +85,7 @@ public:
     void                         check_and_rethrow_exception();
     void                         lock_finished_state();
     void                         unlock_finished_state();
+    std::string                  ctx_info() const;
 
     template <typename T>
     T& local_storage(const std::string& name);

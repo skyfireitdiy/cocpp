@@ -68,6 +68,8 @@ public:
 
     static std::shared_ptr<co_timer>
     create(const std::function<void()>& func, std::chrono::steady_clock::time_point expire_time);
+
+    std::string timer_info();
 };
 
 bool operator==(const std::shared_ptr<co_timer>& lhs, const std::shared_ptr<co_timer>& rhs);

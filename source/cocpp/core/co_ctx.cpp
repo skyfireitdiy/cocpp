@@ -2,6 +2,9 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
+#include "cocpp/core/co_stack.h"
+#include "cocpp/core/co_vos.h"
+#include "cocpp/exception/co_exception.h"
 #include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_state_manager.h"
 
@@ -208,6 +211,69 @@ void co_ctx::lock_finished_state()
 void co_ctx::unlock_finished_state()
 {
     finish_lock__.unlock();
+}
+
+string co_ctx::ctx_info() const
+{
+    stringstream ss;
+    ss << "------------ ctx start -----------" << endl;
+    // config
+    ss << "name:" << config__.name << endl;
+    ss << "stack size:" << config__.stack_size << endl;
+    ss << "config priority:" << config__.priority << endl;
+    ss << "shared stack:" << (config__.shared_stack ? "true" : "false") << endl;
+    ss << "bind env:" << (config__.bind_env ? "true" : "false") << endl;
+
+    // stack
+    if (stack__)
+    {
+        ss << "stack:" << endl;
+        ss << stack__->stack_info() << endl;
+    }
+    else
+    {
+        ss << "stack:null" << endl;
+    }
+
+    // ret
+    ss << "ret: 0x" << hex << &ret__ << endl
+       << dec;
+
+    // priority
+    ss << "realtime priority:" << priority__ << endl;
+
+    // env
+    ss << "env: 0x" << hex << env__ << endl
+       << dec;
+
+    // locals
+    ss << "locals: \n";
+    for (auto& p : locals__)
+    {
+        ss << "  " << p.first << ": 0x" << hex << p.second << dec << endl;
+    }
+
+    // exception
+    ss << (exception__ ? "exception: true" : "exception: false") << endl;
+
+    // regs
+    ss << "regs: \n";
+    auto context = reinterpret_cast<const sigcontext_64*>(&regs__);
+    ss << regs_info(context) << endl;
+
+    // flags
+    ss << "flags: \n";
+    for (auto i = 0; i < CO_CTX_FLAG_MAX; ++i)
+    {
+        ss << i << ": " << (test_flag(i) ? "true" : "false") << endl;
+    }
+
+    // state
+    ss << "state: " << static_cast<int>(state()) << endl;
+
+    ss << "------------ ctx end -----------" << endl;
+
+    return ss.str();
 }
 
 CO_NAMESPACE_END

@@ -20,6 +20,7 @@
 #include <iterator>
 #include <mutex>
 #include <ranges>
+#include <sstream>
 #include <stdexcept>
 
 using namespace std;
@@ -57,7 +58,7 @@ void co_env::create_shared_stack__()
 void co_env::add_ctx(co_ctx* ctx)
 {
     assert(ctx != nullptr);
-    if (state() == co_env_state::created || state() == co_env_state::destorying)
+    if (state() == co_env_state::created || state() == co_env_state::destroying)
     {
         throw runtime_error("env state error");
     }
@@ -77,7 +78,7 @@ void co_env::add_ctx(co_ctx* ctx)
 void co_env::move_ctx_to_here(co_ctx* ctx)
 {
     assert(ctx != nullptr);
-    assert(state() != co_env_state::created && state() != co_env_state::destorying);
+    assert(state() != co_env_state::created && state() != co_env_state::destroying);
 
     ctx->set_env(this);
 
@@ -202,7 +203,7 @@ void co_env::remove_detached_ctx__()
 co_ctx* co_env::next_ctx__()
 {
     // 如果要销毁、并且可以销毁，切换到idle销毁
-    if (state() == co_env_state::destorying)
+    if (state() == co_env_state::destroying)
     {
         return idle_ctx__;
     }
@@ -331,7 +332,7 @@ void co_env::stop_schedule()
 {
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
-        set_state(co_env_state::destorying);
+        set_state(co_env_state::destroying);
     }
 
     wake_up();
@@ -373,7 +374,7 @@ void co_env::start_schedule_routine__()
     set_state(co_env_state::idle);
     {
         scoped_lock lock(schedule_lock__);
-        while (state() != co_env_state::destorying)
+        while (state() != co_env_state::destroying)
         {
             unlock_schedule();
             schedule_switch();
@@ -464,7 +465,7 @@ bool co_env::can_schedule_ctx() const
 {
 
     auto s = state();
-    return s != co_env_state::blocked && s != co_env_state::destorying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
+    return s != co_env_state::blocked && s != co_env_state::destroying && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
 }
 
 void co_env::handle_priority_changed(int old, co_ctx* ctx)
@@ -502,7 +503,7 @@ bool co_env::need_sleep__()
     // Hibernation requires the following conditions:
     // 1. No schedulable coroutines
     // 2. The destroy flag is not set
-    return !can_schedule__() && state() != co_env_state::destorying;
+    return !can_schedule__() && state() != co_env_state::destroying;
 }
 
 co_ctx* co_env::choose_ctx_from_normal_list__()
@@ -673,6 +674,72 @@ bool co_env::can_force_schedule() const
 co_recursive_mutex_with_count& co_env::schedule_lock()
 {
     return schedule_lock__;
+}
+
+std::string co_env::env_info()
+{
+    scoped_lock lock(schedule_lock__, mu_normal_ctx__, mu_min_priority__);
+
+    stringstream ss;
+
+    ss << "------------ env start -----------" << endl;
+    // flags
+    ss << "flags: \n";
+    for (auto i = 0; i < CO_ENV_FLAG_MAX; ++i)
+    {
+        ss << i << "=" << (test_flag(i) ? "true" : "false") << endl;
+    }
+
+    // state
+    ss << "state: " << static_cast<int>(state_manager__.state()) << endl;
+
+    // shared stack
+    if (shared_stack__)
+    {
+        ss << "shared stack: \n"
+           << endl;
+        ss << shared_stack__->stack_info() << endl;
+    }
+    else
+    {
+        ss << "shared stack: null" << endl;
+    }
+
+    // shared stack size
+    ss << "shared stack size: " << shared_stack_size__ << endl;
+
+    // idle ctx
+    if (idle_ctx__)
+    {
+        ss << "idle ctx:" << endl;
+        ss << idle_ctx__->ctx_info();
+    }
+    else
+    {
+        ss << "idle ctx: null" << endl;
+    }
+
+    // schedule thread tid
+    ss << "schedule thread tid: " << schedule_thread_tid__ << endl;
+
+    // min priority
+    ss << "min priority: " << min_priority__ << endl;
+
+    // normal ctx
+    ss << "normal ctx: " << endl;
+    for (size_t i = 0; i < all_normal_ctx__.size(); ++i)
+    {
+        ss << "priority " << i << ": " << endl;
+        for (auto&& ctx : all_normal_ctx__[i])
+        {
+
+            ss << ctx->ctx_info() << endl;
+        }
+    }
+
+    ss << "------------ env end -----------" << endl;
+
+    return ss.str();
 }
 
 void co_recursive_mutex_with_count::lock()

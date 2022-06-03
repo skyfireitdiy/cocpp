@@ -139,9 +139,39 @@ bool operator<(const shared_ptr<co_timer>& lhs, const shared_ptr<co_timer>& rhs)
 function<void()> co_timer::set_expire_callback(const function<void()>& func)
 {
     scoped_lock lock(mutex__);
-    auto             old_cb = callback__;
-    callback__              = func;
+    auto        old_cb = callback__;
+    callback__         = func;
     return old_cb;
+}
+
+string co_timer::timer_info()
+{
+    stringstream ss;
+
+    ss << "------------ timer start -----------" << endl;
+
+    scoped_lock lock(mutex__);
+
+    // timer handle
+    ss << "timer handle: " << handle__ << endl;
+    // expire type
+    ss << "expire type: " << (expire_type__ == co_expire_type::once ? "once" : "period") << endl;
+
+    // timer type
+    ss << "timer type: " << (timer_type__ == co_timer_type::absolute ? "absolute" : "relative") << endl;
+
+    // interval
+    ss << "interval: " << interval__ << endl;
+
+    // expire time
+    ss << "expire time: " << expire_time__.time_since_epoch() << endl;
+
+    // status
+    ss << "status: " << (status__ == co_timer_status::running ? "running" : "stopped") << endl;
+
+    ss << "------------ timer end -----------" << endl;
+
+    return ss.str();
 }
 
 CO_NAMESPACE_END

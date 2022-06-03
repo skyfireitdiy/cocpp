@@ -24,7 +24,7 @@ enum class co_env_state : unsigned char
     idle,
     busy,
     blocked,
-    destorying,
+    destroying,
     created,
 };
 

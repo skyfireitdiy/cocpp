@@ -62,7 +62,7 @@ class co_env final : private co_noncopyable
 
 private:
     co_flag_manager<CO_ENV_FLAG_MAX>                                                flag_manager__;
-    co_state_manager<co_env_state, co_env_state::created, co_env_state::destorying> state_manager__;
+    co_state_manager<co_env_state, co_env_state::created, co_env_state::destroying> state_manager__;
 
     std::future<void> worker__;
 
@@ -148,6 +148,7 @@ public:
     size_t                         ctx_count() const;
     void                           wake_up();
     bool                           can_force_schedule() const;
+    std::string                    env_info();
     co_recursive_mutex_with_count& schedule_lock();
 
     CoConstMemberMethodProxy(&state_manager__, state);

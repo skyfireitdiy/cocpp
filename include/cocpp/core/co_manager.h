@@ -101,6 +101,7 @@ public:
            const std::chrono::steady_clock::duration& duration);
     const std::chrono::steady_clock::duration& timing_duration() const;
     ~co_manager();
+    std::string manager_info();
 
     friend class co_singleton_static<co_manager>;
     friend class co_timer;

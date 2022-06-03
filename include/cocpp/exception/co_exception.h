@@ -46,7 +46,7 @@ struct sigcontext_64
 std::string backtrace();
 std::string maps_info();
 std::string time_info();
-std::string regs_info(sigcontext_64* ctx);
+std::string regs_info(const sigcontext_64* ctx);
 
 void print_debug_info(const std::string& item_name, std::function<std::string()> f);
 

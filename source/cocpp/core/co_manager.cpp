@@ -14,6 +14,7 @@
 #include <future>
 #include <mutex>
 #include <signal.h>
+#include <sstream>
 
 using namespace std;
 
@@ -541,6 +542,61 @@ void co_manager::remove_timer_from_queue__(shared_ptr<co_timer> timer)
     scoped_lock lock(mu_timer_queue__);
     timer_queue__.erase(timer);
     cv_timer_queue__.notify_one();
+}
+
+string co_manager::manager_info()
+{
+    scoped_lock lock(mu_timer_queue__, mu_timer_duration__, mu_timer_queue__);
+
+    stringstream ss;
+
+    // env set
+
+    {
+        scoped_lock lock(env_set__.normal_lock);
+        ss << "env set: " << endl;
+        // normal env
+        ss << "normal env: " << endl;
+        ss << "count: " << env_set__.normal_set.size() << endl;
+        for (auto&& env : env_set__.normal_set)
+        {
+            ss << env->env_info() << endl;
+        }
+
+        // expired env
+        ss << "expired env: " << endl;
+        ss << "count: " << env_set__.expired_set.size() << endl;
+        for (auto&& env : env_set__.expired_set)
+        {
+            ss << env->env_info() << endl;
+        }
+    }
+    // base env count
+    ss << "base env count: " << env_set__.base_env_count << endl;
+    // max env count
+    ss << "max env count: " << env_set__.max_env_count << endl;
+
+    // clean up
+    ss << "clean up: " << clean_up__ << endl;
+
+    // timer duration
+    ss << "timer duration: " << timer_duration__.count() << endl;
+
+    // timer queue
+    ss << "timer queue: " << endl;
+    {
+        scoped_lock lock(mu_timer_queue__);
+        ss << "count: " << timer_queue__.size() << endl;
+        for (auto&& timer : timer_queue__)
+        {
+            ss << timer->timer_info() << endl;
+        }
+    }
+
+    // default shared stack size
+    ss << "default shared stack size: " << default_shared_stack_size__ << endl;
+
+    return ss.str();
 }
 
 CO_NAMESPACE_END

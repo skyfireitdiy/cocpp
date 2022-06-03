@@ -1,5 +1,6 @@
 #include "cocpp/exception/co_exception.h"
 #include "cocpp/core/co_define.h"
+#include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_vos.h"
 #include <execinfo.h>
 #include <signal.h>
@@ -44,7 +45,14 @@ string backtrace()
 
 void handle_exception(sigcontext_64* context, int sig)
 {
-    printf("signal %d\n", sig);
+    fprintf(stderr, "signal %d\n", sig);
+    static bool in_exception = false;
+    if (in_exception)
+    {
+        fprintf(stderr, "exception occurs in exception handler\n");
+        exit(1);
+    }
+    in_exception = true;
     print_debug_info("time info", time_info);
     print_debug_info("regs info", [context]() {
         return regs_info(context);
@@ -52,6 +60,9 @@ void handle_exception(sigcontext_64* context, int sig)
 
     print_debug_info("maps info", maps_info);
     print_debug_info("backtrace", backtrace);
+    print_debug_info("co info", []() {
+        return co_manager::instance()->manager_info();
+    });
     exit(1);
 }
 
@@ -74,13 +85,6 @@ std::string time_info()
     char   buf[64];
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&t));
     return buf;
-}
-
-void print_time_info()
-{
-    printf("=================== time info start ===================\n");
-    printf("%s\n", time_info().c_str());
-    printf("=================== time info end =====================\n");
 }
 
 std::string maps_info()
@@ -108,12 +112,7 @@ std::string maps_info()
     return ss.str();
 }
 
-void print_maps_info()
-{
-    printf("=================== maps info start ===================\n");
-    printf("%s\n", maps_info().c_str());
-    printf("=================== maps info end =====================\n");
-}
+
 
 void signal_handler(int signo)
 {
@@ -133,7 +132,7 @@ void signal_handler(int signo)
     }
 }
 
-std::string regs_info(sigcontext_64* ctx)
+std::string regs_info(const sigcontext_64* ctx)
 {
     stringstream ss;
 #define OUT_PUT_REG(name) ss << #name ": 0x" << hex << ctx->name << dec << "(" << ctx->name << ")" << endl
@@ -164,9 +163,9 @@ std::string regs_info(sigcontext_64* ctx)
 
 void print_debug_info(const std::string& item_name, std::function<std::string()> f)
 {
-    printf("=================== %s start ===================\n", item_name.c_str());
-    printf("%s\n", f().c_str());
-    printf("=================== %s end ===================\n", item_name.c_str());
+    fprintf(stderr, "=================== %s start ===================\n", item_name.c_str());
+    fprintf(stderr, "%s\n", f().c_str());
+    fprintf(stderr, "=================== %s end ===================\n", item_name.c_str());
 }
 
 CO_NAMESPACE_END

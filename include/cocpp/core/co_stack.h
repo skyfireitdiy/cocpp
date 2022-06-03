@@ -13,9 +13,10 @@ class co_stack final : private co_noncopyable
     co_stack(co_byte* ptr, size_t stack_size);
 
 public:
-    size_t   stack_size() const;
-    co_byte* stack() const;
-    co_byte* stack_top() const;
+    size_t      stack_size() const;
+    co_byte*    stack() const;
+    co_byte*    stack_top() const;
+    std::string stack_info() const;
 
     friend class co_object_pool<co_stack>;
 };
