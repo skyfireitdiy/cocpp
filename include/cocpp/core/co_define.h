@@ -46,6 +46,8 @@ constexpr int CO_ENV_FLAG_MAX               = 8;
 constexpr int CO_IDLE_CTX_PRIORITY = 99;
 constexpr int CO_MAX_PRIORITY      = 100;
 
+constexpr int CO_SWITCH_SIGNAL = 10;
+
 CO_NAMESPACE_END
 
 #define CO_OUTPUT(level, fmt, ...)                                                     \

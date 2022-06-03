@@ -6,12 +6,14 @@
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/core/co_timer.h"
 #include "cocpp/core/co_vos.h"
+#include "cocpp/exception/co_exception.h"
 #include "cocpp/sync/co_spinlock.h"
 #include "cocpp/utils/co_defer.h"
 #include <cassert>
 #include <cstddef>
 #include <future>
 #include <mutex>
+#include <signal.h>
 
 using namespace std;
 
@@ -172,8 +174,8 @@ void co_manager::free_mem__()
 co_manager::co_manager()
 {
     subscribe_manager_event__();
-    setup_switch_handler();
     create_background_task__();
+    set_up_signal_handler({ CO_SWITCH_SIGNAL, SIGHUP, SIGINT, SIGTERM, SIGQUIT, SIGABRT, SIGSEGV, SIGBUS, SIGFPE, SIGILL, SIGSYS, SIGXCPU, SIGXFSZ, SIGPIPE });
 }
 
 void co_manager::remove_env__(co_env* env)

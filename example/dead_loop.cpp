@@ -10,6 +10,8 @@ void deadloop()
 {
     while (!stop_flag)
     {
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(1ms);
         printf("deadloop\n");
     }
     printf("deadloop exit\n");
