@@ -224,17 +224,6 @@ string co_ctx::ctx_info() const
     ss << "shared stack:" << (config__.shared_stack ? "true" : "false") << endl;
     ss << "bind env:" << (config__.bind_env ? "true" : "false") << endl;
 
-    // stack
-    if (stack__)
-    {
-        ss << "stack:" << endl;
-        ss << stack__->stack_info() << endl;
-    }
-    else
-    {
-        ss << "stack:null" << endl;
-    }
-
     // ret
     ss << "ret: 0x" << hex << &ret__ << endl
        << dec;
@@ -260,6 +249,25 @@ string co_ctx::ctx_info() const
     ss << "regs: \n";
     auto context = reinterpret_cast<const sigcontext_64*>(&regs__);
     ss << regs_info(context) << endl;
+
+    // stack
+    if (stack__)
+    {
+        ss << "stack:" << endl;
+        ss << stack__->stack_info() << endl;
+        if ((void*)context->sp < (void*)stack__->stack_top() && (void*)context->sp >= (void*)stack__->stack())
+        {
+            ss << dump_memory((co_byte*)context->sp, stack__->stack_top() - (co_byte*)context->sp) << endl;
+        }
+        else
+        {
+            ss << "stack ok" << endl;
+        }
+    }
+    else
+    {
+        ss << "stack:null" << endl;
+    }
 
     // flags
     ss << "flags: \n";

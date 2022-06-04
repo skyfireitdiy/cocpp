@@ -35,6 +35,7 @@ string co_stack::stack_info() const
     ss << "  stack: 0x" << hex << (void*)stack() << dec << endl;
     ss << "  stack top: 0x" << hex << (void*)stack_top() << dec
        << endl;
+
     return ss.str();
 }
 

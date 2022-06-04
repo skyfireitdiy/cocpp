@@ -47,6 +47,7 @@ std::string backtrace();
 std::string maps_info();
 std::string time_info();
 std::string regs_info(const sigcontext_64* ctx);
+std::string dump_memory(const co_byte* addr, size_t size);
 
 void print_debug_info(const std::string& item_name, std::function<std::string()> f);
 

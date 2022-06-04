@@ -3,6 +3,7 @@
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_vos.h"
 #include <execinfo.h>
+#include <iomanip>
 #include <signal.h>
 #include <sstream>
 #include <unistd.h>
@@ -50,7 +51,7 @@ void handle_exception(sigcontext_64* context, int sig)
     if (in_exception)
     {
         fprintf(stderr, "exception occurs in exception handler\n");
-        exit(1);
+        exit(128 - sig);
     }
     in_exception = true;
     print_debug_info("time info", time_info);
@@ -63,7 +64,7 @@ void handle_exception(sigcontext_64* context, int sig)
     print_debug_info("co info", []() {
         return co_manager::instance()->manager_info();
     });
-    exit(1);
+    exit(128 - sig);
 }
 
 void set_up_signal_handler(const std::vector<int>& signals)
@@ -111,8 +112,6 @@ std::string maps_info()
     fclose(fp);
     return ss.str();
 }
-
-
 
 void signal_handler(int signo)
 {
@@ -166,6 +165,26 @@ void print_debug_info(const std::string& item_name, std::function<std::string()>
     fprintf(stderr, "=================== %s start ===================\n", item_name.c_str());
     fprintf(stderr, "%s\n", f().c_str());
     fprintf(stderr, "=================== %s end ===================\n", item_name.c_str());
+}
+
+std::string dump_memory(const co_byte* addr, size_t size)
+{
+    stringstream ss;
+    for (size_t i = 0; i < size; i += sizeof(uint64_t))
+    {
+        if (i % (4 * sizeof(uint64_t)) == 0)
+        {
+            ss << "0x" << hex << setw(16) << setfill('0') << (void*)(addr + i)
+               << ": ";
+        }
+        ss << hex << setw(16) << setfill('0') << (*(uint64_t*)(addr + i))
+           << " ";
+        if (i % (4 * sizeof(uint64_t)) == 3 * sizeof(uint64_t))
+        {
+            ss << endl;
+        }
+    }
+    return ss.str();
 }
 
 CO_NAMESPACE_END

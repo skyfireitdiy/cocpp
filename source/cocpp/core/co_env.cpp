@@ -729,6 +729,10 @@ std::string co_env::env_info()
     ss << "normal ctx: " << endl;
     for (size_t i = 0; i < all_normal_ctx__.size(); ++i)
     {
+        if (all_normal_ctx__[i].empty())
+        {
+            continue;
+        }
         ss << "priority " << i << ": " << endl;
         for (auto&& ctx : all_normal_ctx__[i])
         {
