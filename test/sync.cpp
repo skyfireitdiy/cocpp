@@ -36,10 +36,10 @@ TEST(sync, mutex_try_lock)
 
     co c1([&]() {
         scoped_lock lock(mu);
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
     });
 
-    this_co::sleep_for(500ms);
+    this_co::sleep_for(50ms);
     EXPECT_FALSE(mu.try_lock());
     c1.join();
 }
@@ -123,12 +123,12 @@ TEST(sync, timed_mutex_lock_for)
     co_timed_mutex mu;
     co             c1([&] {
         mu.lock();
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         mu.unlock();
                 });
-    this_co::sleep_for(500ms);
-    EXPECT_FALSE(mu.try_lock_for(100ms));
-    EXPECT_TRUE(mu.try_lock_for(600ms));
+    this_co::sleep_for(50ms);
+    EXPECT_FALSE(mu.try_lock_for(10ms));
+    EXPECT_TRUE(mu.try_lock_for(60ms));
     mu.unlock();
     c1.join();
 }
@@ -139,10 +139,10 @@ TEST(sync, shared_mutex_shared_lock)
 
     co c1([&] {
         mu.lock_shared();
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         mu.unlock_shared();
     });
-    this_co::sleep_for(500ms);
+    this_co::sleep_for(50ms);
     EXPECT_TRUE(mu.try_lock_shared());
     mu.unlock_shared();
     c1.join();
@@ -154,10 +154,10 @@ TEST(sync, shared_mutex_try_lock_shared_locked_mutex)
 
     co c1([&] {
         mu.lock();
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         mu.unlock();
     });
-    this_co::sleep_for(500ms);
+    this_co::sleep_for(50ms);
     EXPECT_FALSE(mu.try_lock_shared());
     c1.join();
 }
@@ -168,10 +168,10 @@ TEST(sync, shared_mutex_lock_try_lock_shared_locked_mutex)
 
     co c1([&] {
         mu.lock_shared();
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         mu.unlock_shared();
     });
-    this_co::sleep_for(500ms);
+    this_co::sleep_for(50ms);
     EXPECT_FALSE(mu.try_lock());
     c1.join();
 }
@@ -182,10 +182,10 @@ TEST(sync, shared_mutex_lock_try_lock_locked_mutex)
 
     co c1([&] {
         mu.lock();
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         mu.unlock();
     });
-    this_co::sleep_for(500ms);
+    this_co::sleep_for(50ms);
     EXPECT_FALSE(mu.try_lock());
     c1.join();
 }
@@ -196,12 +196,12 @@ TEST(sync, shared_timed_mutex_try_lock_for_locked_shread_mutex)
 
     co c1([&] {
         mu.lock_shared();
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         mu.unlock_shared();
     });
-    this_co::sleep_for(500ms);
-    EXPECT_FALSE(mu.try_lock_for(100ms));
-    EXPECT_TRUE(mu.try_lock_for(600ms));
+    this_co::sleep_for(50ms);
+    EXPECT_FALSE(mu.try_lock_for(10ms));
+    EXPECT_TRUE(mu.try_lock_for(60ms));
     mu.unlock();
     c1.join();
 }
@@ -212,12 +212,12 @@ TEST(sync, shared_timed_mutex_try_lock_for_locked_mutex)
 
     co c1([&] {
         mu.lock();
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         mu.unlock();
     });
-    this_co::sleep_for(500ms);
-    EXPECT_FALSE(mu.try_lock_for(100ms));
-    EXPECT_TRUE(mu.try_lock_for(600ms));
+    this_co::sleep_for(50ms);
+    EXPECT_FALSE(mu.try_lock_for(10ms));
+    EXPECT_TRUE(mu.try_lock_for(60ms));
     mu.unlock();
     c1.join();
 }
@@ -228,12 +228,12 @@ TEST(sync, shared_timed_mutex_try_lock_shared_for_locked_mutex)
 
     co c1([&] {
         mu.lock();
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         mu.unlock();
     });
-    this_co::sleep_for(500ms);
-    EXPECT_FALSE(mu.try_lock_shared_for(100ms));
-    EXPECT_TRUE(mu.try_lock_shared_for(800ms));
+    this_co::sleep_for(50ms);
+    EXPECT_FALSE(mu.try_lock_shared_for(10ms));
+    EXPECT_TRUE(mu.try_lock_shared_for(80ms));
     mu.unlock_shared();
     c1.join();
 }
@@ -250,7 +250,7 @@ TEST(sync, condition_variable_notify_one)
         n -= 5;
     });
     n /= 2;
-    this_co::sleep_for(1s);
+    this_co::sleep_for(100ms);
     EXPECT_EQ(n, 50);
     cond.notify_one();
     c1.join();
@@ -274,7 +274,7 @@ TEST(sync, condition_variable_notify_all)
         n -= 10;
     });
     n /= 2;
-    this_co::sleep_for(1s);
+    this_co::sleep_for(100ms);
     EXPECT_EQ(n, 50);
     cond.notify_all();
     c1.join();
@@ -290,7 +290,7 @@ TEST(sync, condition_variable_notify_at_co_exit)
 
     co c1([&] {
         notify_all_at_co_exit(cond);
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         n /= 2;
     });
     c1.detach();

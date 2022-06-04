@@ -51,14 +51,14 @@ TEST(chan, buffered)
     // auto env = co::create_env(true);
 
     co c1([&] {
-        for (int i = 0; i < 10000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             ch.push(i);
         }
         ch.close();
     });
 
-    for (int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 1000; ++i)
     {
         EXPECT_EQ(ch.pop(), i);
     }
@@ -92,14 +92,14 @@ TEST(chan, no_buf)
 {
     co_chan<int, 0> ch;
     co              c1([&] {
-        for (int i = 0; i < 10000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             ch << i;
         }
         ch.close();
                  });
 
-    for (int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 1000; ++i)
     {
         int t = ch.pop().value();
         EXPECT_EQ(t, i);
@@ -116,7 +116,7 @@ TEST(chan, no_buffered_iterator)
     vector<int> pop;
 
     co c1([&] {
-        for (auto &&p : push)
+        for (auto&& p : push)
         {
             ch.push(p);
         }
@@ -154,7 +154,7 @@ TEST(chan, no_buffered_operator_less)
     vector<int> pop;
 
     co c1([&] {
-        for (auto &&p : push)
+        for (auto&& p : push)
         {
             [[maybe_unused]] auto ret = ch < p;
         }
@@ -214,7 +214,7 @@ TEST(chan, push_to_full_chan_closed)
     co_chan<int, 1> ch;
     ch.push(1);
     co c1([&] {
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         ch.close();
     });
     EXPECT_FALSE(ch.push(1));
@@ -225,7 +225,7 @@ TEST(chan, pop_from_empty_chan_closed)
 {
     co_chan<int, 1> ch;
     co              c1([&] {
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         ch.close();
                  });
     EXPECT_FALSE(ch.pop());
@@ -236,7 +236,7 @@ TEST(chan, pop_from_zero_chan_closed)
 {
     co_chan<int, 0> ch;
     co              c1([&] {
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
         ch.close();
                  });
     EXPECT_FALSE(ch.pop());

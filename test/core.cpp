@@ -95,11 +95,11 @@ TEST(core, return_value)
 TEST(core, wait_timeout)
 {
     co   c1([]() {
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
       });
     auto ret = c1.wait_for(1ms);
     EXPECT_FALSE(ret);
-    ret = c1.wait_for(10s);
+    ret = c1.wait_for(1s);
     EXPECT_TRUE(ret);
 }
 
@@ -135,7 +135,7 @@ TEST(core, co_wait_priority)
     auto env = co::create_env(true);
 
     co c1({ with_priority(99), with_bind_env(env) }, [] {
-        this_co::sleep_for(1s);
+        this_co::sleep_for(100ms);
     });
 
     co c2({ with_priority(0), with_bind_env(env) }, [&] {
@@ -202,8 +202,8 @@ TEST(core, pipeline)
                   }
                   return std::nullopt;
               })
-              | pipeline::left(2000)
-              | pipeline::not_left(1000)
+              | pipeline::left(200)
+              | pipeline::not_left(100)
               | pipeline::fork(10, [](int n) -> int {
                     return n * 2;
                 })
@@ -213,5 +213,5 @@ TEST(core, pipeline)
     // {
     //     cout << p << endl;
     // }
-    EXPECT_EQ(ch.pop(), 999000);
+    EXPECT_EQ(ch.pop(), 9900);
 }
