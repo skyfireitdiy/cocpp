@@ -25,7 +25,7 @@ co_env* co_manager::get_best_env__()
     scoped_lock lck(env_set__.normal_lock);
     if (env_set__.normal_set.empty())
     {
-        return create_env(true);
+        return create_env(false);
     }
 
     co_env* best_env               = nullptr;
@@ -57,14 +57,14 @@ co_env* co_manager::get_best_env__()
     // 如果没有可用的env，就创建
     if (best_env == nullptr)
     {
-        auto ret = create_env(true);
+        auto ret = create_env(false);
         return ret;
     }
 
     // 如果可用于调度的env数量小于基础线程数量，创建一个来调度新的ctx
     if (can_schedule_env_count < env_set__.base_env_count)
     {
-        auto ret = create_env(true);
+        auto ret = create_env(false);
         return ret;
     }
     return best_env;
@@ -73,6 +73,7 @@ co_env* co_manager::get_best_env__()
 void co_manager::subscribe_env_event__(co_env* env)
 {
     env->task_finished().sub([this, env]() {
+        CO_O_DEBUG("env %p task finished", env);
         remove_env__(env);
     });
 }
@@ -84,16 +85,16 @@ void co_manager::subscribe_ctx_event__(co_ctx* ctx)
     });
 }
 
-co_env* co_manager::create_env(bool dont_auto_destory)
+co_env* co_manager::create_env(bool dont_auto_destroy)
 {
     assert(!clean_up__);
     auto env = co_env_factory::instance()->create_env(default_shared_stack_size__);
 
     subscribe_env_event__(env);
 
-    if (dont_auto_destory)
+    if (dont_auto_destroy)
     {
-        env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY);
+        env->set_flag(CO_ENV_FLAG_DONT_AUTO_DESTROY);
     }
     scoped_lock lck(env_set__.normal_lock);
 
@@ -122,7 +123,7 @@ void co_manager::create_background_task__()
 
 void co_manager::subscribe_manager_event__()
 {
-    timing_routine_timout().sub([this] {
+    timing_routine_timeout().sub([this] {
         // 每两次超时重新分配一次
         static bool double_timeout = false;
 
@@ -135,7 +136,7 @@ void co_manager::subscribe_manager_event__()
             // 重新调度
             redistribute_ctx__();
             // 偷取ctx
-            steal_ctx_routine__();
+            // steal_ctx_routine__();
             // 销毁多余的env
             destroy_redundant_env__();
             // 释放内存
@@ -181,6 +182,7 @@ co_manager::co_manager()
 
 void co_manager::remove_env__(co_env* env)
 {
+    CO_O_DEBUG("remove env");
     scoped_lock lock(env_set__.normal_lock);
     env_set__.normal_set.erase(env);
     env_set__.expired_set.insert(env);
@@ -347,6 +349,10 @@ void co_manager::destroy_redundant_env__()
         {
             ++can_schedule_env_count;
         }
+        if (env->state() == co_env_state::idle)
+        {
+            CO_O_DEBUG("env->state() == co_env_state::idle : %d env->can_auto_destroy() : %d !env->has_ctx() : %d", env->state() == co_env_state::idle, env->can_auto_destroy(), !env->has_ctx());
+        }
         if (env->state() == co_env_state::idle && env->can_auto_destroy() && !env->has_ctx()) // 如果状态是空闲，并且可以可以被自动销毁线程选中
         {
             idle_env_list.push_back(env);
@@ -356,6 +362,7 @@ void co_manager::destroy_redundant_env__()
     if (can_schedule_env_count > env_set__.max_env_count)
     {
         auto should_destroy_count = can_schedule_env_count - env_set__.max_env_count;
+        CO_O_DEBUG("can_schedule_env_count > env_set__.max_env_count, should destroy %ld, idle env count: %ld", should_destroy_count, idle_env_list.size());
         for (size_t i = 0; i < should_destroy_count && i < idle_env_list.size(); ++i)
         {
             idle_env_list[i]->stop_schedule();
@@ -370,7 +377,7 @@ void co_manager::monitor_routine__()
     {
         lck.unlock();
         this_thread::sleep_for(timing_duration());
-        timing_routine_timout().pub();
+        timing_routine_timeout().pub();
         lck.lock();
     }
 }

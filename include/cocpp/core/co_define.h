@@ -37,9 +37,9 @@ constexpr int CO_CTX_FLAG_SHARED_STACK = 4;
 constexpr int CO_CTX_FLAG_MAX          = 8;
 
 constexpr int CO_ENV_FLAG_NO_SCHE_THREAD    = 0;
-constexpr int CO_ENV_FLAG_COVERTED          = 1;
+constexpr int CO_ENV_FLAG_CONVERTED         = 1;
 constexpr int CO_ENV_FLAG_SCHEDULED         = 2;
-constexpr int CO_ENV_FLAG_DONT_AUTO_DESTORY = 3;
+constexpr int CO_ENV_FLAG_DONT_AUTO_DESTROY = 3;
 constexpr int CO_ENV_FLAG_EXCLUSIVE         = 4;
 constexpr int CO_ENV_FLAG_MAX               = 8;
 

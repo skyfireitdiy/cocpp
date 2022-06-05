@@ -27,7 +27,7 @@ struct co_ctx_config;
 using namespace std::chrono_literals;
 class co_manager final : public co_singleton_static<co_manager>
 {
-    RegCoEvent(timing_routine_timout);
+    RegCoEvent(timing_routine_timeout);
 
 private:
     struct

@@ -45,7 +45,7 @@ co_env::co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_threa
     else
     {
         set_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
-        set_flag(CO_ENV_FLAG_COVERTED);
+        set_flag(CO_ENV_FLAG_CONVERTED);
         current_env__ = this;
     }
 }
@@ -330,6 +330,7 @@ co_ctx* co_env::current_ctx() const
 
 void co_env::stop_schedule()
 {
+    CO_O_DEBUG("set stop schedule flag");
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
         set_state(co_env_state::destroying);
@@ -387,6 +388,7 @@ void co_env::start_schedule_routine__()
             }
 
             // Switch to the idle coroutine, indicating that it is idle
+            CO_O_DEBUG("to be idle");
             set_state(co_env_state::idle);
             unlock_schedule();
             sleep_if_need__();
@@ -397,6 +399,7 @@ void co_env::start_schedule_routine__()
     remove_all_ctx__();
     task_finished().pub();
     current_env__ = nullptr;
+    CO_O_DEBUG("schedule thread exit");
 }
 
 void co_env::schedule_in_this_thread()
@@ -423,7 +426,12 @@ void co_env::reset_scheduled_flag()
 bool co_env::can_auto_destroy() const
 {
     // 如果是用户自己转换的env，不能被选中销毁
-    return !test_flag(CO_ENV_FLAG_COVERTED) && !test_flag(CO_ENV_FLAG_DONT_AUTO_DESTORY) && !test_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
+    CO_O_DEBUG("---------");
+    CO_O_DEBUG("test_flag(CO_ENV_FLAG_CONVERTED): %d", test_flag(CO_ENV_FLAG_CONVERTED));
+    CO_O_DEBUG("test_flag(CO_ENV_FLAG_DONT_AUTO_DESTROY): %d", test_flag(CO_ENV_FLAG_DONT_AUTO_DESTROY));
+    CO_O_DEBUG("test_flag(CO_ENV_FLAG_NO_SCHE_THREAD): %d", test_flag(CO_ENV_FLAG_NO_SCHE_THREAD));
+    CO_O_DEBUG("**********");
+    return !(test_flag(CO_ENV_FLAG_CONVERTED) || test_flag(CO_ENV_FLAG_DONT_AUTO_DESTROY) || test_flag(CO_ENV_FLAG_NO_SCHE_THREAD));
 }
 
 size_t co_env::get_valid_stack_size__(co_ctx* ctx)
