@@ -426,11 +426,6 @@ void co_env::reset_scheduled_flag()
 bool co_env::can_auto_destroy() const
 {
     // 如果是用户自己转换的env，不能被选中销毁
-    CO_O_DEBUG("---------");
-    CO_O_DEBUG("test_flag(CO_ENV_FLAG_CONVERTED): %d", test_flag(CO_ENV_FLAG_CONVERTED));
-    CO_O_DEBUG("test_flag(CO_ENV_FLAG_DONT_AUTO_DESTROY): %d", test_flag(CO_ENV_FLAG_DONT_AUTO_DESTROY));
-    CO_O_DEBUG("test_flag(CO_ENV_FLAG_NO_SCHE_THREAD): %d", test_flag(CO_ENV_FLAG_NO_SCHE_THREAD));
-    CO_O_DEBUG("**********");
     return !(test_flag(CO_ENV_FLAG_CONVERTED) || test_flag(CO_ENV_FLAG_DONT_AUTO_DESTROY) || test_flag(CO_ENV_FLAG_NO_SCHE_THREAD));
 }
 

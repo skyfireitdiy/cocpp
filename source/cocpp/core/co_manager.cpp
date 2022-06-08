@@ -349,10 +349,6 @@ void co_manager::destroy_redundant_env__()
         {
             ++can_schedule_env_count;
         }
-        if (env->state() == co_env_state::idle)
-        {
-            CO_O_DEBUG("env->state() == co_env_state::idle : %d env->can_auto_destroy() : %d !env->has_ctx() : %d", env->state() == co_env_state::idle, env->can_auto_destroy(), !env->has_ctx());
-        }
         if (env->state() == co_env_state::idle && env->can_auto_destroy() && !env->has_ctx()) // 如果状态是空闲，并且可以可以被自动销毁线程选中
         {
             idle_env_list.push_back(env);
