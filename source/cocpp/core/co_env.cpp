@@ -330,7 +330,6 @@ co_ctx* co_env::current_ctx() const
 
 void co_env::stop_schedule()
 {
-    CO_O_DEBUG("set stop schedule flag");
     if (!test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
     {
         set_state(co_env_state::destroying);
@@ -388,7 +387,6 @@ void co_env::start_schedule_routine__()
             }
 
             // Switch to the idle coroutine, indicating that it is idle
-            CO_O_DEBUG("to be idle");
             set_state(co_env_state::idle);
             unlock_schedule();
             sleep_if_need__();
@@ -399,7 +397,6 @@ void co_env::start_schedule_routine__()
     remove_all_ctx__();
     task_finished().pub();
     current_env__ = nullptr;
-    CO_O_DEBUG("schedule thread exit");
 }
 
 void co_env::schedule_in_this_thread()

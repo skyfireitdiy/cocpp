@@ -73,7 +73,6 @@ co_env* co_manager::get_best_env__()
 void co_manager::subscribe_env_event__(co_env* env)
 {
     env->task_finished().sub([this, env]() {
-        CO_O_DEBUG("env %p task finished", env);
         remove_env__(env);
     });
 }
@@ -136,7 +135,7 @@ void co_manager::subscribe_manager_event__()
             // 重新调度
             redistribute_ctx__();
             // 偷取ctx
-            // steal_ctx_routine__();
+            steal_ctx_routine__();
             // 销毁多余的env
             destroy_redundant_env__();
             // 释放内存
@@ -182,7 +181,6 @@ co_manager::co_manager()
 
 void co_manager::remove_env__(co_env* env)
 {
-    CO_O_DEBUG("remove env");
     scoped_lock lock(env_set__.normal_lock);
     env_set__.normal_set.erase(env);
     env_set__.expired_set.insert(env);
@@ -358,7 +356,6 @@ void co_manager::destroy_redundant_env__()
     if (can_schedule_env_count > env_set__.max_env_count)
     {
         auto should_destroy_count = can_schedule_env_count - env_set__.max_env_count;
-        CO_O_DEBUG("can_schedule_env_count > env_set__.max_env_count, should destroy %ld, idle env count: %ld", should_destroy_count, idle_env_list.size());
         for (size_t i = 0; i < should_destroy_count && i < idle_env_list.size(); ++i)
         {
             idle_env_list[i]->stop_schedule();
