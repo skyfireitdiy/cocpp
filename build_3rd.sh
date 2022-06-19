@@ -10,5 +10,3 @@ make install
 cd ..
 rm -rf gtest_build
 
-cd mockcpp
-./build_install4gtest.sh $(pwd)/../gtest_install $(pwd)/../mockcpp_install
