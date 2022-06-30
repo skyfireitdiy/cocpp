@@ -117,9 +117,9 @@ struct reduce_t
     InitType   init__;
 };
 
-template <int Size>
 struct stream_t
 {
+    const int size__ = -1;
 };
 
 struct left_t
@@ -164,9 +164,6 @@ auto reduce(ReduceType reducer, InitType init)
     return reduce_t<ReduceType, InitType> { .reducer__ = reducer, .init__ = init };
 }
 
-template <int Size>
-constexpr auto stream() { return stream_t<Size> {}; }
-
 left_t left(size_t n);
 
 not_left_t not_left(size_t n);
@@ -181,52 +178,54 @@ auto fork(size_t n, FuncType f)
     return fork_t<FuncType> { .fork_count__ = n, .func__ = f };
 }
 
+stream_t stream(int size);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////
 
-template <typename ItemType, int ChanSize = -1>
+template <typename ItemType>
 class co_pipeline final : private co_noncopyable
 {
 private:
-    std::shared_ptr<co>         co__;
-    co_chan<ItemType, ChanSize> channel__;
+    std::shared_ptr<co> co__;
+    co_chan<ItemType>   channel__;
 
     template <typename FilterType>
     requires pipeline::FilterFunc<FilterType, ItemType>
-    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<FilterType>& filter);
+    co_pipeline(co_chan<ItemType> ch, const pipeline::filter_t<FilterType>& filter);
 
     template <typename ReduceType, typename InitType>
     requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
-    co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer);
+    co_pipeline(co_chan<InitType> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer);
 
-    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::left_t& left);
+    co_pipeline(co_chan<ItemType> ch, const pipeline::left_t& left);
 
-    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::not_left_t& not_left);
+    co_pipeline(co_chan<ItemType> ch, const pipeline::not_left_t& not_left);
 
     template <typename FuncType, typename OldType>
     requires pipeline::ReturnIsNotVoid<FuncType, OldType>
-    co_pipeline(co_chan<OldType, ChanSize> ch, const pipeline::fork_t<FuncType>& fork);
+    co_pipeline(co_chan<OldType> ch, const pipeline::fork_t<FuncType>& fork);
 
 public : template <typename FuncType>
     requires pipeline::PipelineInitFunc<FuncType, ItemType>
-    co_pipeline(FuncType init_func);
+    co_pipeline(FuncType init_func, int max_chan_size = -1);
 
     template <typename CollectionType>
     requires pipeline::Iterable<CollectionType>
-    co_pipeline(const CollectionType& col);
+    co_pipeline(const CollectionType& col, int max_chan_size = -1);
 
     template <pipeline::Array ArrayType>
-    co_pipeline(const ArrayType& arr);
+    co_pipeline(const ArrayType& arr, int max_chan_size = -1);
 
-    co_pipeline(const std::initializer_list<ItemType>& col);
+    co_pipeline(const std::initializer_list<ItemType>& col, int max_chan_size = -1);
 
     template <pipeline::Iterator IterType>
-    co_pipeline(IterType begin, IterType end);
+    co_pipeline(IterType begin, IterType end, int max_chan_size = -1);
 
     template <typename IncrementType>
     requires pipeline::Incrementable<ItemType, IncrementType>
-    co_pipeline(const ItemType& begin, const ItemType& end, const IncrementType& inc);
+    co_pipeline(const ItemType& begin, const ItemType& end, const IncrementType& inc, int max_chan_size = -1);
 
     template <typename FuncType>
     requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
@@ -257,24 +256,25 @@ public : template <typename FuncType>
 
 ////////////////////////////////////////////////////////////////////////////
 
-template <pipeline::Collection CollectionType, int Size>
-auto operator|(const CollectionType& c, const pipeline::stream_t<Size>& p)
+template <pipeline::Collection CollectionType>
+auto operator|(const CollectionType& c, const pipeline::stream_t& p)
 {
-    return co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, Size>(c);
+    return co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>>(c);
 }
 
-template <pipeline::Array ArrayType, int Size>
-auto operator|(const ArrayType& a, const pipeline::stream_t<Size>& p)
+template <pipeline::Array ArrayType>
+auto operator|(const ArrayType& a, const pipeline::stream_t& p)
 {
-    return co_pipeline<std::decay_t<decltype(*std::begin(std::declval<ArrayType>()))>, Size>(a);
+    return co_pipeline<std::decay_t<decltype(*std::begin(std::declval<ArrayType>()))>>(a);
 }
 
 ////////////////////////////////////////////////////////////////////////////
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename IncrementType>
 requires pipeline::Incrementable<ItemType, IncrementType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(const ItemType& begin, const ItemType& end, const IncrementType& inc)
+co_pipeline<ItemType>::co_pipeline(const ItemType& begin, const ItemType& end, const IncrementType& inc, int max_chan_size)
+    : channel__(max_chan_size)
 {
     co__ = std::make_shared<co>([ch = channel__, begin, end, inc]() mutable {
         for (auto i = begin; i != end; i += inc)
@@ -292,16 +292,17 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(const ItemType& begin, const ItemTy
 template <typename FuncType>
 requires std::invocable<FuncType>
 co_pipeline(FuncType)
-->co_pipeline<std::decay_t<decltype(*std::declval<std::invoke_result_t<FuncType>>())>, -1>;
+->co_pipeline<std::decay_t<decltype(*std::declval<std::invoke_result_t<FuncType>>())>>;
 
 template <typename CollectionType>
 requires pipeline::Iterable<CollectionType>
 co_pipeline(const CollectionType&)
-->co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>, -1>;
+->co_pipeline<std::decay_t<decltype(*std::declval<CollectionType>().begin())>>;
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <pipeline::Iterator IterType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(IterType begin, IterType end)
+co_pipeline<ItemType>::co_pipeline(IterType begin, IterType end, int max_chan_size)
+    : channel__(max_chan_size)
 {
     co__ = std::make_shared<co>([ch = channel__, begin, end]() mutable {
         for (auto i = begin; i != end; ++i)
@@ -316,17 +317,18 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(IterType begin, IterType end)
     co__->detach();
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <pipeline::Array ArrayType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(const ArrayType& arr)
-    : co_pipeline<ItemType, ChanSize>(std::begin(arr), std::end(arr))
+co_pipeline<ItemType>::co_pipeline(const ArrayType& arr, int max_chan_size)
+    : co_pipeline<ItemType>(std::begin(arr), std::end(arr), max_chan_size)
 {
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename FuncType>
 requires pipeline::PipelineInitFunc<FuncType, ItemType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(FuncType init_func)
+co_pipeline<ItemType>::co_pipeline(FuncType init_func, int max_chan_size)
+    : channel__(max_chan_size)
 {
     co__ = std::make_shared<co>([ch = channel__, init_func]() mutable {
         for (;;)
@@ -346,10 +348,10 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(FuncType init_func)
     co__->detach();
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename CollectionType>
 requires pipeline::To<ItemType, CollectionType>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::to_t<CollectionType>&)
+auto co_pipeline<ItemType>::operator|(const pipeline::to_t<CollectionType>&)
 {
     CollectionType ret;
     for (const auto& t : channel__)
@@ -359,10 +361,11 @@ auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::to_t<CollectionT
     return ret;
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename CollectionType>
 requires pipeline::Iterable<CollectionType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(const CollectionType& col)
+co_pipeline<ItemType>::co_pipeline(const CollectionType& col, int max_chan_size)
+    : channel__(max_chan_size)
 {
     co__ = std::make_shared<co>([ch = channel__, col]() mutable {
         for (const auto& t : col)
@@ -377,8 +380,9 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(const CollectionType& col)
     co__->detach();
 }
 
-template <typename ItemType, int ChanSize>
-co_pipeline<ItemType, ChanSize>::co_pipeline(const std::initializer_list<ItemType>& col)
+template <typename ItemType>
+co_pipeline<ItemType>::co_pipeline(const std::initializer_list<ItemType>& col, int max_chan_size)
+    : channel__(max_chan_size)
 {
     co__ = std::make_shared<co>([ch = channel__, col]() mutable {
         for (const auto& t : col)
@@ -393,12 +397,12 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(const std::initializer_list<ItemTyp
     co__->detach();
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename FuncType>
 requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
-auto co_pipeline<ItemType, ChanSize>::operator|(FuncType func)
+auto co_pipeline<ItemType>::operator|(FuncType func)
 {
-    return co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>([ch = channel__, func]() mutable -> std::optional<std::invoke_result_t<FuncType, ItemType>> {
+    return co_pipeline<std::invoke_result_t<FuncType, ItemType>>([ch = channel__, func]() mutable -> std::optional<std::invoke_result_t<FuncType, ItemType>> {
         auto item = ch.pop();
         if (!item)
         {
@@ -408,10 +412,10 @@ auto co_pipeline<ItemType, ChanSize>::operator|(FuncType func)
     });
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename FuncType, typename OldType>
 requires pipeline::ReturnIsNotVoid<FuncType, OldType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<OldType, ChanSize> ch, const pipeline::fork_t<FuncType>& fork)
+co_pipeline<ItemType>::co_pipeline(co_chan<OldType> ch, const pipeline::fork_t<FuncType>& fork)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, fork]() mutable {
         std::vector<std::shared_ptr<co>> co_list(fork.fork_count__);
@@ -441,24 +445,24 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<OldType, ChanSize> ch, cons
     co__->detach();
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename FuncType>
 requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::fork_t<FuncType>& fork)
+auto co_pipeline<ItemType>::operator|(const pipeline::fork_t<FuncType>& fork)
 {
-    return co_pipeline<std::invoke_result_t<FuncType, ItemType>, ChanSize>(channel__, fork);
+    return co_pipeline<std::invoke_result_t<FuncType, ItemType>>(channel__, fork);
 }
 
-template <typename ItemType, int ChanSize>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::chan_t&)
+template <typename ItemType>
+auto co_pipeline<ItemType>::operator|(const pipeline::chan_t&)
 {
     return channel__;
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename FilterType>
 requires pipeline::FilterFunc<FilterType, ItemType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::filter_t<FilterType>& filter)
+co_pipeline<ItemType>::co_pipeline(co_chan<ItemType> ch, const pipeline::filter_t<FilterType>& filter)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, filter]() mutable {
         for (const auto& item : ch)
@@ -477,26 +481,26 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
     co__->detach();
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename FilterType>
 requires pipeline::FilterFunc<FilterType, ItemType>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::filter_t<FilterType>& filter)
+auto co_pipeline<ItemType>::operator|(const pipeline::filter_t<FilterType>& filter)
 {
-    return co_pipeline<ItemType, ChanSize>(channel__, filter);
+    return co_pipeline<ItemType>(channel__, filter);
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename ReduceType, typename InitType>
 requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::reduce_t<ReduceType, InitType>& reducer)
+auto co_pipeline<ItemType>::operator|(const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
-    return co_pipeline<InitType, ChanSize>(channel__, reducer);
+    return co_pipeline<InitType>(channel__, reducer);
 }
 
-template <typename ItemType, int ChanSize>
+template <typename ItemType>
 template <typename ReduceType, typename InitType>
 requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer)
+co_pipeline<ItemType>::co_pipeline(co_chan<InitType> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, reducer]() mutable {
         auto result = reducer.init__;
@@ -510,20 +514,20 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<InitType, ChanSize> ch, con
     co__->detach();
 }
 
-template <typename ItemType, int ChanSize>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::left_t& left)
+template <typename ItemType>
+auto co_pipeline<ItemType>::operator|(const pipeline::left_t& left)
 {
-    return co_pipeline<ItemType, ChanSize>(channel__, left);
+    return co_pipeline<ItemType>(channel__, left);
 }
 
-template <typename ItemType, int ChanSize>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::not_left_t& not_left)
+template <typename ItemType>
+auto co_pipeline<ItemType>::operator|(const pipeline::not_left_t& not_left)
 {
-    return co_pipeline<ItemType, ChanSize>(channel__, not_left);
+    return co_pipeline<ItemType>(channel__, not_left);
 }
 
-template <typename ItemType, int ChanSize>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::left_t& left)
+template <typename ItemType>
+co_pipeline<ItemType>::co_pipeline(co_chan<ItemType> ch, const pipeline::left_t& left)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, left]() mutable {
         for (size_t index = 0; index < left.left__; ++index)
@@ -548,8 +552,8 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
     co__->detach();
 }
 
-template <typename ItemType, int ChanSize>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::not_left_t& not_left)
+template <typename ItemType>
+co_pipeline<ItemType>::co_pipeline(co_chan<ItemType> ch, const pipeline::not_left_t& not_left)
 {
     co__ = std::make_shared<co>([this_ch = channel__, ch, not_left]() mutable {
         for (size_t index = 0; index < not_left.not_left__; ++index)

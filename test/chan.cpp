@@ -29,7 +29,7 @@ using namespace chrono_literals;
 
 TEST(chan, buffered_order)
 {
-    co_chan<int, 5> ch;
+    co_chan<int> ch(5);
     ch.push(1);
     ch.push(2);
     ch.push(3);
@@ -46,7 +46,7 @@ TEST(chan, buffered_order)
 
 TEST(chan, buffered)
 {
-    co_chan<int, 10> ch;
+    co_chan<int> ch(10);
 
     // auto env = co::create_env(true);
 
@@ -69,7 +69,7 @@ TEST(chan, buffered)
 
 TEST(chan, no_limited)
 {
-    co_chan<int, -1> ch;
+    co_chan<int> ch(-1);
 
     co  c1([&] {
         for (int i = 0; i < 10000; ++i)
@@ -90,14 +90,14 @@ TEST(chan, no_limited)
 
 TEST(chan, no_buf)
 {
-    co_chan<int, 0> ch;
-    co              c1([&] {
+    co_chan<int> ch(0);
+    co           c1([&] {
         for (int i = 0; i < 1000; ++i)
         {
             ch << i;
         }
         ch.close();
-                 });
+              });
 
     for (int i = 0; i < 1000; ++i)
     {
@@ -110,7 +110,7 @@ TEST(chan, no_buf)
 
 TEST(chan, no_buffered_iterator)
 {
-    co_chan<int, 0> ch;
+    co_chan<int> ch(0);
 
     vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     vector<int> pop;
@@ -133,9 +133,9 @@ TEST(chan, no_buffered_iterator)
 
 TEST(chan, buffered_empty_iterator)
 {
-    co_chan<int, 10> ch;
-    vector<int>      pop;
-    vector<int>      push;
+    co_chan<int> ch(10);
+    vector<int>  pop;
+    vector<int>  push;
 
     ch.close();
 
@@ -148,7 +148,7 @@ TEST(chan, buffered_empty_iterator)
 
 TEST(chan, no_buffered_operator_less)
 {
-    co_chan<int, 0> ch;
+    co_chan<int> ch(0);
 
     vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     vector<int> pop;
@@ -180,7 +180,7 @@ TEST(chan, no_buffered_operator_less)
 
 TEST(chan, no_buffered_operator_shift)
 {
-    co_chan<int, 0> ch;
+    co_chan<int> ch(0);
 
     vector<int> pop;
 
@@ -204,14 +204,14 @@ TEST(chan, no_buffered_operator_shift)
 
 TEST(chan, push_to_closed)
 {
-    co_chan<int, 1> ch;
+    co_chan<int> ch(1);
     ch.close();
     EXPECT_FALSE(ch.push(1));
 }
 
 TEST(chan, push_to_full_chan_closed)
 {
-    co_chan<int, 1> ch;
+    co_chan<int> ch(1);
     ch.push(1);
     co c1([&] {
         this_co::sleep_for(100ms);
@@ -223,22 +223,22 @@ TEST(chan, push_to_full_chan_closed)
 
 TEST(chan, pop_from_empty_chan_closed)
 {
-    co_chan<int, 1> ch;
-    co              c1([&] {
+    co_chan<int> ch(1);
+    co           c1([&] {
         this_co::sleep_for(100ms);
         ch.close();
-                 });
+              });
     EXPECT_FALSE(ch.pop());
     c1.join();
 }
 
 TEST(chan, pop_from_zero_chan_closed)
 {
-    co_chan<int, 0> ch;
-    co              c1([&] {
+    co_chan<int> ch(0);
+    co           c1([&] {
         this_co::sleep_for(100ms);
         ch.close();
-                 });
+              });
     EXPECT_FALSE(ch.pop());
     c1.join();
 }

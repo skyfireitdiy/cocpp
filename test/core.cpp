@@ -195,7 +195,7 @@ TEST(core, exception)
 TEST(core, pipeline)
 {
     int  source = 0;
-    auto ch     = co_pipeline<int, 1>([&source]() -> std::optional<int> {
+    auto ch     = co_pipeline<int>([&source]() -> std::optional<int> {
                   if (source < 1000000)
                   {
                       return source++;
