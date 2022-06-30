@@ -122,14 +122,14 @@ struct stream_t
 {
 };
 
-struct left_t
+struct take_t
 {
-    size_t left__;
+    size_t take__;
 };
 
-struct not_left_t
+struct skip_t
 {
-    size_t not_left__;
+    size_t skip__;
 };
 
 template <typename FuncType>
@@ -167,9 +167,9 @@ auto reduce(ReduceType reducer, InitType init)
 template <int Size>
 constexpr auto stream() { return stream_t<Size> {}; }
 
-left_t left(size_t n);
+take_t take(size_t n);
 
-not_left_t not_left(size_t n);
+skip_t skip(size_t n);
 
 template <typename FuncType>
 auto fork(size_t n, FuncType f)
@@ -200,9 +200,9 @@ private:
     requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
     co_pipeline(co_chan<InitType, ChanSize> ch, const pipeline::reduce_t<ReduceType, InitType>& reducer);
 
-    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::left_t& left);
+    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::take_t& take);
 
-    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::not_left_t& not_left);
+    co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::skip_t& skip);
 
     template <typename FuncType, typename OldType>
     requires pipeline::ReturnIsNotVoid<FuncType, OldType>
@@ -246,9 +246,9 @@ public : template <typename FuncType>
     requires pipeline::ReduceFunc<ReduceType, InitType, ItemType>
     auto operator|(const pipeline::reduce_t<ReduceType, InitType>&);
 
-    auto operator|(const pipeline::left_t& left);
+    auto operator|(const pipeline::take_t& take);
 
-    auto operator|(const pipeline::not_left_t& not_left);
+    auto operator|(const pipeline::skip_t& skip);
 
     template <typename FuncType>
     requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
@@ -511,22 +511,22 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<InitType, ChanSize> ch, con
 }
 
 template <typename ItemType, int ChanSize>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::left_t& left)
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::take_t& take)
 {
-    return co_pipeline<ItemType, ChanSize>(channel__, left);
+    return co_pipeline<ItemType, ChanSize>(channel__, take);
 }
 
 template <typename ItemType, int ChanSize>
-auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::not_left_t& not_left)
+auto co_pipeline<ItemType, ChanSize>::operator|(const pipeline::skip_t& skip)
 {
-    return co_pipeline<ItemType, ChanSize>(channel__, not_left);
+    return co_pipeline<ItemType, ChanSize>(channel__, skip);
 }
 
 template <typename ItemType, int ChanSize>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::left_t& left)
+co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::take_t& take)
 {
-    co__ = std::make_shared<co>([this_ch = channel__, ch, left]() mutable {
-        for (size_t index = 0; index < left.left__; ++index)
+    co__ = std::make_shared<co>([this_ch = channel__, ch, take]() mutable {
+        for (size_t index = 0; index < take.take__; ++index)
         {
             auto result = ch.pop();
             if (result)
@@ -549,10 +549,10 @@ co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, con
 }
 
 template <typename ItemType, int ChanSize>
-co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::not_left_t& not_left)
+co_pipeline<ItemType, ChanSize>::co_pipeline(co_chan<ItemType, ChanSize> ch, const pipeline::skip_t& skip)
 {
-    co__ = std::make_shared<co>([this_ch = channel__, ch, not_left]() mutable {
-        for (size_t index = 0; index < not_left.not_left__; ++index)
+    co__ = std::make_shared<co>([this_ch = channel__, ch, skip]() mutable {
+        for (size_t index = 0; index < skip.skip__; ++index)
         {
             auto result = ch.pop();
             if (!result)
