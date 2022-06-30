@@ -202,8 +202,8 @@ TEST(core, pipeline)
                   }
                   return std::nullopt;
               })
-              | pipeline::left(200)
-              | pipeline::not_left(100)
+              | pipeline::take(200)
+              | pipeline::skip(100)
               | pipeline::fork(10, [](int n) -> int {
                     return n * 2;
                 })

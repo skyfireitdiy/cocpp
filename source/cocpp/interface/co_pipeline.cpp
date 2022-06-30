@@ -4,14 +4,14 @@ CO_NAMESPACE_BEGIN
 
 namespace pipeline
 {
-left_t left(size_t n)
+take_t take(size_t n)
 {
-    return left_t { .left__ = n };
+    return take_t { .take__ = n };
 }
 
-not_left_t not_left(size_t n)
+skip_t skip(size_t n)
 {
-    return not_left_t { .not_left__ = n };
+    return skip_t { .skip__ = n };
 }
 
 
