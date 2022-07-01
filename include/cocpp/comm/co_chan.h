@@ -1,20 +1,19 @@
+_Pragma("once");
 #include "cocpp/comm/co_event.h"
 #include "cocpp/core/co_ctx.h"
-#include <algorithm>
-#include <bits/ranges_algo.h>
-#include <cstddef>
-#include <ios>
-#include <memory>
-#include <type_traits>
-_Pragma("once");
-
 #include "cocpp/core/co_define.h"
 #include "cocpp/sync/co_condition_variable.h"
 #include "cocpp/sync/co_mutex.h"
+#include <algorithm>
+#include <bits/ranges_algo.h>
 #include <concepts>
+#include <cstddef>
 #include <deque>
+#include <ios>
+#include <memory>
 #include <mutex>
 #include <optional>
+#include <type_traits>
 
 CO_NAMESPACE_BEGIN
 
@@ -220,7 +219,7 @@ bool co_chan<ValueType>::sync_chan::push(ValueType value)
 
     if (chan_base::data__->size() == static_cast<size_t>(max_size))
     {
-        chan_base::cv_full__->wait(lock, [this] { return *chan_base::closed__ ;});
+        chan_base::cv_full__->wait(lock, [this] { return *chan_base::closed__; });
         if (*chan_base::closed__)
         {
             return false;
