@@ -14,11 +14,6 @@ CO_NAMESPACE_BEGIN
 
 constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
 
-constexpr static size_t MIN_STACK_MEM_ZONE   = 2;
-constexpr static size_t MAX_STACK_ZONE_COUNT = 30;
-
-constexpr static size_t MAX_MEM_POOL_CACHE_COUNT = 1024;
-
 constexpr static size_t MAX_STACK_CACHE_COUNT = 1024;
 
 constexpr static size_t MAX_CTX_CACHE_COUNT = 1024;
