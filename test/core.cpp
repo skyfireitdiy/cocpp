@@ -177,7 +177,6 @@ TEST(core, co_local)
     EXPECT_EQ(value, "");
 }
 
-
 TEST(core, exception)
 {
     auto c = co([] { throw 1; });

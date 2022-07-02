@@ -1,3 +1,4 @@
+#include "cocpp/interface/co.h"
 #include "cocpp/interface/co_pipeline.h"
 #include <chrono>
 #include <iostream>
