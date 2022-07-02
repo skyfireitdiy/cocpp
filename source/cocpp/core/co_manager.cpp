@@ -165,10 +165,6 @@ void co_manager::free_mem__()
         {
             co_stack_factory::instance()->free_obj_pool();
         }
-        if (need_free_mem_cb__())
-        {
-            co_stack_factory::instance()->free_stack_mem_pool();
-        }
     }
 }
 

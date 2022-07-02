@@ -12,7 +12,6 @@
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/interface/co.h"
 #include "cocpp/interface/co_pipeline.h"
-#include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/sync/co_binary_semaphore.h"
 #include "cocpp/sync/co_call_once.h"
 #include "cocpp/sync/co_condition_variable.h"
@@ -178,13 +177,6 @@ TEST(core, co_local)
     EXPECT_EQ(value, "");
 }
 
-TEST(core, zone_edge)
-{
-    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(1), 0ULL);
-    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(2), 1ULL);
-    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(3), 2ULL);
-    EXPECT_EQ(co_mem_pool::align_2_zone_edge__(4), 2ULL);
-}
 
 TEST(core, exception)
 {
