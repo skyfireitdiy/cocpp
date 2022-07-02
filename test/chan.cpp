@@ -11,7 +11,6 @@
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
 #include "cocpp/interface/co.h"
-#include "cocpp/mem/co_mem_pool.h"
 #include "cocpp/sync/co_binary_semaphore.h"
 #include "cocpp/sync/co_call_once.h"
 #include "cocpp/sync/co_condition_variable.h"
