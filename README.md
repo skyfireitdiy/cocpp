@@ -15,7 +15,7 @@ cocpp是一个基于现代C++的协程库（c++20），其主要特点是易于�
 一个最简单的Demo：
 
 ```C++
-#include "cocpp/interface/co.h"
+#include "cocpp/cocpp.h"
 
 #include <cstdio>
 #include <string>

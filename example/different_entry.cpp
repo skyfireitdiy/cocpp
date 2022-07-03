@@ -1,6 +1,6 @@
 // 此 example 演示接受不同函数签名的可调用对象
 
-#include "cocpp/interface/co.h"
+#include "cocpp/cocpp.h"
 
 #include <cstdio>
 #include <functional>

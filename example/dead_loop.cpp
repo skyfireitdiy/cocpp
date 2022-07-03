@@ -1,6 +1,6 @@
 // 此 example 演示死循环强制调度
 
-#include "cocpp/interface/co.h"
+#include "cocpp/cocpp.h"
 
 #include <thread>
 

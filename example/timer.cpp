@@ -1,5 +1,4 @@
-#include "cocpp/core/co_timer.h"
-#include "cocpp/interface/co.h"
+#include "cocpp/cocpp.h"
 
 using namespace cocpp;
 

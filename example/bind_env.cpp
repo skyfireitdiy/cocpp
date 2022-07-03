@@ -1,6 +1,5 @@
 // 此example演示绑定env
-#include "cocpp/core/co_ctx_config.h"
-#include "cocpp/interface/co.h"
+#include "cocpp/cocpp.h"
 
 #include <cstdio>
 #include <iostream>

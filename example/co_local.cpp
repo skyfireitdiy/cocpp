@@ -1,6 +1,6 @@
 // 此 example 演示协程私有数据
 
-#include "cocpp/interface/co.h"
+#include "cocpp/cocpp.h"
 
 #include <cstdio>
 

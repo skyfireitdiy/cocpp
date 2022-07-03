@@ -4,23 +4,7 @@
 #include <unistd.h>
 #include <vector>
 #define private public
-#include "cocpp/comm/co_chan.h"
-#include "cocpp/core/co_ctx_config.h"
-#include "cocpp/core/co_ctx_factory.h"
-#include "cocpp/core/co_env_factory.h"
-#include "cocpp/core/co_manager.h"
-#include "cocpp/core/co_stack_factory.h"
-#include "cocpp/interface/co.h"
-#include "cocpp/sync/co_binary_semaphore.h"
-#include "cocpp/sync/co_call_once.h"
-#include "cocpp/sync/co_condition_variable.h"
-#include "cocpp/sync/co_counting_semaphore.h"
-#include "cocpp/sync/co_mutex.h"
-#include "cocpp/sync/co_recursive_mutex.h"
-#include "cocpp/sync/co_shared_mutex.h"
-#include "cocpp/sync/co_shared_timed_mutex.h"
-#include "cocpp/sync/co_timed_mutex.h"
-#include "cocpp/utils/co_any.h"
+#include "cocpp/cocpp.h"
 
 using namespace cocpp;
 using namespace std;

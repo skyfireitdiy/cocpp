@@ -1,4 +1,4 @@
-#include "cocpp/interface/co.h"
+#include "cocpp/cocpp.h"
 
 #include <cstdio>
 #include <string>

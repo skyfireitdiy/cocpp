@@ -1,7 +1,6 @@
 // 此 example 演示无缓冲channel的使用
 
-#include "cocpp/comm/co_chan.h"
-#include "cocpp/interface/co.h"
+#include "cocpp/cocpp.h"
 
 void producer(cocpp::co_chan<int>& chan)
 {
