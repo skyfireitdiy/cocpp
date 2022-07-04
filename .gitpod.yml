@@ -1,4 +1,4 @@
 tasks:
   - name: gitpod init
     command: |
-      bash ./dev_in_docker_start.sh
+      bash -c cd dev_in_docker ; ./start.sh
