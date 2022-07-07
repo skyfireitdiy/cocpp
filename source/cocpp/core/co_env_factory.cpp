@@ -12,15 +12,10 @@ CO_NAMESPACE_BEGIN
 co_env* co_env_factory::create_env(size_t stack_size)
 {
     auto idle_ctx = create_idle_ctx__();
-    auto ret      = env_pool__.create_obj(stack_size, idle_ctx, true);
+    auto ret      = new co_env(stack_size, idle_ctx, true);
     assert(ret != nullptr);
     idle_ctx->set_state(co_state::running);
     return ret;
-}
-
-void co_env_factory::free_obj_pool()
-{
-    env_pool__.clear_free_object();
 }
 
 void co_env_factory::destroy_env(co_env* env)
@@ -29,7 +24,7 @@ void co_env_factory::destroy_env(co_env* env)
     // 此处需要先删除env对象，然后再销毁内部资源，因为在env销毁前，内部资源可能还正在被使用
     auto idle_ctx     = env->idle_ctx__;
     auto shared_stack = env->shared_stack__;
-    env_pool__.destroy_obj(env);
+    delete env;
     co_ctx_factory::instance()->destroy_ctx(idle_ctx);
     if (shared_stack != nullptr)
     {
@@ -40,7 +35,7 @@ void co_env_factory::destroy_env(co_env* env)
 co_env* co_env_factory::create_env_from_this_thread(size_t stack_size)
 {
     auto idle_ctx = create_idle_ctx__();
-    auto ret      = env_pool__.create_obj(stack_size, idle_ctx, false);
+    auto ret      = new co_env(stack_size, idle_ctx, false);
     idle_ctx->set_state(co_state::running);
     return ret;
 }

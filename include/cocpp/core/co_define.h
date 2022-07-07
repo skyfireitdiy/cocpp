@@ -14,15 +14,7 @@ CO_NAMESPACE_BEGIN
 
 constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
 
-constexpr static size_t MAX_STACK_CACHE_COUNT = 1024;
-
-constexpr static size_t MAX_CTX_CACHE_COUNT = 1024;
-
-constexpr static size_t MAX_ENV_CACHE_COUNT = 1024;
-
 constexpr static size_t DEFAULT_TIMING_TICK_DURATION_IN_MS = 10;
-
-constexpr static size_t TICKS_COUNT_OF_FREE_MEM = 1000;
 
 constexpr int CO_CTX_FLAG_WAITING      = 0;
 constexpr int CO_CTX_FLAG_LOCKED       = 1;

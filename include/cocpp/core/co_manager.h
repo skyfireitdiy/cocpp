@@ -49,9 +49,6 @@ private:
     mutable std::recursive_mutex        mu_timer_duration__;
     std::chrono::steady_clock::duration timer_duration__ { 10ms };
 
-    std::function<bool()> need_free_mem_cb__ { [] { return false; } };
-    std::recursive_mutex  need_free_mem_cb_lock__;
-
     std::set<std::shared_ptr<co_timer>> timer_queue__;
     std::recursive_mutex                mu_timer_queue__;
     std::condition_variable_any         cv_timer_queue__;
@@ -67,7 +64,6 @@ private:
     void    redistribute_ctx__();
     void    force_schedule__();
     void    destroy_redundant_env__();
-    void    free_mem__();
     void    wait_background_task__();
     void    set_clean_up__();
     void    destroy_all_factory__();
@@ -96,7 +92,6 @@ public:
     co_env* current_env();
     void    set_base_schedule_thread_count(size_t base_thread_count);
     void    set_max_schedule_thread_count(size_t max_thread_count);
-    void    set_if_free_mem_callback(std::function<bool()> cb);
     void    set_timer_tick_duration(
            const std::chrono::steady_clock::duration& duration);
     const std::chrono::steady_clock::duration& timing_duration() const;

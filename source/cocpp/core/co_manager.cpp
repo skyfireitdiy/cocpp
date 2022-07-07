@@ -138,35 +138,11 @@ void co_manager::subscribe_manager_event__()
             steal_ctx_routine__();
             // 销毁多余的env
             destroy_redundant_env__();
-            // 释放内存
-            free_mem__();
         }
         double_timeout = !double_timeout;
     });
 }
 
-void co_manager::free_mem__()
-{
-    static size_t pass_tick_count = 0;
-
-    pass_tick_count = (pass_tick_count + 1) % TICKS_COUNT_OF_FREE_MEM;
-    if (pass_tick_count == 0)
-    {
-        scoped_lock lck(need_free_mem_cb_lock__);
-        if (need_free_mem_cb__())
-        {
-            co_env_factory::instance()->free_obj_pool();
-        }
-        if (need_free_mem_cb__())
-        {
-            co_ctx_factory::instance()->free_obj_pool();
-        }
-        if (need_free_mem_cb__())
-        {
-            co_stack_factory::instance()->free_obj_pool();
-        }
-    }
-}
 
 co_manager::co_manager()
 {
@@ -468,11 +444,6 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, functio
     return ctx;
 }
 
-void co_manager::set_if_free_mem_callback(function<bool()> cb)
-{
-    scoped_lock lck(need_free_mem_cb_lock__);
-    need_free_mem_cb__ = cb;
-}
 
 void co_manager::steal_ctx_routine__()
 {

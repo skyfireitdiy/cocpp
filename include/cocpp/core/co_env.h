@@ -4,7 +4,6 @@ _Pragma("once");
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_return_value.h"
 #include "cocpp/core/co_type.h"
-#include "cocpp/mem/co_object_pool.h"
 #include "cocpp/utils/co_flag_manager.h"
 #include "cocpp/utils/co_noncopyable.h"
 #include "cocpp/utils/co_state_manager.h"
@@ -156,7 +155,6 @@ public:
     CoMemberMethodProxy(&flag_manager__, set_flag);
     CoMemberMethodProxy(&flag_manager__, reset_flag);
 
-    friend class co_object_pool<co_env>;
     friend class co_env_factory;
 };
 

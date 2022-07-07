@@ -14,7 +14,7 @@ co_stack* co_stack_factory::create_stack(size_t size)
     {
         mem = reinterpret_cast<co_byte*>(std::aligned_alloc(sizeof(void*), size));
     }
-    auto ret = stack_pool__.create_obj(mem, size);
+    auto ret = new co_stack(mem, size);
     return ret;
 }
 
@@ -25,13 +25,7 @@ void co_stack_factory::destroy_stack(co_stack* stack)
     {
         free(stack->stack());
     }
-    stack_pool__.destroy_obj(stack);
-}
-
-
-void co_stack_factory::free_obj_pool()
-{
-    stack_pool__.clear_free_object();
+    delete stack;
 }
 
 CO_NAMESPACE_END

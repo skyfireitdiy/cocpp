@@ -4,7 +4,6 @@ _Pragma("once");
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_local.h"
 #include "cocpp/core/co_type.h"
-#include "cocpp/mem/co_object_pool.h"
 #include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_flag_manager.h"
 #include "cocpp/utils/co_state_manager.h"
@@ -94,7 +93,7 @@ public:
     CoConstMemberMethodProxy(&state_manager__, state);
     CoMemberMethodProxy(&state_manager__, set_state);
 
-    friend class co_object_pool<co_ctx>;
+    friend class co_ctx_factory;
 };
 
 // 模板实现

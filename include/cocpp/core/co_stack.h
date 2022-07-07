@@ -1,7 +1,7 @@
+#include "cocpp/core/co_stack_factory.h"
 _Pragma("once");
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_type.h"
-#include "cocpp/mem/co_object_pool.h"
 #include "cocpp/utils/co_noncopyable.h"
 
 CO_NAMESPACE_BEGIN
@@ -18,7 +18,7 @@ public:
     co_byte*    stack_top() const;
     std::string stack_info() const;
 
-    friend class co_object_pool<co_stack>;
+    friend class co_stack_factory;
 };
 
 CO_NAMESPACE_END

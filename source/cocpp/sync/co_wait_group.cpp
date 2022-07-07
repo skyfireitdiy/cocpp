@@ -1,4 +1,5 @@
 #include "cocpp/sync/co_wait_group.h"
+#include <cassert>
 
 using namespace std;
 
