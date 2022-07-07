@@ -30,10 +30,13 @@ void co_ctx_factory::destroy_ctx(co_ctx* ctx)
 {
     CoPreemptGuard();
     assert(ctx != nullptr);
-    auto stack = ctx->stack();
+    auto shared_stack = ctx->test_flag(CO_CTX_FLAG_SHARED_STACK);
+    auto stack        = ctx->stack();
     delete ctx;
-    co_stack_factory::instance()->destroy_stack(stack);
+    if (!shared_stack)
+    {
+        co_stack_factory::instance()->destroy_stack(stack);
+    }
 }
-
 
 CO_NAMESPACE_END
