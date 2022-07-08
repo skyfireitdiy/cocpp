@@ -1,4 +1,6 @@
 #include "cocpp/core/co_env_factory.h"
+#include "cocpp/core/co_stack_factory.h"
+#include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
@@ -25,10 +27,10 @@ void co_env_factory::destroy_env(co_env* env)
     auto idle_ctx     = env->idle_ctx__;
     auto shared_stack = env->shared_stack__;
     delete env;
-    co_ctx_factory::instance()->destroy_ctx(idle_ctx);
+    co_ctx_factory::destroy_ctx(idle_ctx);
     if (shared_stack != nullptr)
     {
-        stack_factory__->destroy_stack(shared_stack);
+        co_stack_factory::destroy_stack(shared_stack);
     }
 }
 
@@ -46,7 +48,7 @@ co_ctx* co_env_factory::create_idle_ctx__()
     config.name       = "idle";
     config.stack_size = 0;
     config.priority   = CO_IDLE_CTX_PRIORITY;
-    auto ret          = co_ctx_factory::instance()->create_ctx(config, nullptr);
+    auto ret          = co_ctx_factory::create_ctx(config, nullptr);
     ret->set_flag(CO_CTX_FLAG_IDLE);
     return ret;
 }

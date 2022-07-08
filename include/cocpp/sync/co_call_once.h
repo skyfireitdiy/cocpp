@@ -18,9 +18,9 @@ template <class Callable, class... Args>
 void co_call_once(co_once_flag& flag, Callable&& f, Args&&... args)
 {
     CoPreemptGuard();
-    if (!flag.flag__.load(std::memory_order_acquire))
+    bool key = false;
+    if (flag.flag__.compare_exchange_strong(key, true))
     {
-        flag.flag__.store(true, std::memory_order_release);
         std::invoke(std::forward<Callable>(f), std::forward<Args>(args)...);
     }
 }

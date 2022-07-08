@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include "cocpp/comm/co_event.h"
+#include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_ctx_config.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"

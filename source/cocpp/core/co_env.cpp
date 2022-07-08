@@ -52,7 +52,7 @@ co_env::co_env(size_t shared_stack_size, co_ctx* idle_ctx, bool create_new_threa
 
 void co_env::create_shared_stack__()
 {
-    shared_stack__ = co_stack_factory::instance()->create_stack(shared_stack_size__);
+    shared_stack__ = co_stack_factory::create_stack(shared_stack_size__);
 }
 
 void co_env::add_ctx(co_ctx* ctx)
@@ -318,7 +318,7 @@ void co_env::remove_ctx(co_ctx* ctx)
         all_normal_ctx__[ctx->priority()].remove(ctx);
         --ctx_count__;
     }
-    co_ctx_factory::instance()->destroy_ctx(ctx);
+    co_ctx_factory::destroy_ctx(ctx);
 }
 
 // Warning: The CTX returned by this interface is not guaranteed to be valid after the call.
@@ -434,7 +434,7 @@ size_t co_env::get_valid_stack_size__(co_ctx* ctx)
 void co_env::save_shared_stack__(co_ctx* ctx)
 {
     auto stack_size = get_valid_stack_size__(ctx);
-    auto tmp_stack  = co_stack_factory::instance()->create_stack(stack_size);
+    auto tmp_stack  = co_stack_factory::create_stack(stack_size);
     memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
     ctx->set_stack(tmp_stack);
 }
@@ -447,7 +447,7 @@ void co_env::restore_shared_stack__(co_ctx* ctx)
     {
         memcpy(shared_stack__->stack_top() - ctx->stack()->stack_size(), ctx->stack()->stack(), ctx->stack()->stack_size());
         // 销毁原stack
-        co_stack_factory::instance()->destroy_stack(ctx->stack());
+        co_stack_factory::destroy_stack(ctx->stack());
     }
     else
     {

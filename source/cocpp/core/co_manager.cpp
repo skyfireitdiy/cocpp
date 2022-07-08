@@ -87,7 +87,7 @@ void co_manager::subscribe_ctx_event__(co_ctx* ctx)
 co_env* co_manager::create_env(bool dont_auto_destroy)
 {
     assert(!clean_up__);
-    auto env = co_env_factory::instance()->create_env(default_shared_stack_size__);
+    auto env = co_env_factory::create_env(default_shared_stack_size__);
 
     subscribe_env_event__(env);
 
@@ -161,7 +161,7 @@ void co_manager::remove_env__(co_env* env)
 void co_manager::create_env_from_this_thread__()
 {
     scoped_lock lck(env_set__.normal_lock);
-    current_env__ = co_env_factory::instance()->create_env_from_this_thread(default_shared_stack_size__);
+    current_env__ = co_env_factory::create_env_from_this_thread(default_shared_stack_size__);
     subscribe_env_event__(current_env__);
     env_set__.normal_set.insert(current_env__);
 }
@@ -220,7 +220,7 @@ void co_manager::clean_env_routine__()
         }
         for (auto&& p : env_set__.expired_set)
         {
-            co_env_factory::instance()->destroy_env(p);
+            co_env_factory::destroy_env(p);
         }
         env_set__.expired_set.clear();
     }
@@ -405,15 +405,8 @@ co_manager::~co_manager()
 {
     set_clean_up__();
     wait_background_task__(); // 此处所有的流程都已经结束了，可以清理一些单例的资源了
-    destroy_all_factory__();
 }
 
-void co_manager::destroy_all_factory__()
-{
-    co_stack_factory::destroy_instance();
-    co_ctx_factory::destroy_instance();
-    co_env_factory::destroy_instance();
-}
 
 void co_manager::wait_background_task__()
 {
@@ -425,7 +418,7 @@ void co_manager::wait_background_task__()
 
 co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, function<void(co_any&)> entry, bool lock_destroy)
 {
-    auto ctx = co_ctx_factory::instance()->create_ctx(config, entry);
+    auto ctx = co_ctx_factory::create_ctx(config, entry);
     subscribe_ctx_event__(ctx);
     if (lock_destroy)
     {

@@ -1,12 +1,10 @@
 _Pragma("once");
 
 #include "cocpp/comm/co_event.h"
-#include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_define.h"
-#include "cocpp/core/co_env_factory.h"
-#include "cocpp/core/co_stack_factory.h"
 #include "cocpp/utils/co_noncopyable.h"
 #include "cocpp/utils/co_singleton.h"
+#include "cocpp/utils/co_any.h"
 
 #include <functional>
 #include <future>
@@ -18,9 +16,6 @@ CO_NAMESPACE_BEGIN
 
 class co_env;
 class co_ctx;
-class co_env_factory;
-class co_ctx_factory;
-class co_scheduler_factory;
 class co_timer;
 struct co_ctx_config;
 
@@ -66,7 +61,6 @@ private:
     void    destroy_redundant_env__();
     void    wait_background_task__();
     void    set_clean_up__();
-    void    destroy_all_factory__();
     co_env* get_best_env__();
     void    remove_env__(co_env* env);
     void    subscribe_env_event__(co_env* env);

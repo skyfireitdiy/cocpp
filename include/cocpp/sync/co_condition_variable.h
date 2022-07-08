@@ -1,5 +1,6 @@
 _Pragma("once");
 
+#include "cocpp/core/co_ctx.h"
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"

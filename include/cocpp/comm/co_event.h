@@ -62,4 +62,5 @@ public:                                  \
         return eventName##__;            \
     }
 
+
 CO_NAMESPACE_END

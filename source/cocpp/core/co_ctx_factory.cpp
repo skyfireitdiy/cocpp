@@ -13,7 +13,7 @@ CO_NAMESPACE_BEGIN
 
 co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config, function<void(co_any&)> entry)
 {
-    auto ret = new co_ctx(config.shared_stack ? nullptr : co_stack_factory::instance()->create_stack(config.stack_size), config, entry);
+    auto ret = new co_ctx(config.shared_stack ? nullptr : co_stack_factory::create_stack(config.stack_size), config, entry);
     assert(ret != nullptr);
     if (config.bind_env != nullptr)
     {
@@ -35,7 +35,7 @@ void co_ctx_factory::destroy_ctx(co_ctx* ctx)
     delete ctx;
     if (!shared_stack)
     {
-        co_stack_factory::instance()->destroy_stack(stack);
+        co_stack_factory::destroy_stack(stack);
     }
 }
 

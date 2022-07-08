@@ -8,12 +8,12 @@ CO_NAMESPACE_BEGIN
 class co_stack;
 class co_manager;
 
-class co_stack_factory final : public co_singleton<co_stack_factory>
+class co_stack_factory
 {
 
 public:
-    co_stack* create_stack(size_t size);
-    void      destroy_stack(co_stack* stack);
+    static co_stack* create_stack(size_t size);
+    static void      destroy_stack(co_stack* stack);
 };
 
 CO_NAMESPACE_END
