@@ -13,7 +13,7 @@ CO_NAMESPACE_BEGIN
 void co_recursive_mutex::lock()
 {
     CoPreemptGuard();
-    auto             ctx = CoCurrentCtx();
+    auto        ctx = CoCurrentCtx();
     scoped_lock lock(spinlock__);
 
     if (owner__ == nullptr || owner__ == ctx)
@@ -64,7 +64,7 @@ void co_recursive_mutex::lock()
 bool co_recursive_mutex::try_lock()
 {
     CoPreemptGuard();
-    auto             ctx = CoCurrentCtx();
+    auto        ctx = CoCurrentCtx();
     scoped_lock lock(spinlock__);
     if (owner__ != ctx && owner__ != nullptr)
     {
@@ -78,7 +78,7 @@ bool co_recursive_mutex::try_lock()
 void co_recursive_mutex::unlock()
 {
     CoPreemptGuard();
-    auto             ctx = CoCurrentCtx();
+    auto        ctx = CoCurrentCtx();
     scoped_lock lock(spinlock__);
     if (owner__ != ctx)
     {

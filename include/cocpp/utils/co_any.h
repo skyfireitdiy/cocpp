@@ -29,8 +29,8 @@ private:
     std::shared_ptr<base_type> data__ { nullptr };
 
 public:
-    co_any()                               = default;
-    co_any(const co_any& value)            = default;
+    co_any()                    = default;
+    co_any(const co_any& value) = default;
     co_any& operator=(const co_any& value) = default;
     template <typename T>
     co_any(const T& value);

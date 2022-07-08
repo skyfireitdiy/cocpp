@@ -143,7 +143,6 @@ void co_manager::subscribe_manager_event__()
     });
 }
 
-
 co_manager::co_manager()
 {
     subscribe_manager_event__();
@@ -443,7 +442,6 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, functio
     }
     return ctx;
 }
-
 
 void co_manager::steal_ctx_routine__()
 {

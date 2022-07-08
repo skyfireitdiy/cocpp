@@ -71,7 +71,7 @@ void co_mutex::lock()
 bool co_mutex::try_lock()
 {
     CoPreemptGuard();
-    auto             ctx = CoCurrentCtx();
+    auto        ctx = CoCurrentCtx();
     scoped_lock lock(spinlock__);
     if (owner__ != nullptr)
     {
@@ -84,7 +84,7 @@ bool co_mutex::try_lock()
 void co_mutex::unlock()
 {
     CoPreemptGuard();
-    auto             ctx = CoCurrentCtx();
+    auto        ctx = CoCurrentCtx();
     scoped_lock lock(spinlock__);
     if (owner__ != ctx)
     {

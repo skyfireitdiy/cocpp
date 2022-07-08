@@ -11,9 +11,9 @@ class co_return_value
 
 public:
     co_return_value(co_any value);
-    co_return_value(const co_return_value& value)            = default;
+    co_return_value(const co_return_value& value) = default;
     co_return_value& operator=(const co_return_value& value) = default;
-    co_return_value& operator=(co_return_value&& value)      = default;
+    co_return_value& operator=(co_return_value&& value) = default;
 
     template <typename T>
     operator T();

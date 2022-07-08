@@ -26,8 +26,8 @@ void customer(cocpp::co_chan<int>& chan)
 int main()
 {
     cocpp::co_chan<int> chan(-1);
-    cocpp::co               co_producer(&producer, std::ref(chan));
-    cocpp::co               co_customer(&customer, std::ref(chan));
+    cocpp::co           co_producer(&producer, std::ref(chan));
+    cocpp::co           co_customer(&customer, std::ref(chan));
     co_producer.join();
     co_customer.join();
 }

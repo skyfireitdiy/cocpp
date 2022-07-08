@@ -69,7 +69,7 @@ void co_shared_mutex::lock()
 bool co_shared_mutex::try_lock()
 {
     CoPreemptGuard();
-    auto             ctx = CoCurrentCtx();
+    auto        ctx = CoCurrentCtx();
     scoped_lock lock(spinlock__);
     while (!owners__.empty())
     {
@@ -154,7 +154,7 @@ void co_shared_mutex::lock_shared()
 bool co_shared_mutex::try_lock_shared()
 {
     CoPreemptGuard();
-    auto             ctx = CoCurrentCtx();
+    auto        ctx = CoCurrentCtx();
     scoped_lock lock(spinlock__);
     if (lock_type__ != lock_type::shared && lock_type__ != lock_type::unlocked)
     {
@@ -168,7 +168,7 @@ bool co_shared_mutex::try_lock_shared()
 void co_shared_mutex::unlock_shared()
 {
     CoPreemptGuard();
-    auto             ctx = CoCurrentCtx();
+    auto        ctx = CoCurrentCtx();
     scoped_lock lock(spinlock__);
 
     if (lock_type__ != lock_type::shared || !owners__.contains(ctx))
