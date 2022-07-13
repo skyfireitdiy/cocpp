@@ -60,7 +60,7 @@ TEST(chan, no_limited)
             ch.push(i);
         }
         ch.close();
-     });
+    });
     int t;
     for (int i = 0; i < 10000; ++i)
     {
@@ -80,7 +80,7 @@ TEST(chan, no_buf)
             ch << i;
         }
         ch.close();
-              });
+    });
 
     for (int i = 0; i < 1000; ++i)
     {
@@ -210,7 +210,7 @@ TEST(chan, pop_from_empty_chan_closed)
     co           c1([&] {
         this_co::sleep_for(100ms);
         ch.close();
-              });
+    });
     EXPECT_FALSE(ch.pop());
     c1.join();
 }
@@ -221,7 +221,7 @@ TEST(chan, pop_from_zero_chan_closed)
     co           c1([&] {
         this_co::sleep_for(100ms);
         ch.close();
-              });
+    });
     EXPECT_FALSE(ch.pop());
     c1.join();
 }

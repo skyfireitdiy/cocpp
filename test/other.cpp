@@ -20,14 +20,14 @@ TEST(stl, vector)
             v1.push_back(i);
             this_co::yield();
         }
-             });
+    });
     co          c2([&] {
         for (auto i = 0; i < 10000; ++i)
         {
             v2.push_back(i);
             this_co::yield();
         }
-             });
+    });
     c1.join();
     c2.join();
     EXPECT_EQ(v1, v2);

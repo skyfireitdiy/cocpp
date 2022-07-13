@@ -55,7 +55,8 @@ private:
     requires pipeline::ReturnIsNotVoid<FuncType, OldType>
     co_pipeline(co_chan<OldType> ch, const pipeline::fork<FuncType>& fork);
 
-public : template <typename FuncType>
+public:
+    template <typename FuncType>
     requires pipeline::PipelineInitFunc<FuncType, ItemType>
     co_pipeline(FuncType init_func, int max_chan_size = -1);
 

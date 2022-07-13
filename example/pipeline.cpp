@@ -10,7 +10,7 @@ int main()
     auto ch     = co_pipeline<int>([&source]() -> std::optional<int> { // 生成[0, 1000000) 序列
                   if (source < 1000000)
                   {
-                      return source++;
+                          return source++;
                   }
                   return std::nullopt;
               })

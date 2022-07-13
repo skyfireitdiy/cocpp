@@ -78,7 +78,7 @@ TEST(core, wait_timeout)
 {
     co   c1([]() {
         this_co::sleep_for(100ms);
-      });
+    });
     auto ret = c1.wait_for(1ms);
     EXPECT_FALSE(ret);
     ret = c1.wait_for(1s);
@@ -90,7 +90,7 @@ TEST(core, this_co_id)
     co_id id;
     co    c1([&id]() {
         id = this_co::id();
-       });
+    });
     c1.wait<void>();
     EXPECT_EQ(c1.id(), id);
 }

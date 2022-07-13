@@ -37,7 +37,7 @@ private:
     template <typename Func, typename... Args> //
     void init__(co_ctx_config config, Func&& func, Args&&... args);
 
-    co(const co&) = delete;
+    co(const co&)            = delete;
     co& operator=(const co&) = delete;
 
 public:

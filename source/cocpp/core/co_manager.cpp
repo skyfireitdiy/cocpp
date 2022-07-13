@@ -407,7 +407,6 @@ co_manager::~co_manager()
     wait_background_task__(); // 此处所有的流程都已经结束了，可以清理一些单例的资源了
 }
 
-
 void co_manager::wait_background_task__()
 {
     for (auto&& task : background_task__)

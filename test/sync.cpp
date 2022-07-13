@@ -105,7 +105,7 @@ TEST(sync, timed_mutex_lock_for)
         mu.lock();
         this_co::sleep_for(100ms);
         mu.unlock();
-                });
+    });
     this_co::sleep_for(50ms);
     EXPECT_FALSE(mu.try_lock_for(10ms));
     EXPECT_TRUE(mu.try_lock_for(60ms));
