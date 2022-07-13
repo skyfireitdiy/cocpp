@@ -59,7 +59,7 @@ struct take
 
 struct skip
 {
-    size_t skip__;
+    const size_t skip__;
     skip(const size_t& sp)
         : skip__(sp)
     {
@@ -69,8 +69,8 @@ struct skip
 template <typename FuncType>
 struct fork
 {
-    size_t   fork_count__;
-    FuncType func__;
+    const size_t   fork_count__;
+    const FuncType func__;
     fork(const size_t& fc, const FuncType& func)
         : fork_count__(fc)
         , func__(func)
