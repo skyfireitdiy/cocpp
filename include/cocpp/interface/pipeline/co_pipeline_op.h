@@ -78,6 +78,18 @@ struct fork
     }
 };
 
+template <typename FuncType>
+struct group
+{
+    const size_t   group_count__;
+    const FuncType func__;
+    group(const size_t& sz, const FuncType& func)
+        : group_count__(sz)
+        , func__(func)
+    {
+    }
+};
+
 ///////////////////////////////////////////////////////////////////////
 
 }

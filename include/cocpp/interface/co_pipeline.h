@@ -55,6 +55,10 @@ private:
     requires pipeline::ReturnIsNotVoid<FuncType, OldType>
     co_pipeline(co_chan<OldType> ch, const pipeline::fork<FuncType>& fork);
 
+    template <typename FuncType, typename OldType>
+    requires pipeline::ReturnIsNotVoid<FuncType, std::vector<OldType>>
+    co_pipeline(co_chan<OldType> ch, const pipeline::group<FuncType>& group);
+
 public:
     template <typename FuncType>
     requires pipeline::PipelineInitFunc<FuncType, ItemType>
@@ -101,6 +105,10 @@ public:
     template <typename FuncType>
     requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
     auto operator|(const pipeline::fork<FuncType>& fork);
+
+    template <typename FuncType>
+    requires pipeline::ReturnIsNotVoid<FuncType, std::vector<ItemType>>
+    auto operator|(const pipeline::group<FuncType>& fork);
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -295,11 +303,48 @@ co_pipeline<ItemType>::co_pipeline(co_chan<OldType> ch, const pipeline::fork<Fun
 }
 
 template <typename ItemType>
+template <typename FuncType, typename OldType>
+requires pipeline::ReturnIsNotVoid<FuncType, std::vector<OldType>>
+co_pipeline<ItemType>::co_pipeline(co_chan<OldType> ch, const pipeline::group<FuncType>& gp)
+{
+    co__ = std::make_shared<co>([this_ch = channel__, ch, gp]() mutable {
+        for (;;)
+        {
+            std::vector<OldType> data(gp.group_count__);
+            for (size_t i = 0; i < gp.group_count__; ++i)
+            {
+                auto item = ch.pop();
+                if (!item)
+                {
+                    this_ch.close();
+                    return;
+                }
+                data[i] = *item;
+            }
+            if (!this_ch.push(gp.func__(data)))
+            {
+                ch.close();
+                return;
+            }
+        }
+    });
+    co__->detach();
+}
+
+template <typename ItemType>
 template <typename FuncType>
 requires pipeline::ReturnIsNotVoid<FuncType, ItemType>
 auto co_pipeline<ItemType>::operator|(const pipeline::fork<FuncType>& fork)
 {
     return co_pipeline<std::invoke_result_t<FuncType, ItemType>>(channel__, fork);
+}
+
+template <typename ItemType>
+template <typename FuncType>
+requires pipeline::ReturnIsNotVoid<FuncType, std::vector<ItemType>>
+auto co_pipeline<ItemType>::operator|(const pipeline::group<FuncType>& group)
+{
+    return co_pipeline<std::invoke_result_t<FuncType, std::vector<ItemType>>>(channel__, group);
 }
 
 template <typename ItemType>

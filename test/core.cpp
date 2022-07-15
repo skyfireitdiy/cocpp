@@ -189,3 +189,19 @@ TEST(core, pipeline)
     // }
     EXPECT_EQ(ch.pop(), 9900);
 }
+
+TEST(core, pipeline_group)
+{
+    auto ret = std::list<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
+               | pipeline::stream()
+               | pipeline::group(2, [](const std::vector<int>& data) {
+                     return data[0] + data[1];
+                 })
+               | pipeline::to<std::vector<int>>();
+
+    EXPECT_EQ(ret[0], 3);
+    EXPECT_EQ(ret[1], 7);
+    EXPECT_EQ(ret[2], 11);
+    EXPECT_EQ(ret[3], 15);
+    EXPECT_EQ(ret[4], 19);
+}
