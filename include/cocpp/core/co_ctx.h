@@ -11,6 +11,7 @@ _Pragma("once");
 #include <exception>
 #include <memory>
 #include <mutex>
+#include <ucontext.h>
 
 CO_NAMESPACE_BEGIN
 
@@ -49,13 +50,8 @@ private:
     const std::function<void(co_any&)>                    entry__;
     std::exception_ptr                                    exception__;
 
-#ifdef __GNUC__
-#ifdef __x86_64__
-    co_byte* regs__[32] {};
-#else
-#error only supported x86_64
-#endif
-#endif
+    ucontext_t context__;
+
     co_ctx(co_stack* stack, const co_ctx_config& config, std::function<void(co_any&)> entry);
 
 public:
@@ -63,7 +59,7 @@ public:
     size_t                       priority() const;
     bool                         can_schedule() const;
     co_stack*                    stack() const;
-    co_byte**                    regs();
+    ucontext_t&                  context();
     const co_ctx_config&         config() const;
     co_any&                      ret_ref();
     void                         set_env(co_env* env);

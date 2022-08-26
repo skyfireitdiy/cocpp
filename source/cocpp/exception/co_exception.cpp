@@ -44,7 +44,7 @@ string backtrace()
     return ret;
 }
 
-void handle_exception(sigcontext_64* context, int sig)
+void handle_exception(ucontext_t& context, int sig)
 {
     fprintf(stderr, "signal %d\n", sig);
     static bool in_exception = false;
@@ -72,7 +72,8 @@ void set_up_signal_handler(const std::vector<int>& signals)
     for (auto&& s : signals)
     {
         struct sigaction sa;
-        sa.sa_handler = signal_handler;
+        sa.sa_sigaction = signal_handler;
+        sa.sa_flags     = SA_SIGINFO | SA_ONSTACK;
 
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = 0;
@@ -113,49 +114,24 @@ std::string maps_info()
     return ss.str();
 }
 
-void signal_handler(int signo)
+void signal_handler(int sig_no, siginfo_t* info, void* ctx)
 {
-    sigcontext_64* context = nullptr;
-    __asm volatile("leaq 88(%%rsp), %%rax\t\n"
-                   "movq %%rax, %0\t\n"
-                   : "=m"(context)
-                   :
-                   : "memory", "rax");
-    if (signo == CO_SWITCH_SIGNAL)
+    auto* context = reinterpret_cast<ucontext_t*>(ctx);
+    if (sig_no == CO_SWITCH_SIGNAL)
     {
-        switch_from_outside(context);
+        switch_from_outside(*context);
     }
     else
     {
-        handle_exception(context, signo);
+        handle_exception(*context, sig_no);
     }
 }
 
-std::string regs_info(const sigcontext_64* ctx)
+std::string regs_info(const ucontext_t& ctx)
 {
     stringstream ss;
-#define OUT_PUT_REG(name) ss << #name ": 0x" << hex << ctx->name << dec << "(" << ctx->name << ")" << endl
 
-    OUT_PUT_REG(r8);
-    OUT_PUT_REG(r9);
-    OUT_PUT_REG(r10);
-    OUT_PUT_REG(r11);
-    OUT_PUT_REG(r12);
-    OUT_PUT_REG(r13);
-    OUT_PUT_REG(r14);
-    OUT_PUT_REG(r15);
-    OUT_PUT_REG(di);
-    OUT_PUT_REG(si);
-    OUT_PUT_REG(bp);
-    OUT_PUT_REG(bx);
-    OUT_PUT_REG(dx);
-    OUT_PUT_REG(ax);
-    OUT_PUT_REG(cx);
-    OUT_PUT_REG(sp);
-    OUT_PUT_REG(ip);
-    OUT_PUT_REG(flags);
-
-#undef OUT_PUT_REG
+    // todo 打印寄存器信息
 
     return ss.str();
 }

@@ -21,9 +21,9 @@ co_stack* co_ctx::stack() const
     return stack__;
 }
 
-co_byte** co_ctx::regs()
+ucontext_t& co_ctx::context()
 {
-    return reinterpret_cast<co_byte**>(&regs__);
+    return context__;
 }
 
 const co_ctx_config& co_ctx::config() const
@@ -247,17 +247,16 @@ string co_ctx::ctx_info() const
 
     // regs
     ss << "regs: \n";
-    auto context = reinterpret_cast<const sigcontext_64*>(&regs__);
-    ss << regs_info(context) << endl;
+    ss << regs_info(context__) << endl;
 
     // stack
     if (stack__)
     {
         ss << "stack:" << endl;
         ss << stack__->stack_info() << endl;
-        if ((void*)context->sp < (void*)stack__->stack_top() && (void*)context->sp >= (void*)stack__->stack())
+        if ((void*)context__.uc_stack.ss_sp < (void*)stack__->stack_top() && (void*)context__.uc_stack.ss_sp >= (void*)stack__->stack())
         {
-            ss << dump_memory((co_byte*)context->sp, stack__->stack_top() - (co_byte*)context->sp) << endl;
+            ss << dump_memory((co_byte*)context__.uc_stack.ss_sp, stack__->stack_top() - (co_byte*)context__.uc_stack.ss_sp) << endl;
         }
         else
         {

@@ -291,7 +291,7 @@ void co_env::switch_normal_ctx__()
     }
 
     unlock_schedule();
-    switch_to(curr->regs(), next->regs());
+    swapcontext(&curr->context(), &next->context());
     lock_schedule();
 }
 
@@ -363,7 +363,7 @@ void co_env::switch_shared_stack_ctx__()
     // 切换到to
 
     unlock_schedule();
-    switch_to(idle_ctx__->regs(), shared_stack_switch_info__.to->regs());
+    swapcontext(&idle_ctx__->context(), &shared_stack_switch_info__.to->context());
     lock_schedule();
 }
 
@@ -428,14 +428,14 @@ bool co_env::can_auto_destroy() const
 
 size_t co_env::get_valid_stack_size__(co_ctx* ctx)
 {
-    return ctx->stack()->stack_top() - get_rsp(ctx);
+    return ctx->stack()->stack_top() - reinterpret_cast<co_byte*>(ctx->context().uc_stack.ss_sp);
 }
 
 void co_env::save_shared_stack__(co_ctx* ctx)
 {
     auto stack_size = get_valid_stack_size__(ctx);
     auto tmp_stack  = co_stack_factory::create_stack(stack_size);
-    memcpy(tmp_stack->stack(), get_rsp(ctx), stack_size);
+    memcpy(tmp_stack->stack(), ctx->context().uc_stack.ss_sp, stack_size);
     ctx->set_stack(tmp_stack);
 }
 
