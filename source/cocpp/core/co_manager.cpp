@@ -126,17 +126,17 @@ void co_manager::subscribe_manager_event__()
         // 每两次超时重新分配一次
         static bool double_timeout = false;
 
-        // FIXME: There are problems with external scheduling and it is difficult to determine the safety point
+        // 每次超时强制调度
         force_schedule__();
 
-        // If it's the second time out
+        // 每两次重新分配
         if (double_timeout)
         {
-            // 重新调度
+            // 重新分配
             redistribute_ctx__();
-            // 偷取ctx
+            // 如果有空闲的env，偷取ctx
             steal_ctx_routine__();
-            // 销毁多余的env
+            // 如果还有空闲env，销毁多余的env
             destroy_redundant_env__();
         }
         double_timeout = !double_timeout;
