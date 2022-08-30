@@ -11,7 +11,7 @@
 #include <cassert>
 #include <exception>
 #include <mutex>
-#include <sys/ucontext.h>
+#include <ucontext.h>
 
 using namespace std;
 
