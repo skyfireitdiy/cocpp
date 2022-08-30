@@ -2,8 +2,10 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_vos.h"
+#include <exception>
 #include <execinfo.h>
 #include <iomanip>
+#include <ios>
 #include <signal.h>
 #include <sstream>
 #include <unistd.h>
@@ -12,7 +14,17 @@ using namespace std;
 
 CO_NAMESPACE_BEGIN
 
+static FILE* exception_out_file = stderr;
+
+static void print_debug_info(const std::string& item_name, std::function<std::string()> f);
+static void signal_handler(int sig_no, siginfo_t* info, void* context);
+
 static std::string exe_path();
+
+void set_exception_out_file(FILE* file)
+{
+    exception_out_file = file;
+}
 
 static std::string exe_path()
 {
@@ -46,11 +58,11 @@ string backtrace()
 
 void handle_exception(ucontext_t& context, int sig)
 {
-    fprintf(stderr, "signal %d\n", sig);
+    fprintf(exception_out_file, "signal %d\n", sig);
     static bool in_exception = false;
     if (in_exception)
     {
-        fprintf(stderr, "exception occurs in exception handler\n");
+        fprintf(exception_out_file, "exception occurs in exception handler\n");
         exit(128 - sig);
     }
     in_exception = true;
@@ -131,16 +143,53 @@ std::string regs_info(const ucontext_t& ctx)
 {
     stringstream ss;
 
-    // todo 打印寄存器信息
+#define OUT_REG(name) \
+    ss << #name << ":" << hex << setw(16) << setfill('0') << ctx.uc_mcontext.gregs[REG_##name] << std::endl;
+    OUT_REG(R8)
+    OUT_REG(R9)
+    OUT_REG(R10)
+    OUT_REG(R11)
+    OUT_REG(R12)
+    OUT_REG(R13)
+    OUT_REG(R14)
+    OUT_REG(R15)
+    OUT_REG(RDI)
+    OUT_REG(RSI)
+    OUT_REG(RBP)
+    OUT_REG(RBX)
+    OUT_REG(RDX)
+    OUT_REG(RAX)
+    OUT_REG(RCX)
+    OUT_REG(RSP)
+    OUT_REG(RIP)
+    OUT_REG(EFL)
+    OUT_REG(CSGSFS)
+    OUT_REG(ERR)
+    OUT_REG(TRAPNO)
+    OUT_REG(OLDMASK)
+    OUT_REG(CR2)
+#undef OUT_REG
 
+#define OUT_FXSAVE(name) \
+    ss << #name << ":"   \
+       << "0x" << hex << setw(sizeof(ctx.uc_mcontext.fpregs->name) * 2) << setfill('0') << ctx.uc_mcontext.fpregs->name << std::endl;
+    OUT_FXSAVE(cwd)
+    OUT_FXSAVE(swd)
+    OUT_FXSAVE(ftw)
+    OUT_FXSAVE(fop)
+    OUT_FXSAVE(rip)
+    OUT_FXSAVE(rdp)
+    OUT_FXSAVE(mxcsr)
+    OUT_FXSAVE(mxcr_mask)
+#undef OUT_FXSAVE
     return ss.str();
 }
 
 void print_debug_info(const std::string& item_name, std::function<std::string()> f)
 {
-    fprintf(stderr, "=================== %s start ===================\n", item_name.c_str());
-    fprintf(stderr, "%s\n", f().c_str());
-    fprintf(stderr, "=================== %s end ===================\n", item_name.c_str());
+    fprintf(exception_out_file, "=================== %s start ===================\n", item_name.c_str());
+    fprintf(exception_out_file, "%s\n", f().c_str());
+    fprintf(exception_out_file, "=================== %s end ===================\n", item_name.c_str());
 }
 
 std::string dump_memory(const co_byte* addr, size_t size)

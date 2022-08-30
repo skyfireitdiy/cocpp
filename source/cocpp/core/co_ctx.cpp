@@ -11,6 +11,7 @@
 #include <cassert>
 #include <exception>
 #include <mutex>
+#include <sys/ucontext.h>
 
 using namespace std;
 
@@ -254,9 +255,10 @@ string co_ctx::ctx_info() const
     {
         ss << "stack:" << endl;
         ss << stack__->stack_info() << endl;
-        if ((void*)context__.uc_stack.ss_sp < (void*)stack__->stack_top() && (void*)context__.uc_stack.ss_sp >= (void*)stack__->stack())
+        auto sp = context__.uc_mcontext.gregs[REG_RSP];
+        if ((void*)sp < (void*)stack__->stack_top() && (void*)sp >= (void*)stack__->stack())
         {
-            ss << dump_memory((co_byte*)context__.uc_stack.ss_sp, stack__->stack_top() - (co_byte*)context__.uc_stack.ss_sp) << endl;
+            ss << dump_memory((co_byte*)sp, stack__->stack_top() - (co_byte*)sp) << endl;
         }
         else
         {
