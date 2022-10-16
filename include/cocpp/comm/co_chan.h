@@ -23,19 +23,19 @@ private:
     class chan_base
     {
     protected:
-        std::shared_ptr<std::deque<ValueType>> data__ { std::make_shared<std::deque<ValueType>>() };
-        std::shared_ptr<bool>                  closed__ { std::make_shared<bool>(false) };
-        mutable std::shared_ptr<co_mutex>      mu__ { std::make_shared<co_mutex>() };
-        std::shared_ptr<co_condition_variable> cv_full__  = { std::make_shared<co_condition_variable>() };
-        std::shared_ptr<co_condition_variable> cv_empty__ = { std::make_shared<co_condition_variable>() };
+        std::shared_ptr<std::deque<ValueType> > data__ {std::make_shared<std::deque<ValueType> >()};
+        std::shared_ptr<bool> closed__ {std::make_shared<bool>(false)};
+        mutable std::shared_ptr<co_mutex> mu__ {std::make_shared<co_mutex>()};
+        std::shared_ptr<co_condition_variable> cv_full__ = {std::make_shared<co_condition_variable>()};
+        std::shared_ptr<co_condition_variable> cv_empty__ = {std::make_shared<co_condition_variable>()};
 
     public:
         std::optional<ValueType> pop();
-        void                     close();
-        bool                     closed() const;
-        bool                     empty() const;
+        void close();
+        bool closed() const;
+        bool empty() const;
 
-        virtual int  max_size() const      = 0;
+        virtual int max_size() const = 0;
         virtual bool push(ValueType value) = 0;
     };
 
@@ -51,21 +51,21 @@ private:
         }
 
         bool push(ValueType value) override;
-        int  max_size() const override;
+        int max_size() const override;
     };
 
     class unlimited_chan final : public chan_base
     {
     public:
         bool push(ValueType value) override;
-        int  max_size() const override;
+        int max_size() const override;
     };
 
     class sync_chan final : public chan_base
     {
     public:
         bool push(ValueType value) override;
-        int  max_size() const override;
+        int max_size() const override;
     };
 
     std::shared_ptr<chan_base> impl__;
@@ -74,28 +74,28 @@ public:
     class iterator
     {
     private:
-        co_chan*                 ch__ { nullptr };
+        co_chan *ch__ {nullptr};
         std::optional<ValueType> value__;
 
     public:
-        iterator(co_chan* ch);
+        iterator(co_chan *ch);
         iterator() = default;
-        iterator   operator++();
-        ValueType& operator*();
-        ValueType* operator->();
-        bool       operator==(const iterator& other);
+        iterator operator++();
+        ValueType &operator*();
+        ValueType *operator->();
+        bool operator==(const iterator &other);
         // bool       operator!=(const iterator& other);
     };
 
     iterator begin();
     iterator end();
 
-    bool                     push(ValueType value);
+    bool push(ValueType value);
     std::optional<ValueType> pop();
-    void                     close();
-    bool                     closed() const;
-    bool                     empty() const;
-    int                      max_size() const;
+    void close();
+    bool closed() const;
+    bool empty() const;
+    int max_size() const;
 
     co_chan(int max_size = -1);
 };
@@ -118,25 +118,25 @@ co_chan<ValueType>::co_chan(int max_size)
 }
 
 template <std::copyable ValueType>
-bool operator<(co_chan<ValueType>& ch, ValueType value);
+bool operator<(co_chan<ValueType> &ch, ValueType value);
 
 template <std::copyable ValueType>
-bool operator>(co_chan<ValueType>& ch, ValueType& value);
+bool operator>(co_chan<ValueType> &ch, ValueType &value);
 
 template <std::copyable ValueType>
-co_chan<ValueType>& operator<<(co_chan<ValueType>& ch, ValueType value);
+co_chan<ValueType> &operator<<(co_chan<ValueType> &ch, ValueType value);
 
 template <std::copyable ValueType>
-co_chan<ValueType>& operator>>(co_chan<ValueType>& ch, ValueType& value);
+co_chan<ValueType> &operator>>(co_chan<ValueType> &ch, ValueType &value);
 
 template <std::copyable ValueType>
-bool operator<(co_chan<ValueType>& ch, ValueType value)
+bool operator<(co_chan<ValueType> &ch, ValueType value)
 {
     return ch.push(value);
 }
 
 template <std::copyable ValueType>
-bool operator>(co_chan<ValueType>& ch, ValueType& value)
+bool operator>(co_chan<ValueType> &ch, ValueType &value)
 {
     auto ret = ch.pop();
     if (!ret)
@@ -148,14 +148,14 @@ bool operator>(co_chan<ValueType>& ch, ValueType& value)
 }
 
 template <std::copyable ValueType>
-co_chan<ValueType>& operator<<(co_chan<ValueType>& ch, ValueType value)
+co_chan<ValueType> &operator<<(co_chan<ValueType> &ch, ValueType value)
 {
     ch.push(value);
     return ch;
 }
 
 template <std::copyable ValueType>
-co_chan<ValueType>& operator>>(co_chan<ValueType>& ch, ValueType& value)
+co_chan<ValueType> &operator>>(co_chan<ValueType> &ch, ValueType &value)
 {
     value = ch.pop().value();
     return ch;
@@ -173,7 +173,9 @@ bool co_chan<ValueType>::fixed_chan::push(ValueType value)
 
     if (chan_base::data__->size() == static_cast<size_t>(max_size))
     {
-        chan_base::cv_full__->wait(lock, [this] { return *chan_base::closed__ || chan_base::data__->size() < static_cast<size_t>(max_size__); });
+        chan_base::cv_full__->wait(lock, [this] {
+            return *chan_base::closed__ || chan_base::data__->size() < static_cast<size_t>(max_size__);
+        });
         if (*chan_base::closed__)
         {
             return false;
@@ -213,7 +215,9 @@ bool co_chan<ValueType>::sync_chan::push(ValueType value)
 
     if (chan_base::data__->size() == static_cast<size_t>(max_size))
     {
-        chan_base::cv_full__->wait(lock, [this] { return *chan_base::closed__; });
+        chan_base::cv_full__->wait(lock, [this] {
+            return *chan_base::closed__;
+        });
         if (*chan_base::closed__)
         {
             return false;
@@ -223,7 +227,9 @@ bool co_chan<ValueType>::sync_chan::push(ValueType value)
     chan_base::data__->push_back(value);
     chan_base::cv_empty__->notify_one();
 
-    chan_base::cv_full__->wait(lock, [this] { return *chan_base::closed__ || chan_base::data__->empty(); });
+    chan_base::cv_full__->wait(lock, [this] {
+        return *chan_base::closed__ || chan_base::data__->empty();
+    });
 
     return true;
 }
@@ -238,7 +244,7 @@ template <std::copyable ValueType>
 std::optional<ValueType> co_chan<ValueType>::chan_base::pop()
 {
     std::optional<ValueType> ret;
-    std::unique_lock         lock(*mu__);
+    std::unique_lock lock(*mu__);
 
     if (data__->empty())
     {
@@ -283,16 +289,28 @@ void co_chan<ValueType>::close()
 }
 
 template <std::copyable ValueType>
-int co_chan<ValueType>::fixed_chan::max_size() const { return max_size__; }
+int co_chan<ValueType>::fixed_chan::max_size() const
+{
+    return max_size__;
+}
 
 template <std::copyable ValueType>
-int co_chan<ValueType>::unlimited_chan::max_size() const { return -1; }
+int co_chan<ValueType>::unlimited_chan::max_size() const
+{
+    return -1;
+}
 
 template <std::copyable ValueType>
-int co_chan<ValueType>::sync_chan::max_size() const { return 0; }
+int co_chan<ValueType>::sync_chan::max_size() const
+{
+    return 0;
+}
 
 template <std::copyable ValueType>
-int co_chan<ValueType>::max_size() const { return impl__->max_size(); }
+int co_chan<ValueType>::max_size() const
+{
+    return impl__->max_size();
+}
 
 template <std::copyable ValueType>
 bool co_chan<ValueType>::chan_base::closed() const
@@ -321,7 +339,7 @@ bool co_chan<ValueType>::empty() const
 }
 
 template <std::copyable ValueType>
-co_chan<ValueType>::iterator::iterator(co_chan<ValueType>* ch)
+co_chan<ValueType>::iterator::iterator(co_chan<ValueType> *ch)
     : ch__(ch)
 {
     ++*this;
@@ -335,19 +353,19 @@ typename co_chan<ValueType>::iterator co_chan<ValueType>::iterator::operator++()
 }
 
 template <std::copyable ValueType>
-ValueType& co_chan<ValueType>::iterator::operator*()
+ValueType &co_chan<ValueType>::iterator::operator*()
 {
     return *value__;
 }
 
 template <std::copyable ValueType>
-ValueType* co_chan<ValueType>::iterator::operator->()
+ValueType *co_chan<ValueType>::iterator::operator->()
 {
     return &*value__;
 }
 
 template <std::copyable ValueType>
-bool co_chan<ValueType>::iterator::operator==(const iterator& other)
+bool co_chan<ValueType>::iterator::operator==(const iterator &other)
 {
     if (ch__ == other.ch__)
     {

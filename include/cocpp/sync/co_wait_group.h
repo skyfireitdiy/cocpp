@@ -10,9 +10,9 @@ CO_NAMESPACE_BEGIN
 class co_wait_group final : private co_noncopyable
 {
 private:
-    const size_t          count__;
-    size_t                done__;
-    co_mutex              mutex__;
+    const size_t count__;
+    size_t done__;
+    co_mutex mutex__;
     co_condition_variable cond__;
 
 public:

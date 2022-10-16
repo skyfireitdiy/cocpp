@@ -101,7 +101,7 @@ TEST(sync, recursive_mutex_trylock)
 TEST(sync, timed_mutex_lock_for)
 {
     co_timed_mutex mu;
-    co             c1([&] {
+    co c1([&] {
         mu.lock();
         this_co::sleep_for(100ms);
         mu.unlock();
@@ -220,9 +220,9 @@ TEST(sync, shared_timed_mutex_try_lock_shared_for_locked_mutex)
 
 TEST(sync, condition_variable_notify_one)
 {
-    co_mutex              mu;
+    co_mutex mu;
     co_condition_variable cond;
-    int                   n = 100;
+    int n = 100;
 
     co c1([&] {
         unique_lock lck(mu);
@@ -239,9 +239,9 @@ TEST(sync, condition_variable_notify_one)
 
 TEST(sync, condition_variable_notify_all)
 {
-    co_mutex              mu;
+    co_mutex mu;
     co_condition_variable cond;
-    int                   n = 100;
+    int n = 100;
 
     co c1([&] {
         unique_lock lck(mu);
@@ -264,9 +264,9 @@ TEST(sync, condition_variable_notify_all)
 
 TEST(sync, condition_variable_notify_at_co_exit)
 {
-    co_mutex              mu;
+    co_mutex mu;
     co_condition_variable cond;
-    int                   n = 100;
+    int n = 100;
 
     co c1([&] {
         notify_all_at_co_exit(cond);
@@ -283,7 +283,7 @@ TEST(sync, condition_variable_notify_at_co_exit)
 TEST(sync, call_once)
 {
     co_once_flag flag;
-    atomic<int>  n = 0;
+    atomic<int> n = 0;
 
     auto f = [&](int t) {
         n += t;
@@ -326,8 +326,8 @@ TEST(sync, counting_semaphore_normal)
 TEST(sync, barrier)
 {
     atomic<int> n = 0;
-    co_barrier  barrier(10);
-    vector<co>  cs;
+    co_barrier barrier(10);
+    vector<co> cs;
 
     for (int i = 0; i < 10; ++i)
     {
@@ -345,9 +345,9 @@ TEST(sync, barrier)
 
 TEST(sync, wait_group)
 {
-    atomic<int>   n = 0;
+    atomic<int> n = 0;
     co_wait_group wg(10);
-    vector<co>    cs;
+    vector<co> cs;
 
     for (int i = 0; i < 10; ++i)
     {
@@ -367,8 +367,8 @@ TEST(sync, wait_group)
 TEST(sync, latch)
 {
     atomic<int> n = 0;
-    co_latch    latch(10);
-    vector<co>  cs;
+    co_latch latch(10);
+    vector<co> cs;
 
     for (int i = 0; i < 10; ++i)
     {

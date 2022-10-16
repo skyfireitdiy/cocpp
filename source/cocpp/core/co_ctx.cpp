@@ -16,37 +16,37 @@ using namespace std;
 
 CO_NAMESPACE_BEGIN
 
-co_stack* co_ctx::stack() const
+co_stack *co_ctx::stack() const
 {
     return stack__;
 }
 
-co_byte** co_ctx::regs()
+co_byte **co_ctx::regs()
 {
-    return reinterpret_cast<co_byte**>(&regs__);
+    return reinterpret_cast<co_byte **>(&regs__);
 }
 
-const co_ctx_config& co_ctx::config() const
+const co_ctx_config &co_ctx::config() const
 {
     return config__;
 }
 
-co_any& co_ctx::ret_ref()
+co_any &co_ctx::ret_ref()
 {
     return ret__;
 }
 
-void co_ctx::set_env(co_env* env)
+void co_ctx::set_env(co_env *env)
 {
     env__ = env;
 }
 
-co_env* co_ctx::env() const
+co_env *co_ctx::env() const
 {
     return env__;
 }
 
-co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, function<void(co_any&)> entry)
+co_ctx::co_ctx(co_stack *stack, const co_ctx_config &config, function<void(co_any &)> entry)
     : stack__(stack)
     , config__(config)
     , entry__(entry)
@@ -54,12 +54,12 @@ co_ctx::co_ctx(co_stack* stack, const co_ctx_config& config, function<void(co_an
     set_priority(config.priority);
 }
 
-function<void(co_any&)> co_ctx::entry() const
+function<void(co_any &)> co_ctx::entry() const
 {
     return entry__;
 }
 
-void co_ctx::real_entry(co_ctx* ctx)
+void co_ctx::real_entry(co_ctx *ctx)
 {
     try
     {
@@ -92,7 +92,7 @@ void co_ctx::set_priority(int priority)
         return;
     }
     unique_lock lock(priority_lock__);
-    int         old_priority = priority__;
+    int old_priority = priority__;
     if (priority >= CO_MAX_PRIORITY)
     {
         priority = CO_MAX_PRIORITY - 1;
@@ -129,7 +129,7 @@ void co_ctx::check_and_rethrow_exception()
 {
     if (exception__)
     {
-        auto e      = exception__;
+        auto e = exception__;
         exception__ = nullptr; // 仅第一次抛出异常
         rethrow_exception(e);
     }
@@ -155,7 +155,7 @@ void co_ctx::unlock_destroy()
     reset_flag(CO_CTX_FLAG_LOCKED);
 }
 
-void co_ctx::set_stack(co_stack* stack)
+void co_ctx::set_stack(co_stack *stack)
 {
     stack__ = stack;
 }
@@ -175,7 +175,7 @@ co_id co_ctx::id() const
     return reinterpret_cast<co_id>(this);
 }
 
-void co_ctx::enter_wait_resource_state(void* rc)
+void co_ctx::enter_wait_resource_state(void *rc)
 {
     {
         scoped_lock lock(wait_data__.mu);
@@ -186,7 +186,7 @@ void co_ctx::enter_wait_resource_state(void* rc)
     env__->ctx_enter_wait_state(this);
 }
 
-void co_ctx::leave_wait_resource_state(void* rc)
+void co_ctx::leave_wait_resource_state(void *rc)
 {
     {
         scoped_lock lock(wait_data__.mu);
@@ -237,7 +237,7 @@ string co_ctx::ctx_info() const
 
     // locals
     ss << "locals: \n";
-    for (auto& p : locals__)
+    for (auto &p : locals__)
     {
         ss << "  " << p.first << ": 0x" << hex << p.second << dec << endl;
     }
@@ -247,7 +247,7 @@ string co_ctx::ctx_info() const
 
     // regs
     ss << "regs: \n";
-    auto context = reinterpret_cast<const sigcontext_64*>(&regs__);
+    auto context = reinterpret_cast<const sigcontext_64 *>(&regs__);
     ss << regs_info(context) << endl;
 
     // stack
@@ -255,9 +255,9 @@ string co_ctx::ctx_info() const
     {
         ss << "stack:" << endl;
         ss << stack__->stack_info() << endl;
-        if ((void*)context->sp < (void*)stack__->stack_top() && (void*)context->sp >= (void*)stack__->stack())
+        if ((void *)context->sp < (void *)stack__->stack_top() && (void *)context->sp >= (void *)stack__->stack())
         {
-            ss << dump_memory((co_byte*)context->sp, stack__->stack_top() - (co_byte*)context->sp) << endl;
+            ss << dump_memory((co_byte *)context->sp, stack__->stack_top() - (co_byte *)context->sp) << endl;
         }
         else
         {

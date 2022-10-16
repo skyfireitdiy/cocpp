@@ -11,7 +11,7 @@ template <size_t MAX_FLAG_COUNT>
 class co_flag_manager final
 {
 private:
-    std::bitset<MAX_FLAG_COUNT>  flags__;
+    std::bitset<MAX_FLAG_COUNT> flags__;
     mutable std::recursive_mutex mu__;
 
 public:

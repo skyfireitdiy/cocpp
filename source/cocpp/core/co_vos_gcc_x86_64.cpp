@@ -18,19 +18,19 @@
 extern "C" void _start();
 CO_NAMESPACE_BEGIN
 
-static sigcontext_64* get_sigcontext_64(co_ctx* ctx)
+static sigcontext_64 *get_sigcontext_64(co_ctx *ctx)
 {
-    return reinterpret_cast<sigcontext_64*>(ctx->regs());
+    return reinterpret_cast<sigcontext_64 *>(ctx->regs());
 }
 
 #define CO_SETREG(context, x, y) context->x = reinterpret_cast<decltype(context->x)>(y)
 
-co_byte* get_rsp(co_ctx* ctx)
+co_byte *get_rsp(co_ctx *ctx)
 {
-    return reinterpret_cast<co_byte*>(get_sigcontext_64(ctx)->sp);
+    return reinterpret_cast<co_byte *>(get_sigcontext_64(ctx)->sp);
 }
 
-void switch_to(co_byte** curr, co_byte** next)
+void switch_to(co_byte **curr, co_byte **next)
 {
 
     __asm volatile("" ::
@@ -86,7 +86,7 @@ void switch_to(co_byte** curr, co_byte** next)
                        : "memory");
 }
 
-void init_ctx(co_stack* stack, co_ctx* ctx)
+void init_ctx(co_stack *stack, co_ctx *ctx)
 {
     auto context = get_sigcontext_64(ctx);
     CO_SETREG(context, sp, stack->stack_top() - 8);
@@ -94,7 +94,7 @@ void init_ctx(co_stack* stack, co_ctx* ctx)
     CO_SETREG(context, ip, &co_ctx::real_entry);
     CO_SETREG(context, di, ctx);
     // Store the address of '_start' at the bottom of the stack to prevent segment fault in case of exception backtracking of the call chain
-    *reinterpret_cast<void**>(context->sp) = reinterpret_cast<void*>(&::_start);
+    *reinterpret_cast<void **>(context->sp) = reinterpret_cast<void *>(&::_start);
 }
 
 co_tid gettid()
@@ -102,31 +102,31 @@ co_tid gettid()
     return static_cast<co_tid>(::gettid());
 }
 
-void send_switch_from_outside_signal(co_env* env)
+void send_switch_from_outside_signal(co_env *env)
 {
     ::syscall(SYS_tgkill, ::getpid(), static_cast<pid_t>(env->schedule_thread_tid()), CO_SWITCH_SIGNAL);
 }
 
-static void save_context_to_ctx(sigcontext_64* context, co_ctx* ctx)
+static void save_context_to_ctx(sigcontext_64 *context, co_ctx *ctx)
 {
-    *reinterpret_cast<sigcontext_64*>(ctx->regs()) = *context;
+    *reinterpret_cast<sigcontext_64 *>(ctx->regs()) = *context;
     // printf("rip: 0x%llx\n", context->ip);
     // printf("rsp: 0x%llx\n", context->sp);
     // printf("rbp: 0x%llx\n", context->bp);
     // print_backtrace();
 }
 
-static void restore_context_from_ctx(sigcontext_64* context, co_ctx* ctx)
+static void restore_context_from_ctx(sigcontext_64 *context, co_ctx *ctx)
 {
-    *context = *reinterpret_cast<sigcontext_64*>(ctx->regs());
+    *context = *reinterpret_cast<sigcontext_64 *>(ctx->regs());
 }
 
-void switch_from_outside(sigcontext_64* context)
+void switch_from_outside(sigcontext_64 *context)
 {
     auto env = CoCurrentEnv();
 
-    co_ctx* curr = nullptr;
-    co_ctx* next = nullptr;
+    co_ctx *curr = nullptr;
+    co_ctx *next = nullptr;
     {
         if (!env->can_force_schedule())
         {

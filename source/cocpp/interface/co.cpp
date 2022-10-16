@@ -15,7 +15,7 @@ void co::detach()
         return;
     }
     auto ctx = ctx__;
-    ctx__    = nullptr;
+    ctx__ = nullptr;
     ctx->unlock_destroy();
 }
 
@@ -52,7 +52,7 @@ void co::join()
     if (ctx__ != nullptr)
     {
         auto ctx = ctx__;
-        ctx__    = nullptr;
+        ctx__ = nullptr;
         ctx->unlock_destroy();
     }
     if (e)
@@ -61,18 +61,18 @@ void co::join()
     }
 }
 
-co::co(co&& other) noexcept
+co::co(co &&other) noexcept
 {
-    ctx__       = other.ctx__;
+    ctx__ = other.ctx__;
     other.ctx__ = nullptr;
 }
 
-co& co::operator=(co&& other) noexcept
+co &co::operator=(co &&other) noexcept
 {
     if (this != &other)
     {
         join();
-        ctx__       = other.ctx__;
+        ctx__ = other.ctx__;
         other.ctx__ = nullptr;
     }
     return *this;

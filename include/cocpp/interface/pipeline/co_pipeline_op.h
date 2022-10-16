@@ -21,7 +21,7 @@ template <typename FilterType>
 struct filter
 {
     const FilterType filter__;
-    filter(const FilterType& filter)
+    filter(const FilterType &filter)
         : filter__(filter)
     {
     }
@@ -31,8 +31,8 @@ template <typename ReduceType, typename InitType>
 struct reduce
 {
     const ReduceType reducer__;
-    const InitType   init__;
-    reduce(const ReduceType& reducer, const InitType& init)
+    const InitType init__;
+    reduce(const ReduceType &reducer, const InitType &init)
         : reducer__(reducer)
         , init__(init)
     {
@@ -51,7 +51,7 @@ struct stream
 struct take
 {
     const size_t take__;
-    take(const size_t& tk)
+    take(const size_t &tk)
         : take__(tk)
     {
     }
@@ -60,7 +60,7 @@ struct take
 struct skip
 {
     const size_t skip__;
-    skip(const size_t& sp)
+    skip(const size_t &sp)
         : skip__(sp)
     {
     }
@@ -69,9 +69,9 @@ struct skip
 template <typename FuncType>
 struct fork
 {
-    const size_t   fork_count__;
+    const size_t fork_count__;
     const FuncType func__;
-    fork(const size_t& fc, const FuncType& func)
+    fork(const size_t &fc, const FuncType &func)
         : fork_count__(fc)
         , func__(func)
     {
@@ -81,9 +81,9 @@ struct fork
 template <typename FuncType>
 struct group
 {
-    const size_t   group_count__;
+    const size_t group_count__;
     const FuncType func__;
-    group(const size_t& sz, const FuncType& func)
+    group(const size_t &sz, const FuncType &func)
         : group_count__(sz)
         , func__(func)
     {

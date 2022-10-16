@@ -9,8 +9,8 @@ _Pragma("once");
 CO_NAMESPACE_BEGIN
 
 using co_byte = unsigned char;
-using co_id   = unsigned long long;
-using co_tid  = unsigned long long;
+using co_id = unsigned long long;
+using co_tid = unsigned long long;
 
 enum class co_state : unsigned char
 {

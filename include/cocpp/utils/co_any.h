@@ -22,53 +22,53 @@ private:
         T value__;
 
     public:
-        real_type(const T& value);
-        T& get();
+        real_type(const T &value);
+        T &get();
     };
 
-    std::shared_ptr<base_type> data__ { nullptr };
+    std::shared_ptr<base_type> data__ {nullptr};
 
 public:
-    co_any()                               = default;
-    co_any(const co_any& value)            = default;
-    co_any& operator=(const co_any& value) = default;
+    co_any() = default;
+    co_any(const co_any &value) = default;
+    co_any &operator=(const co_any &value) = default;
     template <typename T>
-    co_any(const T& value);
+    co_any(const T &value);
     template <typename T>
-    co_any& operator=(const T& other);
+    co_any &operator=(const T &other);
     template <typename T>
-    T& get();
+    T &get();
 };
 
 template <typename T>
-T& co_any::real_type<T>::get()
+T &co_any::real_type<T>::get()
 {
     return value__;
 }
 
 template <typename T>
-co_any::real_type<T>::real_type(const T& value)
+co_any::real_type<T>::real_type(const T &value)
     : value__(value)
 {
 }
 
 template <typename T>
-co_any::co_any(const T& value)
-    : data__(std::shared_ptr<real_type<T>>(new real_type<T>(value)))
+co_any::co_any(const T &value)
+    : data__(std::shared_ptr<real_type<T> >(new real_type<T>(value)))
 {
 }
 
 template <typename T>
-co_any& co_any::operator=(const T& value)
+co_any &co_any::operator=(const T &value)
 {
-    data__ = std::shared_ptr<real_type<T>>(new real_type<T>(value));
+    data__ = std::shared_ptr<real_type<T> >(new real_type<T>(value));
     return *this;
 }
 
 template <typename T>
-T& co_any::get()
+T &co_any::get()
 {
-    auto ptr = std::dynamic_pointer_cast<real_type<T>>(data__);
+    auto ptr = std::dynamic_pointer_cast<real_type<T> >(data__);
     if (ptr == nullptr)
     {
         throw std::bad_cast();

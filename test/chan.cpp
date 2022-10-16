@@ -54,7 +54,7 @@ TEST(chan, no_limited)
 {
     co_chan<int> ch(-1);
 
-    co  c1([&] {
+    co c1([&] {
         for (int i = 0; i < 10000; ++i)
         {
             ch.push(i);
@@ -74,7 +74,7 @@ TEST(chan, no_limited)
 TEST(chan, no_buf)
 {
     co_chan<int> ch(0);
-    co           c1([&] {
+    co c1([&] {
         for (int i = 0; i < 1000; ++i)
         {
             ch << i;
@@ -95,18 +95,18 @@ TEST(chan, no_buffered_iterator)
 {
     co_chan<int> ch(0);
 
-    vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    vector<int> push {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     vector<int> pop;
 
     co c1([&] {
-        for (auto&& p : push)
+        for (auto &&p : push)
         {
             ch.push(p);
         }
         ch.close();
     });
 
-    for (auto&& p : ch)
+    for (auto &&p : ch)
     {
         pop.push_back(p);
     }
@@ -117,12 +117,12 @@ TEST(chan, no_buffered_iterator)
 TEST(chan, buffered_empty_iterator)
 {
     co_chan<int> ch(10);
-    vector<int>  pop;
-    vector<int>  push;
+    vector<int> pop;
+    vector<int> push;
 
     ch.close();
 
-    for (auto&& p : ch)
+    for (auto &&p : ch)
     {
         pop.push_back(p);
     }
@@ -133,11 +133,11 @@ TEST(chan, no_buffered_operator_less)
 {
     co_chan<int> ch(0);
 
-    vector<int> push { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    vector<int> push {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     vector<int> pop;
 
     co c1([&] {
-        for (auto&& p : push)
+        for (auto &&p : push)
         {
             [[maybe_unused]] auto ret = ch < p;
         }
@@ -207,7 +207,7 @@ TEST(chan, push_to_full_chan_closed)
 TEST(chan, pop_from_empty_chan_closed)
 {
     co_chan<int> ch(1);
-    co           c1([&] {
+    co c1([&] {
         this_co::sleep_for(100ms);
         ch.close();
     });
@@ -218,7 +218,7 @@ TEST(chan, pop_from_empty_chan_closed)
 TEST(chan, pop_from_zero_chan_closed)
 {
     co_chan<int> ch(0);
-    co           c1([&] {
+    co c1([&] {
         this_co::sleep_for(100ms);
         ch.close();
     });

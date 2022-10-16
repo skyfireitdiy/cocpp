@@ -21,12 +21,11 @@ co_arrival_token co_barrier::arrive(ptrdiff_t n)
     expected__ -= n;
     return co_arrival_token {
         .generation__ = generation__,
-        .barrier__    = this,
-        .n__          = n
-    };
+        .barrier__ = this,
+        .n__ = n};
 }
 
-void co_barrier::wait(co_arrival_token&& arrival)
+void co_barrier::wait(co_arrival_token &&arrival)
 {
     unique_lock lock(mutex__);
     if (arrival.generation__ != generation__ || arrival.barrier__ != this)
@@ -41,7 +40,7 @@ void co_barrier::wait(co_arrival_token&& arrival)
     if (count__ == 0)
     {
         generation__++;
-        count__    = max__;
+        count__ = max__;
         expected__ = max__;
         cond__.notify_all();
     }

@@ -16,7 +16,7 @@ static std::string exe_path();
 
 static std::string exe_path()
 {
-    char    buf[1024];
+    char buf[1024];
     ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf));
     if (len == -1)
     {
@@ -27,9 +27,9 @@ static std::string exe_path()
 
 string backtrace()
 {
-    vector<void*> buffer(100);
-    int           pointer_num   = ::backtrace(buffer.data(), buffer.size());
-    char**        string_buffer = ::backtrace_symbols(buffer.data(), pointer_num);
+    vector<void *> buffer(100);
+    int pointer_num = ::backtrace(buffer.data(), buffer.size());
+    char **string_buffer = ::backtrace_symbols(buffer.data(), pointer_num);
     if (string_buffer == NULL)
     {
         return {};
@@ -44,7 +44,7 @@ string backtrace()
     return ret;
 }
 
-void handle_exception(sigcontext_64* context, int sig)
+void handle_exception(sigcontext_64 *context, int sig)
 {
     fprintf(stderr, "signal %d\n", sig);
     static bool in_exception = false;
@@ -67,9 +67,9 @@ void handle_exception(sigcontext_64* context, int sig)
     exit(128 - sig);
 }
 
-void set_up_signal_handler(const std::vector<int>& signals)
+void set_up_signal_handler(const std::vector<int> &signals)
 {
-    for (auto&& s : signals)
+    for (auto &&s : signals)
     {
         struct sigaction sa;
         sa.sa_handler = signal_handler;
@@ -83,7 +83,7 @@ void set_up_signal_handler(const std::vector<int>& signals)
 std::string time_info()
 {
     time_t t = time(nullptr);
-    char   buf[64];
+    char buf[64];
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&t));
     return buf;
 }
@@ -99,7 +99,7 @@ std::string maps_info()
     ss << "gid: " << getgid() << "\n";
     ss << "egid: " << getegid() << "\n";
     ss << "maps:" << endl;
-    FILE* fp = fopen("/proc/self/maps", "r");
+    FILE *fp = fopen("/proc/self/maps", "r");
     if (fp == nullptr)
     {
         return "";
@@ -115,7 +115,7 @@ std::string maps_info()
 
 void signal_handler(int signo)
 {
-    sigcontext_64* context = nullptr;
+    sigcontext_64 *context = nullptr;
     __asm volatile("leaq 88(%%rsp), %%rax\t\n"
                    "movq %%rax, %0\t\n"
                    : "=m"(context)
@@ -131,7 +131,7 @@ void signal_handler(int signo)
     }
 }
 
-std::string regs_info(const sigcontext_64* ctx)
+std::string regs_info(const sigcontext_64 *ctx)
 {
     stringstream ss;
 #define OUT_PUT_REG(name) ss << #name ": 0x" << hex << ctx->name << dec << "(" << ctx->name << ")" << endl
@@ -160,24 +160,24 @@ std::string regs_info(const sigcontext_64* ctx)
     return ss.str();
 }
 
-void print_debug_info(const std::string& item_name, std::function<std::string()> f)
+void print_debug_info(const std::string &item_name, std::function<std::string()> f)
 {
     fprintf(stderr, "=================== %s start ===================\n", item_name.c_str());
     fprintf(stderr, "%s\n", f().c_str());
     fprintf(stderr, "=================== %s end ===================\n", item_name.c_str());
 }
 
-std::string dump_memory(const co_byte* addr, size_t size)
+std::string dump_memory(const co_byte *addr, size_t size)
 {
     stringstream ss;
     for (size_t i = 0; i < size; i += sizeof(uint64_t))
     {
         if (i % (4 * sizeof(uint64_t)) == 0)
         {
-            ss << "0x" << hex << setw(16) << setfill('0') << (void*)(addr + i)
+            ss << "0x" << hex << setw(16) << setfill('0') << (void *)(addr + i)
                << ": ";
         }
-        ss << hex << setw(16) << setfill('0') << (*(uint64_t*)(addr + i))
+        ss << hex << setw(16) << setfill('0') << (*(uint64_t *)(addr + i))
            << " ";
         if (i % (4 * sizeof(uint64_t)) == 3 * sizeof(uint64_t))
         {

@@ -11,15 +11,15 @@ class co_state_manager final
 {
 private:
     mutable std::recursive_mutex mu_state__;
-    T                            state__ { InitState };
+    T state__ {InitState};
 
 public:
-    void set_state(const T& state);
-    T    state() const;
+    void set_state(const T &state);
+    T state() const;
 };
 
 template <typename T, T InitState, T FinalState>
-void co_state_manager<T, InitState, FinalState>::set_state(const T& state)
+void co_state_manager<T, InitState, FinalState>::set_state(const T &state)
 {
     std::scoped_lock lock(mu_state__);
     if (state__ != FinalState)

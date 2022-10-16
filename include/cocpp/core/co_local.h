@@ -18,11 +18,11 @@ private:
     T local_data__;
 
 public:
-    T& get();
+    T &get();
 };
 
 template <std::default_initializable T>
-T& co_local<T>::get()
+T &co_local<T>::get()
 {
     return local_data__;
 }

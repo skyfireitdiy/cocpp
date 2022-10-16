@@ -15,20 +15,20 @@ template <std::ptrdiff_t LeastMaxValue>
 class co_counting_semaphore final : private co_noncopyable
 {
 private:
-    co_mutex              mu__;
+    co_mutex mu__;
     co_condition_variable cv_empty__;
     co_condition_variable cv_full__;
-    std::ptrdiff_t        desired__;
-    void                  release_one__();
+    std::ptrdiff_t desired__;
+    void release_one__();
 
 public:
     void acquire();
     void release(std::ptrdiff_t update = 1);
     bool try_acquire() noexcept;
     template <class Rep, class Period>
-    bool try_acquire_for(const std::chrono::duration<Rep, Period>& rel_time);
+    bool try_acquire_for(const std::chrono::duration<Rep, Period> &rel_time);
     template <class Clock, class Duration>
-    bool try_acquire_until(const std::chrono::time_point<Clock, Duration>& abs_time);
+    bool try_acquire_until(const std::chrono::time_point<Clock, Duration> &abs_time);
     constexpr explicit co_counting_semaphore(std::ptrdiff_t desired);
     static constexpr std::ptrdiff_t max() noexcept;
 };
@@ -84,14 +84,14 @@ bool co_counting_semaphore<LeastMaxValue>::try_acquire() noexcept
 
 template <std::ptrdiff_t LeastMaxValue>
 template <class Rep, class Period>
-bool co_counting_semaphore<LeastMaxValue>::try_acquire_for(const std::chrono::duration<Rep, Period>& rel_time)
+bool co_counting_semaphore<LeastMaxValue>::try_acquire_for(const std::chrono::duration<Rep, Period> &rel_time)
 {
     return try_acquire_until(std::chrono::steady_clock::now() + rel_time);
 }
 
 template <std::ptrdiff_t LeastMaxValue>
 template <class Clock, class Duration>
-bool co_counting_semaphore<LeastMaxValue>::try_acquire_until(const std::chrono::time_point<Clock, Duration>& abs_time)
+bool co_counting_semaphore<LeastMaxValue>::try_acquire_until(const std::chrono::time_point<Clock, Duration> &abs_time)
 {
     do
     {

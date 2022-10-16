@@ -12,8 +12,8 @@ class co_stack_factory
 {
 
 public:
-    static co_stack* create_stack(size_t size);
-    static void      destroy_stack(co_stack* stack);
+    static co_stack *create_stack(size_t size);
+    static void destroy_stack(co_stack *stack);
 };
 
 CO_NAMESPACE_END

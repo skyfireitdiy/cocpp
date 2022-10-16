@@ -13,8 +13,8 @@ class co_ctx_factory final
 {
 
 public:
-    static co_ctx* create_ctx(const co_ctx_config& config, std::function<void(co_any&)> entry);
-    static void    destroy_ctx(co_ctx* ctx);
+    static co_ctx *create_ctx(const co_ctx_config &config, std::function<void(co_any &)> entry);
+    static void destroy_ctx(co_ctx *ctx);
 };
 
 CO_NAMESPACE_END

@@ -24,14 +24,14 @@ private:
     struct shared_lock_context
     {
         lock_type type;
-        co_ctx*   ctx;
+        co_ctx *ctx;
     };
 
-    co_spinlock                     spinlock__;
-    lock_type                       lock_type__ { lock_type::unlocked };
+    co_spinlock spinlock__;
+    lock_type lock_type__ {lock_type::unlocked};
     std::deque<shared_lock_context> wait_deque__;
-    std::set<co_ctx*>               owners__;
-    void                            wake_up_waiters__();
+    std::set<co_ctx *> owners__;
+    void wake_up_waiters__();
 
 public:
     void lock();

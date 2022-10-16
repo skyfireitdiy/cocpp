@@ -5,7 +5,7 @@ using namespace std;
 
 CO_NAMESPACE_BEGIN
 
-co_timer::co_timer(const function<void()>& func, co_expire_type type, unsigned long long interval_ms)
+co_timer::co_timer(const function<void()> &func, co_expire_type type, unsigned long long interval_ms)
     : handle__(static_cast<co_timer_handle>(reinterpret_cast<unsigned long>(this)))
     , callback__(func)
     , expire_type__(type)
@@ -15,7 +15,7 @@ co_timer::co_timer(const function<void()>& func, co_expire_type type, unsigned l
 {
 }
 
-co_timer::co_timer(const function<void()>& func, chrono::steady_clock::time_point expire_time)
+co_timer::co_timer(const function<void()> &func, chrono::steady_clock::time_point expire_time)
     : handle__(static_cast<co_timer_handle>(reinterpret_cast<unsigned long>(this)))
     , callback__(func)
     , expire_type__(co_expire_type::once)
@@ -26,12 +26,12 @@ co_timer::co_timer(const function<void()>& func, chrono::steady_clock::time_poin
 {
 }
 
-shared_ptr<co_timer> co_timer::create(const function<void()>& func, co_expire_type type, unsigned long long interval_ms)
+shared_ptr<co_timer> co_timer::create(const function<void()> &func, co_expire_type type, unsigned long long interval_ms)
 {
     return shared_ptr<co_timer>(new co_timer(func, type, interval_ms));
 }
 
-shared_ptr<co_timer> co_timer::create(const function<void()>& func, chrono::steady_clock::time_point expire_time)
+shared_ptr<co_timer> co_timer::create(const function<void()> &func, chrono::steady_clock::time_point expire_time)
 {
     return shared_ptr<co_timer>(new co_timer(func, expire_time));
 }
@@ -126,21 +126,21 @@ void co_timer::run() const
     }
 }
 
-bool operator==(const shared_ptr<co_timer>& lhs, const shared_ptr<co_timer>& rhs)
+bool operator==(const shared_ptr<co_timer> &lhs, const shared_ptr<co_timer> &rhs)
 {
     return lhs->get_handle() == rhs->get_handle();
 }
 
-bool operator<(const shared_ptr<co_timer>& lhs, const shared_ptr<co_timer>& rhs)
+bool operator<(const shared_ptr<co_timer> &lhs, const shared_ptr<co_timer> &rhs)
 {
     return lhs->expire_time() < rhs->expire_time();
 }
 
-function<void()> co_timer::set_expire_callback(const function<void()>& func)
+function<void()> co_timer::set_expire_callback(const function<void()> &func)
 {
     scoped_lock lock(mutex__);
-    auto        old_cb = callback__;
-    callback__         = func;
+    auto old_cb = callback__;
+    callback__ = func;
     return old_cb;
 }
 

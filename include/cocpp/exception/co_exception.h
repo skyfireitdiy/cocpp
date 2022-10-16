@@ -46,12 +46,12 @@ struct sigcontext_64
 std::string backtrace();
 std::string maps_info();
 std::string time_info();
-std::string regs_info(const sigcontext_64* ctx);
-std::string dump_memory(const co_byte* addr, size_t size);
+std::string regs_info(const sigcontext_64 *ctx);
+std::string dump_memory(const co_byte *addr, size_t size);
 
-void print_debug_info(const std::string& item_name, std::function<std::string()> f);
+void print_debug_info(const std::string &item_name, std::function<std::string()> f);
 
-void set_up_signal_handler(const std::vector<int>& signals);
+void set_up_signal_handler(const std::vector<int> &signals);
 void signal_handler(int signo);
 
 CO_NAMESPACE_END

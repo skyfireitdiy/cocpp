@@ -18,7 +18,9 @@ struct sub
     }
 };
 
-auto mul = [](int a, int b) { return a * b; };
+auto mul = [](int a, int b) {
+    return a * b;
+};
 
 int div_(int a, int b)
 {
@@ -30,7 +32,7 @@ int main()
     cocpp::co add_co(&add, 1000, 200);
     cocpp::co sub_co(sub {}, 1000, 200);
     cocpp::co mul_co(mul, 1000, 200);
-    auto      p_div = std::function<int(int, int)>(&div_);
+    auto p_div = std::function<int(int, int)>(&div_);
     cocpp::co div_co(p_div, 1000, 200);
 
     auto add_ret = add_co.wait<int>();

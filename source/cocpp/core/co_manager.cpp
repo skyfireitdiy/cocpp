@@ -20,7 +20,7 @@ using namespace std;
 
 CO_NAMESPACE_BEGIN
 
-co_env* co_manager::get_best_env__()
+co_env *co_manager::get_best_env__()
 {
     scoped_lock lck(env_set__.normal_lock);
     if (env_set__.normal_set.empty())
@@ -28,10 +28,10 @@ co_env* co_manager::get_best_env__()
         return create_env(false);
     }
 
-    co_env* best_env               = nullptr;
-    auto    min_workload           = numeric_limits<size_t>::max();
-    size_t  can_schedule_env_count = 0;
-    for (auto&& env : env_set__.normal_set)
+    co_env *best_env = nullptr;
+    auto min_workload = numeric_limits<size_t>::max();
+    size_t can_schedule_env_count = 0;
+    for (auto &&env : env_set__.normal_set)
     {
         if (env->state() == co_env_state::idle)
         {
@@ -51,7 +51,7 @@ co_env* co_manager::get_best_env__()
         if (env->workload() < min_workload)
         {
             min_workload = env->workload();
-            best_env     = env;
+            best_env = env;
         }
     }
     // 如果没有可用的env，就创建
@@ -70,21 +70,21 @@ co_env* co_manager::get_best_env__()
     return best_env;
 }
 
-void co_manager::subscribe_env_event__(co_env* env)
+void co_manager::subscribe_env_event__(co_env *env)
 {
     env->task_finished().sub([this, env]() {
         remove_env__(env);
     });
 }
 
-void co_manager::subscribe_ctx_event__(co_ctx* ctx)
+void co_manager::subscribe_ctx_event__(co_ctx *ctx)
 {
     ctx->priority_changed().sub([ctx](int old, int new_) {
         ctx->env()->handle_priority_changed(old, ctx);
     });
 }
 
-co_env* co_manager::create_env(bool dont_auto_destroy)
+co_env *co_manager::create_env(bool dont_auto_destroy)
 {
     assert(!clean_up__);
     auto env = co_env_factory::create_env(default_shared_stack_size__);
@@ -147,10 +147,10 @@ co_manager::co_manager()
 {
     subscribe_manager_event__();
     create_background_task__();
-    set_up_signal_handler({ CO_SWITCH_SIGNAL, SIGHUP, SIGINT, SIGTERM, SIGQUIT, SIGABRT, SIGSEGV, SIGBUS, SIGFPE, SIGILL, SIGSYS, SIGXCPU, SIGXFSZ, SIGPIPE });
+    set_up_signal_handler({CO_SWITCH_SIGNAL, SIGHUP, SIGINT, SIGTERM, SIGQUIT, SIGABRT, SIGSEGV, SIGBUS, SIGFPE, SIGILL, SIGSYS, SIGXCPU, SIGXFSZ, SIGPIPE});
 }
 
-void co_manager::remove_env__(co_env* env)
+void co_manager::remove_env__(co_env *env)
 {
     scoped_lock lock(env_set__.normal_lock);
     env_set__.normal_set.erase(env);
@@ -166,7 +166,7 @@ void co_manager::create_env_from_this_thread__()
     env_set__.normal_set.insert(current_env__);
 }
 
-co_env* co_manager::current_env()
+co_env *co_manager::current_env()
 {
     if (current_env__ == nullptr)
     {
@@ -178,9 +178,9 @@ co_env* co_manager::current_env()
 void co_manager::set_clean_up__()
 {
     scoped_lock lock(env_set__.normal_lock);
-    clean_up__       = true;
+    clean_up__ = true;
     auto backup_data = env_set__.normal_set;
-    for (auto&& env : backup_data)
+    for (auto &&env : backup_data)
     {
         if (env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
         {
@@ -202,7 +202,7 @@ void co_manager::clean_env_routine__()
         if (clean_up__)
         {
             auto backup = env_set__.normal_set;
-            for (auto&& env : backup)
+            for (auto &&env : backup)
             {
                 if (env->test_flag(CO_ENV_FLAG_NO_SCHE_THREAD))
                 {
@@ -218,7 +218,7 @@ void co_manager::clean_env_routine__()
         {
             env_set__.cv_expired_env.wait(lck);
         }
-        for (auto&& p : env_set__.expired_set)
+        for (auto &&p : env_set__.expired_set)
         {
             co_env_factory::destroy_env(p);
         }
@@ -251,7 +251,7 @@ void co_manager::force_schedule__()
     {
         return;
     }
-    for (auto&& env : env_set__.normal_set)
+    for (auto &&env : env_set__.normal_set)
     {
         // 如果检测到某个env被阻塞了，先锁定对应env的调度，防止在操作的时候发生调度，然后收集可转移的ctx
         if (env->is_blocked() && env->ctx_count() > 1)
@@ -271,13 +271,13 @@ void co_manager::redistribute_ctx__()
         return;
     }
 
-    list<co_ctx*> moved_ctx_list; // 需要被移动的ctx
+    list<co_ctx *> moved_ctx_list; // 需要被移动的ctx
 
-    auto merge_list = [](list<co_ctx*>& target, const list<co_ctx*>& src) {
+    auto merge_list = [](list<co_ctx *> &target, const list<co_ctx *> &src) {
         target.insert(target.end(), src.begin(), src.end());
     };
 
-    for (auto&& env : env_set__.normal_set)
+    for (auto &&env : env_set__.normal_set)
     {
         if (!env->try_lock_schedule())
         {
@@ -299,7 +299,7 @@ void co_manager::redistribute_ctx__()
         env->reset_scheduled_flag();
     }
     // 重新选择合适的env进行调度
-    for (auto&& ctx : moved_ctx_list)
+    for (auto &&ctx : moved_ctx_list)
     {
         get_best_env__()->move_ctx_to_here(ctx);
     }
@@ -309,10 +309,10 @@ void co_manager::destroy_redundant_env__()
 {
     scoped_lock lock(env_set__.normal_lock);
     // 然后删除多余的处于idle状态的env
-    size_t          can_schedule_env_count = 0;
-    vector<co_env*> idle_env_list;
+    size_t can_schedule_env_count = 0;
+    vector<co_env *> idle_env_list;
     idle_env_list.reserve(env_set__.normal_set.size());
-    for (auto&& env : env_set__.normal_set)
+    for (auto &&env : env_set__.normal_set)
     {
         if (env->can_schedule_ctx())
         {
@@ -364,7 +364,10 @@ void co_manager::timer_routine__()
         if (front->is_expired())
         {
             create_and_schedule_ctx(
-                {}, [front](co_any&) { front->run(); }, false);
+                {}, [front](co_any &) {
+                    front->run();
+                },
+                false);
             if (front->expire_type() == co_expire_type::once)
             {
                 front->stop();
@@ -382,7 +385,7 @@ void co_manager::timer_routine__()
 }
 
 void co_manager::set_timer_tick_duration(
-    const chrono::steady_clock::duration& duration)
+    const chrono::steady_clock::duration &duration)
 {
     scoped_lock lock(mu_timer_duration__);
     if (duration < chrono::milliseconds(DEFAULT_TIMING_TICK_DURATION_IN_MS))
@@ -395,7 +398,7 @@ void co_manager::set_timer_tick_duration(
     }
 }
 
-const chrono::steady_clock::duration& co_manager::timing_duration() const
+const chrono::steady_clock::duration &co_manager::timing_duration() const
 {
     scoped_lock lock(mu_timer_duration__);
     return timer_duration__;
@@ -409,13 +412,13 @@ co_manager::~co_manager()
 
 void co_manager::wait_background_task__()
 {
-    for (auto&& task : background_task__)
+    for (auto &&task : background_task__)
     {
         task.wait();
     }
 }
 
-co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, function<void(co_any&)> entry, bool lock_destroy)
+co_ctx *co_manager::create_and_schedule_ctx(const co_ctx_config &config, function<void(co_any &)> entry, bool lock_destroy)
 {
     auto ctx = co_ctx_factory::create_ctx(config, entry);
     subscribe_ctx_event__(ctx);
@@ -437,10 +440,10 @@ co_ctx* co_manager::create_and_schedule_ctx(const co_ctx_config& config, functio
 
 void co_manager::steal_ctx_routine__()
 {
-    scoped_lock     lock(env_set__.normal_lock);
-    vector<co_env*> idle_env_list;
+    scoped_lock lock(env_set__.normal_lock);
+    vector<co_env *> idle_env_list;
     idle_env_list.reserve(env_set__.normal_set.size());
-    for (auto&& env : env_set__.normal_set)
+    for (auto &&env : env_set__.normal_set)
     {
         // 空闲非独占的env可以去其他的env中偷取ctx
         if (env->state() == co_env_state::idle && !env->test_flag(CO_ENV_FLAG_EXCLUSIVE))
@@ -450,7 +453,7 @@ void co_manager::steal_ctx_routine__()
     }
 
     auto iter = env_set__.normal_set.begin();
-    for (auto&& env : idle_env_list)
+    for (auto &&env : idle_env_list)
     {
         if (!env->try_lock_schedule())
         {
@@ -515,7 +518,7 @@ string co_manager::manager_info()
         // normal env
         ss << "normal env: " << endl;
         ss << "count: " << env_set__.normal_set.size() << endl;
-        for (auto&& env : env_set__.normal_set)
+        for (auto &&env : env_set__.normal_set)
         {
             ss << env->env_info() << endl;
         }
@@ -523,7 +526,7 @@ string co_manager::manager_info()
         // expired env
         ss << "expired env: " << endl;
         ss << "count: " << env_set__.expired_set.size() << endl;
-        for (auto&& env : env_set__.expired_set)
+        for (auto &&env : env_set__.expired_set)
         {
             ss << env->env_info() << endl;
         }
@@ -544,7 +547,7 @@ string co_manager::manager_info()
     {
         scoped_lock lock(mu_timer_queue__);
         ss << "count: " << timer_queue__.size() << endl;
-        for (auto&& timer : timer_queue__)
+        for (auto &&timer : timer_queue__)
         {
             ss << timer->timer_info() << endl;
         }

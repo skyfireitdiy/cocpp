@@ -4,7 +4,7 @@
 
 #include <cstdio>
 
-long long       value = 0;
+long long value = 0;
 cocpp::co_mutex mu;
 
 void add_value()

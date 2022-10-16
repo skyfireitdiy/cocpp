@@ -12,9 +12,9 @@ CO_NAMESPACE_BEGIN
 class co_ctx;
 class co_mutex : private co_noncopyable
 {
-    co_ctx*             owner__ { nullptr };
-    co_spinlock         spinlock__;
-    std::deque<co_ctx*> wait_deque__;
+    co_ctx *owner__ {nullptr};
+    co_spinlock spinlock__;
+    std::deque<co_ctx *> wait_deque__;
 
 public:
     void lock();

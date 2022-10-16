@@ -13,8 +13,8 @@ CO_NAMESPACE_BEGIN
 class co_latch final : private co_noncopyable
 {
 private:
-    std::ptrdiff_t                expect__;
-    mutable co_mutex              mutex__;
+    std::ptrdiff_t expect__;
+    mutable co_mutex mutex__;
     mutable co_condition_variable cond__;
 
 public:

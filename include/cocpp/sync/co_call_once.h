@@ -11,11 +11,11 @@ CO_NAMESPACE_BEGIN
 class co_once_flag : private co_noncopyable
 {
 public:
-    std::atomic<bool> flag__ { false };
+    std::atomic<bool> flag__ {false};
 };
 
 template <class Callable, class... Args>
-void co_call_once(co_once_flag& flag, Callable&& f, Args&&... args)
+void co_call_once(co_once_flag &flag, Callable &&f, Args &&...args)
 {
     CoPreemptGuard();
     bool key = false;

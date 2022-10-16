@@ -11,7 +11,7 @@ using namespace std;
 
 CO_NAMESPACE_BEGIN
 
-co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config, function<void(co_any&)> entry)
+co_ctx *co_ctx_factory ::create_ctx(const co_ctx_config &config, function<void(co_any &)> entry)
 {
     auto ret = new co_ctx(config.shared_stack ? nullptr : co_stack_factory::create_stack(config.stack_size), config, entry);
     assert(ret != nullptr);
@@ -26,12 +26,12 @@ co_ctx* co_ctx_factory ::create_ctx(const co_ctx_config& config, function<void(c
     return ret;
 }
 
-void co_ctx_factory::destroy_ctx(co_ctx* ctx)
+void co_ctx_factory::destroy_ctx(co_ctx *ctx)
 {
     CoPreemptGuard();
     assert(ctx != nullptr);
     auto shared_stack = ctx->test_flag(CO_CTX_FLAG_SHARED_STACK);
-    auto stack        = ctx->stack();
+    auto stack = ctx->stack();
     delete ctx;
     if (!shared_stack)
     {

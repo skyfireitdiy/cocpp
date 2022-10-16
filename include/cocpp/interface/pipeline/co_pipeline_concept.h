@@ -19,7 +19,7 @@ template <typename FuncType, typename ItemType>
 concept PipelineInitFunc = requires(FuncType f, ItemType i)
 {
     requires std::invocable<FuncType>;
-    requires std::same_as<std::invoke_result_t<FuncType>, std::optional<ItemType>>;
+    requires std::same_as<std::invoke_result_t<FuncType>, std::optional<ItemType> >;
 };
 
 template <typename ItemType, typename CollectionType>
@@ -37,8 +37,8 @@ template <typename FilterType, typename ItemType>
 concept FilterFunc = requires(FilterType f, ItemType i)
 {
     requires std::invocable<FilterType, ItemType>;
-    requires std::same_as < std::invoke_result_t<FilterType, ItemType>,
-    bool > ;
+    requires std::same_as<std::invoke_result_t<FilterType, ItemType>,
+                          bool>;
 };
 
 template <typename ReduceType, typename InitType, typename ItemType>
@@ -75,7 +75,7 @@ concept Array = requires(ArrayType a)
 };
 
 template <typename ItemType, typename IncrementType>
-concept Incrementable = requires(const ItemType& i, const IncrementType& inc)
+concept Incrementable = requires(const ItemType &i, const IncrementType &inc)
 {
     {
         i + inc

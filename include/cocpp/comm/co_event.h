@@ -17,14 +17,14 @@ template <std::copyable... Args>
 class co_event final : private co_noncopyable
 {
 private:
-    std::map<int, std::function<void(Args... args)>> cb_list__;
-    mutable std::recursive_mutex                     mu_cb_list__;
-    co_event_handle                                  current_handler__ { 0 };
+    std::map<int, std::function<void(Args... args)> > cb_list__;
+    mutable std::recursive_mutex mu_cb_list__;
+    co_event_handle current_handler__ {0};
 
 public:
     co_event_handle sub(std::function<void(Args... args)> cb);
-    void            pub(Args... args) const;
-    void            unsub(co_event_handle h);
+    void pub(Args... args) const;
+    void unsub(co_event_handle h);
 };
 
 template <std::copyable... Args>
@@ -46,7 +46,7 @@ template <std::copyable... Args>
 void co_event<Args...>::pub(Args... args) const
 {
     std::scoped_lock lck(mu_cb_list__);
-    for (auto&& [_, cb] : cb_list__)
+    for (auto &&[_, cb] : cb_list__)
     {
         cb(args...);
     }
@@ -57,7 +57,7 @@ private:                                 \
     co_event<__VA_ARGS__> eventName##__; \
                                          \
 public:                                  \
-    co_event<__VA_ARGS__>& eventName()   \
+    co_event<__VA_ARGS__> &eventName()   \
     {                                    \
         return eventName##__;            \
     }

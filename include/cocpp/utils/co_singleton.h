@@ -13,7 +13,7 @@ private:
     co_singleton() = default;
 
 public:
-    static T*   instance();
+    static T *instance();
     static void destroy_instance();
     friend T;
 };
@@ -25,14 +25,14 @@ private:
     co_singleton_static() = default;
 
 public:
-    static T* instance();
+    static T *instance();
     friend T;
 };
 
 template <typename T>
-T* co_singleton<T>::instance()
+T *co_singleton<T>::instance()
 {
-    static T* inst = new T;
+    static T *inst = new T;
     return inst;
 }
 
@@ -43,7 +43,7 @@ void co_singleton<T>::destroy_instance()
 }
 
 template <typename T>
-T* co_singleton_static<T>::instance()
+T *co_singleton_static<T>::instance()
 {
     static T inst;
     return &inst;

@@ -13,10 +13,10 @@ class co_ctx;
 class co_recursive_mutex final : private co_noncopyable
 {
 private:
-    co_spinlock         spinlock__;
-    co_ctx*             owner__ { nullptr };
-    std::deque<co_ctx*> wait_deque__;
-    unsigned long long  lock_count__ { 0 };
+    co_spinlock spinlock__;
+    co_ctx *owner__ {nullptr};
+    std::deque<co_ctx *> wait_deque__;
+    unsigned long long lock_count__ {0};
 
 public:
     void lock();
