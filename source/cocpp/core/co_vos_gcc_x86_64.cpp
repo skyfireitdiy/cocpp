@@ -30,13 +30,12 @@ co_byte *get_rsp(co_ctx *ctx)
     return reinterpret_cast<co_byte *>(get_sigcontext_64(ctx)->sp);
 }
 
-void switch_to(co_byte **curr, co_byte **next)
+__attribute__((naked)) void switch_to(co_byte **curr, co_byte **next)
 {
 
     __asm volatile("" ::
                        : "memory");
 
-    __asm volatile("popq %rbp");
 
     __asm volatile("movq %r8, 0(%rdi)");
     __asm volatile("movq %r9, 8(%rdi)");
@@ -80,10 +79,10 @@ void switch_to(co_byte **curr, co_byte **next)
     __asm volatile("movq 0(%rsi), %r8");
     __asm volatile("movq 72(%rsi), %rsi"); // 必须放在最后恢复
 
-    __asm volatile("pushq %rbp");
-
     __asm volatile("" ::
                        : "memory");
+
+    __asm volatile("retq");
 }
 
 void init_ctx(co_stack *stack, co_ctx *ctx)
