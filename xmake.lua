@@ -25,10 +25,11 @@ target_end()
 
 add_links("pthread")
 
+add_requires("gtest")
+
 target("test")
 set_kind("binary")
-add_includedirs("3rd/gtest_install/include")
-add_linkdirs("3rd/gtest_install/lib")
+add_packages("gtest")
 add_includedirs("include")
 add_files("test/*.cpp")
 add_links("gtest")
@@ -50,9 +51,9 @@ on_run(function()
     os.exec(exe .. "/test --gtest_shuffle")
     os.exec("lcov -c -d ./ -o cover.info")
     os.exec(
-        "lcov --remove cover.info '*/usr/include/*' '*/usr/lib/*' '*/usr/lib64/*' '*/usr/local/include/' '*/usr/local/lib/*' '*/usr/local/lib64/*' '*/3rd/*'  -o final.info")
+    "lcov --remove cover.info '*/usr/include/*' '*/usr/lib/*' '*/usr/lib64/*' '*/usr/local/include/' '*/usr/local/lib/*' '*/usr/local/lib64/*' '*/3rd/*'  -o final.info")
     os.exec(
-        "genhtml -o cover_report --legend --title 'lcov'  --prefix=./ final.info")
+    "genhtml -o cover_report --legend --title 'lcov'  --prefix=./ final.info")
 end)
 task_end()
 
