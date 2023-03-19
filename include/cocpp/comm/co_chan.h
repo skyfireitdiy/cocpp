@@ -400,3 +400,19 @@ typename co_chan<ValueType>::iterator co_chan<ValueType>::end()
 }
 
 CO_NAMESPACE_END
+;
+// }
+
+template <std::copyable ValueType>
+typename co_chan<ValueType>::iterator co_chan<ValueType>::begin()
+{
+    return co_chan<ValueType>::iterator(this);
+}
+
+template <std::copyable ValueType>
+typename co_chan<ValueType>::iterator co_chan<ValueType>::end()
+{
+    return co_chan<ValueType>::iterator();
+}
+
+CO_NAMESPACE_END
