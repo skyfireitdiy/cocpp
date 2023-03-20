@@ -1,18 +1,18 @@
 # README
 
-## 简介
+## Introduction
 
-cocpp是一个基于现代C++的协程库（c++20），其主要特点是易于使用，会用std::thread，就会用cocpp，封装性好，学习成本低。
+cocpp is a coroutine library based on modern C++ (c++20). Its main features are easy to use, good encapsulation, and low learning cost. If you can use std::thread, you can use cocpp.
 
-目前的环境要求为：
+The current environment requirements are:
 
-- x86_64体系架构
-- linux操作系统
-- gcc支持C++20
+- x86_64 architecture
+- Linux operating system
+- gcc supports C++20
 
 ### hello world
 
-一个最简单的Demo：
+The simplest demo:
 
 ```C++
 #include "cocpp/cocpp.h"
@@ -32,49 +32,49 @@ int main()
 ```
 
 
-## 特性介绍
+## Feature introduction
 
-目前cocpp支持的特性说明如下：
+The current features supported by cocpp are as follows:
 
-- 自由的协程入口函数
+- Free coroutine entry function
 
-	任何样式的函数都可以作为函数签名，无论是有返回值的、无返回值的、无参数的、一个参数的、多个参数，都可以作为协程的入口函数。
-- 协程优先级
+	Any style of function can be used as the function signature, whether it has a return value, no return value, no parameters, one parameter, or multiple parameters, it can be used as the coroutine entry function.
+- Coroutine priority
 
-	协程创建时可以指定协程的优先级，也可以在协程运行过程中修改优先级（优先级0~99，其中0最高，99最低，默认创建的协程优先级为99）。不同优先级间以高优先级协程优先调度，相同优先级的协程轮询调度。
-- 多线程负载均衡
+	The priority of the coroutine can be specified when the coroutine is created, and the priority can also be modified during the coroutine running process (priority 0~99, where 0 is the highest and 99 is the lowest, and the default priority of the created coroutine is 99). Coroutines with different priorities are scheduled first with high-priority coroutines, and coroutines with the same priority are polled and scheduled.
+- Multi-threaded load balancing
 
-	协程可以在不同的线程间迁移实现以负载均衡。
-- 死循环强制调度
+	Coroutines can be migrated between different threads to achieve load balancing.
+- Dead loop forced scheduling
 
-	当协程环境超过设置的阈值没有调度时，会从外部强制调度。
-- 系统调用超时，重新分配协程
+	When the coroutine environment has not been scheduled for more than the set threshold, it will be forcibly scheduled from the outside.
+- System call timeout, reassign coroutine
 
-	当一个协程由于系统调用而被阻塞时，管理器会将当前线程上其余所有可迁移的协程迁移到其他合适的执行环境中。
-- 协程偷取
+	When a coroutine is blocked due to a system call, the manager will migrate all other migratable coroutines on the current thread to other suitable execution environments.
+- Coroutine stealing
 
-	当当前线程空闲了，会尝试从其他执行环境偷取协程来执行。
-- 协程同步工具
+	When the current thread is idle, it will try to steal coroutines from other execution environments to execute.
+- Coroutine synchronization tools
 
-	具有丰富的协程同步工具。信号量、二值信号量、条件变量、互斥锁、递归锁、读写锁等。
-- 用于通信的channel
+	It has rich coroutine synchronization tools. Semaphore, binary semaphore, conditional variable, mutex, recursive lock, read-write lock, etc.
+- Channel for communication
 
-	和Go一样，具有用于协程通信的channel实现。
+	Like Go, it has channels for coroutine communication.
 
-- 共享栈
+- Shared stack
 
-	多个协程可以共用一个栈空间，以此减少内存使用（共享栈协程不支持迁移）。
-- 运行环境绑定
+	Multiple coroutines can share a stack space to reduce memory usage (shared stack coroutines do not support migration).
+- Running environment binding
 
-	协程可以与某个运行环境绑定，禁止迁移，这在某些场景下很有用，如使用线程局部存储的场景。
-- 返回值获取
+	Coroutines can be bound to a certain running environment to prohibit migration, which is very useful in some scenarios, such as using thread-local storage.
+- Return value acquisition
 
-	协程的返回值获取非常简单易用。
-- 协程局部存储
+	The return value of the coroutine is very simple and easy to use.
+- Coroutine local storage
 
-	方便的协程局部存储，让每个协程拥有自己的私有数据。
+	Convenient coroutine local storage, allowing each coroutine to have its own private data.
 
-- 支持 pipeline 的并行数据处理模式
+- Support for parallel data processing mode with pipeline
 
 ```cpp
 #include "cocpp/cocpp.h"
@@ -86,21 +86,21 @@ using namespace std;
 int main()
 {
     int source = 0;
-    auto ch = co_pipeline<int>([&source]() -> std::optional<int> { // 生成[0, 1000000) 序列
+    auto ch = co_pipeline<int>([&source]() -> std::optional<int> { // Generate [0, 1000000) sequence
                   if (source < 1000000)
                   {
                       return source++;
                   }
                   return std::nullopt;
               })
-              | pipeline::take(2000) // 取前 2000 项
-              | pipeline::skip(1000) // 跳过前 1000 项 （相当于取[1000, 1999)）
-              | pipeline::fork(10, [](int n) -> int { // 每个数字乘以2 ，10个协程同时计算
+              | pipeline::take(2000) // Take the first 2000 items
+              | pipeline::skip(1000) // Skip the first 1000 items (equivalent to taking [1000, 1999))
+              | pipeline::fork(10, [](int n) -> int { // Multiply each number by 2, 10 coroutines calculate at the same time
                     return n * 2;
                 })
-              | pipeline::filter([](int n) { return n % 3 == 0; })  // 过滤出 3 的倍数
-              | pipeline::reduce([](int n, int m) { return n + m; }, 0) // 求和
-              | pipeline::chan(); // 转换为 channel
+              | pipeline::filter([](int n) { return n % 3 == 0; })  // Filter out multiples of 3
+              | pipeline::reduce([](int n, int m) { return n + m; }, 0) // Sum
+              | pipeline::chan(); // Convert to channel
 
     for (auto t : ch)
     {
@@ -109,45 +109,45 @@ int main()
 }
 ```
 
-## 编译安装
+## Compilation and installation
 
-### 安装xmake
+### Install xmake
 
-此工程使用xmake管理，所以构建需要安装xmake，安装方法：
+This project uses xmake management, so building requires xmake installation, installation method:
 
-- 通过curl
+- Through curl
 
 ```Bash
 bash <(curl -fsSL https://xmake.io/shget.text)
 ```
 
 
-- 通过wget
+- Through wget
 
 ```Bash
 bash <(wget https://xmake.io/shget.text -O -)
 ```
 
 
-### 安装cmake
+### Install cmake
 
-如果需要编译运行测试用例，需要依赖cmake。
+If you need to compile and run test cases, you need to rely on cmake.
 
-### 拉取代码
+### Pull code
 
 ```Git
 git clone https://github.com/skyfireitdiy/cocpp
 ```
 
 
-如果需要编译运行测试程序，需要将gtest和mockcpp也clone下来，这两个工程作为cocpp的子模块，可以直接使用如下命令：
+If you need to compile and run the test program, you need to clone gtest and mockcpp as well. These two projects are submodules of cocpp and can be used directly with the following command:
 
 ```Git
 git clone --recursive https://github.com/skyfireitdiy/cocpp
 ```
 
 
-或者如果已经clone过了，可以在源码目录下使用如下命令更新子模块：
+Or if you have already cloned, you can use the following command to update the submodule in the source directory:
 
 ```Git
 git submodule init
@@ -155,55 +155,55 @@ git submodule update
 ```
 
 
-### 编译
+### Compilation
 
 #### cocpp
 
-在源码目录，使用以下命令编译cocpp：
+In the source directory, use the following command to compile cocpp:
 
 ```Bash
-xmake f --mode=release # 设置编译模式为release，也可以设置为debug
-xmake b cocpp # 编译cocpp
+xmake f --mode=release # Set the compilation mode to release, you can also set it to debug
+xmake b cocpp # Compile cocpp
 ```
 
 #### test
 
-如果需要运行测试用例，需要先编译gtest与mockcpp：
+If you need to run the test case, you need to compile gtest and mockcpp first:
 
 ```Bash
 ./build_3rd.sh
 ```
 
 
-然后编译运行test:
+Then compile and run the test:
 
 ```Bash
-xmake f --mode=release # 设置编译模式为release，也可以设置为debug
-xmake b test # 编译并运行cocpp
+xmake f --mode=release # Set the compilation mode to release, you can also set it to debug
+xmake b test # Compile and run cocpp
 ```
 
 
-### 安装
+### Installation
 
-使用如下命令可以安装至/usr/local/目录（需要root权限）：
+Use the following command to install to the /usr/local/ directory (requires root privileges):
 
 ```Bash
 xmake install cocpp
 ```
 
 
-或者也可以指定安装目录：
+Or you can also specify the installation directory:
 
 ```Bash
 xmake install -o /install/path cocpp
 ```
 
 
-## 使用示例
+## Example
 
-使用的例子参见example目录。
+The example used is in the example directory.
 
-## 联系作者
+## Contact the author
 
 - E-mail : skyfireitdiy@hotmail.com
 - QQ: 1513008876
