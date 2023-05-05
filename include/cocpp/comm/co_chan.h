@@ -11,11 +11,6 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-namespace chan
-{
-
-};
-
 template <std::copyable ValueType>
 class co_chan final
 {
@@ -83,8 +78,8 @@ public:
         iterator operator++();
         ValueType &operator*();
         ValueType *operator->();
-        bool operator==(const iterator &other);
-        // bool       operator!=(const iterator& other);
+        // bool operator==(const iterator &other);
+        bool operator!=(const iterator &other);
     };
 
     iterator begin();
@@ -364,28 +359,41 @@ ValueType *co_chan<ValueType>::iterator::operator->()
     return &*value__;
 }
 
+// template <std::copyable ValueType>
+// bool co_chan<ValueType>::iterator::operator==(const iterator &other)
+// {
+// if (ch__ == other.ch__)
+// {
+// return true;
+// }
+// if (!ch__ || (ch__->closed() && ch__->empty() && !value__))
+// {
+// if (!other.ch__ || (other.ch__->closed() && other.ch__->empty() && !other.value__))
+// {
+// return true;
+// }
+// }
+// return false;
+// }
+
 template <std::copyable ValueType>
-bool co_chan<ValueType>::iterator::operator==(const iterator &other)
+bool co_chan<ValueType>::iterator::operator!=(const iterator &other)
 {
-    if (ch__ == other.ch__)
-    {
-        return true;
-    }
-    if (!ch__ || (ch__->closed() && ch__->empty() && !value__))
-    {
-        if (!other.ch__ || (other.ch__->closed() && other.ch__->empty() && !other.value__))
+    return ![&] {
+        if (ch__ == other.ch__)
         {
             return true;
         }
-    }
-    return false;
+        if (!ch__ || (ch__->closed() && ch__->empty() && !value__))
+        {
+            if (!other.ch__ || (other.ch__->closed() && other.ch__->empty() && !other.value__))
+            {
+                return true;
+            }
+        }
+        return false;
+    }();
 }
-
-// template <std::copyable ValueType>
-// bool co_chan<ValueType>::iterator::operator!=(const iterator& other)
-// {
-//     return !(*this == other);
-// }
 
 template <std::copyable ValueType>
 typename co_chan<ValueType>::iterator co_chan<ValueType>::begin()
@@ -398,3 +406,5 @@ typename co_chan<ValueType>::iterator co_chan<ValueType>::end()
 {
     return co_chan<ValueType>::iterator();
 }
+
+CO_NAMESPACE_END
