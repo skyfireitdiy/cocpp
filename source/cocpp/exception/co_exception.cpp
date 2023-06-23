@@ -13,6 +13,8 @@ using namespace std;
 
 CO_NAMESPACE_BEGIN
 
+static FILE* exec_file = stderr;
+
 static std::string exe_path();
 
 static std::string exe_path()
@@ -24,6 +26,13 @@ static std::string exe_path()
         return "";
     }
     return std::string(buf);
+}
+
+
+FILE* set_exec_file(FILE *file) {
+    auto old = exec_file;
+    exec_file = file;
+    return old;
 }
 
 string backtrace()

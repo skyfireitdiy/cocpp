@@ -1,7 +1,7 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
-#include "cocpp/interface/pipeline/co_pipeline_concept.h"
+#include "cocpp/pipeline/co_pipeline_concept.h"
 
 CO_NAMESPACE_BEGIN
 

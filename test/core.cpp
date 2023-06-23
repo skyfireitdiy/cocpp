@@ -36,12 +36,12 @@ TEST(core, id)
 TEST(core, thread_convert)
 {
     thread th([]() {
-        printf("new thread: %u\n", gettid());
+        printf("new thread: %u\n", ::gettid());
         co::schedule_in_this_thread();
     });
 
     co c1([]() {
-        printf("new co %llu in thread %u\n", this_co::id(), gettid());
+        printf("new co %llu in thread %u\n", this_co::id(), ::gettid());
     });
 
     c1.join();
