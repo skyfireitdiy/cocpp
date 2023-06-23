@@ -2,6 +2,7 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_vos.h"
+#include <cstdlib>
 #include <execinfo.h>
 #include <iomanip>
 #include <signal.h>
@@ -17,12 +18,12 @@ static std::string exe_path();
 static std::string exe_path()
 {
     char buf[1024];
-    ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf));
-    if (len == -1)
+    char *ret = realpath("/proc/self/exe", buf);
+    if (ret != nullptr)
     {
         return "";
     }
-    return std::string(buf, len);
+    return std::string(buf);
 }
 
 string backtrace()
