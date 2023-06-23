@@ -2,6 +2,7 @@
 #include "cocpp/core/co_define.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_vos.h"
+#include <cstdio>
 #include <cstdlib>
 #include <execinfo.h>
 #include <iomanip>
@@ -13,7 +14,7 @@ using namespace std;
 
 CO_NAMESPACE_BEGIN
 
-static FILE* exec_file = stderr;
+static FILE *exec_file = stderr;
 
 static std::string exe_path();
 
@@ -28,8 +29,8 @@ static std::string exe_path()
     return std::string(buf);
 }
 
-
-FILE* set_exec_file(FILE *file) {
+FILE *set_exec_file(FILE *file)
+{
     auto old = exec_file;
     exec_file = file;
     return old;
@@ -56,11 +57,11 @@ string backtrace()
 
 void handle_exception(sigcontext_64 *context, int sig)
 {
-    fprintf(stderr, "signal %d\n", sig);
+    fprintf(exec_file, "signal %d\n", sig);
     static bool in_exception = false;
     if (in_exception)
     {
-        fprintf(stderr, "exception occurs in exception handler\n");
+        fprintf(exec_file, "exception occurs in exception handler\n");
         exit(128 - sig);
     }
     in_exception = true;
@@ -172,9 +173,9 @@ std::string regs_info(const sigcontext_64 *ctx)
 
 void print_debug_info(const std::string &item_name, std::function<std::string()> f)
 {
-    fprintf(stderr, "=================== %s start ===================\n", item_name.c_str());
-    fprintf(stderr, "%s\n", f().c_str());
-    fprintf(stderr, "=================== %s end ===================\n", item_name.c_str());
+    fprintf(exec_file, "=================== %s start ===================\n", item_name.c_str());
+    fprintf(exec_file, "%s\n", f().c_str());
+    fprintf(exec_file, "=================== %s end ===================\n", item_name.c_str());
 }
 
 std::string dump_memory(const co_byte *addr, size_t size)
