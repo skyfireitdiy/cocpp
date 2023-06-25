@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #ifdef __GNUC__
 #ifdef __x86_64__
@@ -35,7 +36,6 @@ __attribute__((naked)) void switch_to(co_byte **curr, co_byte **next)
 
     __asm volatile("" ::
                        : "memory");
-
 
     __asm volatile("movq %r8, 0(%rdi)");
     __asm volatile("movq %r9, 8(%rdi)");
@@ -143,6 +143,21 @@ void switch_from_outside(sigcontext_64 *context)
     }
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);
+}
+
+int set_mem_dontneed(void *ptr, size_t size)
+{
+    return madvise(ptr, size, MADV_DONTNEED);
+}
+
+void *alloc_mem_by_mmap(size_t size)
+{
+    return mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+}
+
+int free_mem_by_munmap(void *ptr, size_t size)
+{
+    return munmap(ptr, size);
 }
 
 CO_NAMESPACE_END

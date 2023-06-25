@@ -12,7 +12,7 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 8;
+constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 1024;
 
 constexpr static size_t DEFAULT_TIMING_TICK_DURATION_IN_MS = 10;
 
