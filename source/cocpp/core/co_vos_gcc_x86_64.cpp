@@ -96,6 +96,11 @@ void init_ctx(co_stack *stack, co_ctx *ctx)
     *reinterpret_cast<void **>(context->sp) = reinterpret_cast<void *>(&::_start);
 }
 
+co_pid getpid()
+{
+    return static_cast<co_pid>(::getpid());
+}
+
 co_tid gettid()
 {
     return static_cast<co_tid>(::gettid());
@@ -103,7 +108,7 @@ co_tid gettid()
 
 void send_switch_from_outside_signal(co_env *env)
 {
-    ::syscall(SYS_tgkill, ::getpid(), static_cast<pid_t>(env->schedule_thread_tid()), CO_SWITCH_SIGNAL);
+    tkill(getpid(), gettid(), CO_SWITCH_SIGNAL);
 }
 
 static void save_context_to_ctx(sigcontext_64 *context, co_ctx *ctx)
@@ -158,6 +163,11 @@ void *alloc_mem_by_mmap(size_t size)
 int free_mem_by_munmap(void *ptr, size_t size)
 {
     return munmap(ptr, size);
+}
+
+int tkill(co_pid pid, co_tid tid, int sig)
+{
+    return ::syscall(SYS_tgkill, static_cast<pid_t>(pid), static_cast<pid_t>(tid), sig);
 }
 
 CO_NAMESPACE_END
