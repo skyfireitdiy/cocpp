@@ -3,11 +3,13 @@
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack.h"
+#include "cocpp/core/co_type.h"
 #include "cocpp/core/co_vos.h"
 #include "cocpp/exception/co_exception.h"
 #include "cocpp/utils/co_any.h"
 #include "cocpp/utils/co_state_manager.h"
 
+#include <algorithm>
 #include <cassert>
 #include <exception>
 #include <mutex>
@@ -282,6 +284,12 @@ string co_ctx::ctx_info() const
     ss << "------------ ctx end -----------" << endl;
 
     return ss.str();
+}
+
+void co_ctx::adjust_stack()
+{
+    auto context = reinterpret_cast<const sigcontext_64 *>(&regs__);
+    adjust_mem_to_top(reinterpret_cast<co_byte *>(context->sp), stack__->stack());
 }
 
 CO_NAMESPACE_END

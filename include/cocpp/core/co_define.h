@@ -12,7 +12,7 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-constexpr size_t CO_DEFAULT_STACK_SIZE = 1024 * 1024 * 1024;
+constexpr size_t CO_DEFAULT_STACK_SIZE = 1024L * 1024 * 1024 * 8;
 
 constexpr static size_t DEFAULT_TIMING_TICK_DURATION_IN_MS = 10;
 
@@ -34,6 +34,8 @@ constexpr int CO_IDLE_CTX_PRIORITY = 99;
 constexpr int CO_MAX_PRIORITY = 100;
 
 constexpr int CO_SWITCH_SIGNAL = 10;
+
+constexpr unsigned long long CO_PAGE_SIZE = 4096;
 
 CO_NAMESPACE_END
 

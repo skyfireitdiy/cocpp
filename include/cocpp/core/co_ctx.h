@@ -37,9 +37,6 @@ private:
 
     co_stack *stack__ {nullptr};
 
-    // 最小的栈顶指针，用于栈空间自动收缩
-    void *min_stask_top__ = nullptr;
-
     co_ctx_config config__ {};
     co_any ret__;
 
@@ -89,6 +86,7 @@ public:
     void lock_finished_state();
     void unlock_finished_state();
     std::string ctx_info() const;
+    void adjust_stack();
 
     template <typename T>
     T &local_storage(const std::string &name);

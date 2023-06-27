@@ -8,7 +8,11 @@
 #include "cocpp/exception/co_exception.h"
 #include "cocpp/utils/co_defer.h"
 
+#include <cstddef>
+#include <fstream>
+#include <iterator>
 #include <signal.h>
+#include <string>
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -18,6 +22,8 @@
 
 extern "C" void _start();
 CO_NAMESPACE_BEGIN
+
+using namespace std;
 
 static sigcontext_64 *get_sigcontext_64(co_ctx *ctx)
 {
@@ -168,6 +174,48 @@ bool free_mem_by_munmap(void *ptr, size_t size)
 bool tkill(co_pid pid, co_tid tid, int sig)
 {
     return ::syscall(SYS_tgkill, static_cast<pid_t>(pid), static_cast<pid_t>(tid), sig) == 0;
+}
+
+bool adjust_mem_to_top(co_byte *top, co_byte *bottom)
+{
+    if (bottom >= top)
+    {
+        return false;
+    }
+
+    unsigned long long bottom_page_addr = ((unsigned long long)bottom) & ~(CO_PAGE_SIZE - 1);
+    size_t size = bottom_page_addr - (((unsigned long long)top) & ~(CO_PAGE_SIZE - 1));
+
+    return set_mem_dontneed((void *)bottom_page_addr, size);
+}
+
+size_t get_process_phy_mem()
+{
+    size_t memory_usage = 0;
+    ifstream file("/proc/self/status");
+
+    string line;
+    while (getline(file, line))
+    {
+        if (line.substr(0, 6) == "VmRSS:")
+        {
+            string value_string = line.substr(6);
+            size_t found = value_string.find_first_not_of(" \t");
+            if (found != string::npos)
+            {
+                value_string = value_string.substr(found);
+                size_t spacePos = value_string.find_first_of(" \t");
+                if (spacePos != string::npos)
+                {
+                    value_string = value_string.substr(0, spacePos);
+                    memory_usage = stoul(value_string);
+                    break;
+                }
+            }
+        }
+    }
+
+    return memory_usage;
 }
 
 CO_NAMESPACE_END

@@ -294,6 +294,8 @@ void co_env::switch_normal_ctx__()
         return;
     }
 
+    next->adjust_stack(); // 收缩栈空间
+
     unlock_schedule();
     switch_to(curr->regs(), next->regs());
     lock_schedule();
