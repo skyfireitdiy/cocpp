@@ -17,9 +17,9 @@ co_tid gettid();
 co_pid getpid();
 void send_switch_from_outside_signal(co_env *env);
 void switch_from_outside(sigcontext_64 *context);
-int set_mem_dontneed(void *ptr, size_t size);
+bool set_mem_dontneed(void *ptr, size_t size);
 void *alloc_mem_by_mmap(size_t size);
-int free_mem_by_munmap(void *ptr, size_t size);
-int tkill(co_pid pid, co_tid tid, int sig);
+bool free_mem_by_munmap(void *ptr, size_t size);
+bool tkill(co_pid pid, co_tid tid, int sig);
 
 CO_NAMESPACE_END

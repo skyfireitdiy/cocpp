@@ -150,9 +150,9 @@ void switch_from_outside(sigcontext_64 *context)
     restore_context_from_ctx(context, next);
 }
 
-int set_mem_dontneed(void *ptr, size_t size)
+bool set_mem_dontneed(void *ptr, size_t size)
 {
-    return madvise(ptr, size, MADV_DONTNEED);
+    return madvise(ptr, size, MADV_DONTNEED) == 0;
 }
 
 void *alloc_mem_by_mmap(size_t size)
@@ -160,14 +160,14 @@ void *alloc_mem_by_mmap(size_t size)
     return mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 }
 
-int free_mem_by_munmap(void *ptr, size_t size)
+bool free_mem_by_munmap(void *ptr, size_t size)
 {
-    return munmap(ptr, size);
+    return munmap(ptr, size) == 0;
 }
 
-int tkill(co_pid pid, co_tid tid, int sig)
+bool tkill(co_pid pid, co_tid tid, int sig)
 {
-    return ::syscall(SYS_tgkill, static_cast<pid_t>(pid), static_cast<pid_t>(tid), sig);
+    return ::syscall(SYS_tgkill, static_cast<pid_t>(pid), static_cast<pid_t>(tid), sig) == 0;
 }
 
 CO_NAMESPACE_END

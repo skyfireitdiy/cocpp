@@ -18,7 +18,7 @@ co_stack *co_stack_factory::create_stack(size_t size)
         {
             // todo 处理mem为nullptr
         }
-        if (0 != set_mem_dontneed(mem, size))
+        if (!set_mem_dontneed(mem, size))
         {
             // todo 处理madvise失败
         }
