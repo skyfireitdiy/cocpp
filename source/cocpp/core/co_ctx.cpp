@@ -288,6 +288,10 @@ string co_ctx::ctx_info() const
 
 void co_ctx::adjust_stack()
 {
+    if (nullptr == stack__->stack())
+    {
+        return;
+    }
     auto context = reinterpret_cast<const sigcontext_64 *>(&regs__);
     adjust_mem_to_top(reinterpret_cast<co_byte *>(context->sp), stack__->stack());
 }

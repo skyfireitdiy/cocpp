@@ -9,6 +9,7 @@
 #include "cocpp/utils/co_defer.h"
 
 #include <cstddef>
+#include <cstdlib>
 #include <fstream>
 #include <iterator>
 #include <signal.h>
@@ -184,7 +185,7 @@ bool adjust_mem_to_top(co_byte *top, co_byte *bottom)
     }
 
     unsigned long long bottom_page_addr = ((unsigned long long)bottom) & ~(CO_PAGE_SIZE - 1);
-    size_t size = bottom_page_addr - (((unsigned long long)top) & ~(CO_PAGE_SIZE - 1));
+    size_t size = (((unsigned long long)top) & ~(CO_PAGE_SIZE - 1)) - bottom_page_addr;
 
     return set_mem_dontneed((void *)bottom_page_addr, size);
 }

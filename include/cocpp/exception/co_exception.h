@@ -49,10 +49,8 @@ std::string time_info();
 std::string regs_info(const sigcontext_64 *ctx);
 std::string dump_memory(const co_byte *addr, size_t size);
 
-void print_debug_info(const std::string &item_name, std::function<std::string()> f);
 FILE* set_exec_file(FILE *file);
 
 void set_up_signal_handler(const std::vector<int> &signals);
-void signal_handler(int signo) __attribute__((optimize("O0"))); // 信号处理函数不能优化，否则获取的寄存器信息有问题
 
 CO_NAMESPACE_END

@@ -17,6 +17,8 @@ CO_NAMESPACE_BEGIN
 static FILE *exec_file = stderr;
 
 static std::string exe_path();
+static void print_debug_info(const std::string &item_name, std::function<std::string()> f);
+static void signal_handler(int signo) __attribute__((optimize("O0"))); // 信号处理函数不能优化，否则获取的寄存器信息有问题
 
 static std::string exe_path()
 {
