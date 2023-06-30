@@ -21,7 +21,7 @@ bool set_mem_dontneed(void *ptr, size_t size);
 void *alloc_mem_by_mmap(size_t size);
 bool free_mem_by_munmap(void *ptr, size_t size);
 bool tkill(co_pid pid, co_tid tid, int sig);
-bool adjust_mem_to_top(co_byte *top, co_byte *bottom);
+bool shrink_mem_to_top(co_byte *top, co_byte *bottom);
 size_t get_process_phy_mem();
 
 CO_NAMESPACE_END

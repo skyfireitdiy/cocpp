@@ -286,18 +286,18 @@ string co_ctx::ctx_info() const
     return ss.str();
 }
 
-void co_ctx::adjust_stack()
+void co_ctx::shrink_stack()
 {
     if (nullptr == stack__->stack())
     {
         return;
     }
-    ++adjust_stack_counter__;
-    if ((adjust_stack_counter__ & CO_ADJUST_STACK_COUNT) != 0)
+    ++shrink_stack_counter__;
+    if ((shrink_stack_counter__ & CO_SHRINK_STACK_COUNT) != 0)
     {
-        adjust_stack_counter__ = 0;
+        shrink_stack_counter__ = 0;
         auto context = reinterpret_cast<const sigcontext_64 *>(&regs__);
-        adjust_mem_to_top(reinterpret_cast<co_byte *>(context->sp), stack__->stack());
+        shrink_mem_to_top(reinterpret_cast<co_byte *>(context->sp), stack__->stack());
     }
 }
 

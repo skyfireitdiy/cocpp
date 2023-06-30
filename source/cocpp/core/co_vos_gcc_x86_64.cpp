@@ -177,7 +177,7 @@ bool tkill(co_pid pid, co_tid tid, int sig)
     return ::syscall(SYS_tgkill, static_cast<pid_t>(pid), static_cast<pid_t>(tid), sig) == 0;
 }
 
-bool adjust_mem_to_top(co_byte *top, co_byte *bottom)
+bool shrink_mem_to_top(co_byte *top, co_byte *bottom)
 {
     if (bottom >= top)
     {

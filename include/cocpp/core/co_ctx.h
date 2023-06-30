@@ -50,7 +50,7 @@ private:
     const std::function<void(co_any &)> entry__;
     std::exception_ptr exception__;
 
-    unsigned short adjust_stack_counter__ = {0};
+    unsigned short shrink_stack_counter__ = {0};
 
 #ifdef __GNUC__
 #ifdef __x86_64__
@@ -88,7 +88,7 @@ public:
     void lock_finished_state();
     void unlock_finished_state();
     std::string ctx_info() const;
-    void adjust_stack();
+    void shrink_stack();
 
     template <typename T>
     T &local_storage(const std::string &name);
