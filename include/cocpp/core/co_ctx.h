@@ -50,6 +50,8 @@ private:
     const std::function<void(co_any &)> entry__;
     std::exception_ptr exception__;
 
+    unsigned short adjust_stack_counter__ = {0};
+
 #ifdef __GNUC__
 #ifdef __x86_64__
     co_byte *regs__[32] {};

@@ -36,6 +36,7 @@ constexpr int CO_MAX_PRIORITY = 100;
 constexpr int CO_SWITCH_SIGNAL = 10;
 
 constexpr unsigned long long CO_PAGE_SIZE = 4096;
+constexpr unsigned short CO_ADJUST_STACK_COUNT = 1 << 10;
 
 CO_NAMESPACE_END
 
