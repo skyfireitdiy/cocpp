@@ -1,5 +1,5 @@
 _Pragma("once");
-#include "cocpp/comm/co_chan.h"
+#include "cocpp/event/co_chan.h"
 #include "cocpp/co/co_co.h"
 #include "cocpp/pipeline/co_pipeline_op.h"
 #include "cocpp/utils/co_noncopyable.h"

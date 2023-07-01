@@ -1,6 +1,6 @@
 _Pragma("once");
 
-#include "cocpp/comm/co_chan.h"
+#include "cocpp/event/co_chan.h"
 
 #include "cocpp/co/co_co.h"
 
