@@ -1,6 +1,8 @@
 #include "cocpp/core/co_timer.h"
 #include "cocpp/core/co_manager.h"
 
+#include <sstream>
+
 using namespace std;
 
 CO_NAMESPACE_BEGIN
@@ -164,7 +166,7 @@ string co_timer::timer_info()
     ss << "interval: " << interval__ << endl;
 
     // expire time
-    ss << "expire time: " << expire_time__.time_since_epoch() << endl;
+    ss << "expire time: " << expire_time__.time_since_epoch().count() << endl;
 
     // status
     ss << "status: " << (status__ == co_timer_status::running ? "running" : "stopped") << endl;

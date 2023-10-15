@@ -13,6 +13,7 @@
 #include <cassert>
 #include <exception>
 #include <mutex>
+#include <sstream>
 
 using namespace std;
 
