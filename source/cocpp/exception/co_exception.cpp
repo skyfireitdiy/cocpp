@@ -16,11 +16,11 @@ CO_NAMESPACE_BEGIN
 
 static FILE *exec_file = stderr;
 
-static std::string exe_path();
-static void print_debug_info(const std::string &item_name, std::function<std::string()> f);
+static string exe_path();
+static void print_debug_info(const string &item_name, function<string()> f);
 static void signal_handler(int signo) __attribute__((optimize("O0"))); // 信号处理函数不能优化，否则获取的寄存器信息有问题
 
-static std::string exe_path()
+static string exe_path()
 {
     char buf[1024];
     char *ret = realpath("/proc/self/exe", buf);
@@ -28,7 +28,7 @@ static std::string exe_path()
     {
         return "";
     }
-    return std::string(buf);
+    return string(buf);
 }
 
 FILE *set_exec_file(FILE *file)
@@ -80,7 +80,7 @@ void handle_exception(sigcontext_64 *context, int sig)
     exit(128 - sig);
 }
 
-void set_up_signal_handler(const std::vector<int> &signals)
+void set_up_signal_handler(const vector<int> &signals)
 {
     for (auto &&s : signals)
     {
@@ -93,7 +93,7 @@ void set_up_signal_handler(const std::vector<int> &signals)
     }
 }
 
-std::string time_info()
+string time_info()
 {
     time_t t = time(nullptr);
     char buf[64];
@@ -101,7 +101,7 @@ std::string time_info()
     return buf;
 }
 
-std::string maps_info()
+string maps_info()
 {
     stringstream ss;
     ss << "exe:" << exe_path() << "\n";
@@ -144,7 +144,7 @@ void signal_handler(int signo)
     }
 }
 
-std::string regs_info(const sigcontext_64 *ctx)
+string regs_info(const sigcontext_64 *ctx)
 {
     stringstream ss;
 #define OUT_PUT_REG(name) ss << #name ": 0x" << hex << ctx->name << dec << "(" << ctx->name << ")" << endl
@@ -173,14 +173,14 @@ std::string regs_info(const sigcontext_64 *ctx)
     return ss.str();
 }
 
-void print_debug_info(const std::string &item_name, std::function<std::string()> f)
+void print_debug_info(const string &item_name, function<string()> f)
 {
     fprintf(exec_file, "=================== %s start ===================\n", item_name.c_str());
     fprintf(exec_file, "%s\n", f().c_str());
     fprintf(exec_file, "=================== %s end ===================\n", item_name.c_str());
 }
 
-std::string dump_memory(const co_byte *addr, size_t size)
+string dump_memory(const co_byte *addr, size_t size)
 {
     stringstream ss;
     for (size_t i = 0; i < size; i += sizeof(uint64_t))
