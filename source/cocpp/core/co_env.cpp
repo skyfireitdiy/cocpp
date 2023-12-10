@@ -376,7 +376,7 @@ void co_env::switch_shared_stack_ctx__()
 void co_env::start_schedule_routine__()
 {
     schedule_thread_tid__ = gettid();
-    reset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
+    unset_flag(CO_ENV_FLAG_NO_SCHE_THREAD);
     set_state(co_env_state::idle);
     {
         scoped_lock lock(schedule_lock__);
@@ -423,7 +423,7 @@ void co_env::remove_all_ctx__()
 
 void co_env::reset_scheduled_flag()
 {
-    reset_flag(CO_ENV_FLAG_SCHEDULED);
+    unset_flag(CO_ENV_FLAG_SCHEDULED);
 }
 
 bool co_env::can_auto_destroy() const

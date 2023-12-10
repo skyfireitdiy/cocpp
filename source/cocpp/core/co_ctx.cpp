@@ -123,9 +123,9 @@ void co_ctx::set_flag(size_t flag)
     flag_manager__.set_flag(flag);
 }
 
-void co_ctx::reset_flag(size_t flag)
+void co_ctx::unset_flag(size_t flag)
 {
-    flag_manager__.reset_flag(flag);
+    flag_manager__.unset_flag(flag);
 }
 
 void co_ctx::check_and_rethrow_exception()
@@ -155,7 +155,7 @@ void co_ctx::lock_destroy()
 
 void co_ctx::unlock_destroy()
 {
-    reset_flag(CO_CTX_FLAG_LOCKED);
+    unset_flag(CO_CTX_FLAG_LOCKED);
 }
 
 void co_ctx::set_stack(co_stack *stack)
@@ -196,7 +196,7 @@ void co_ctx::leave_wait_resource_state(void *rc)
         wait_data__.resource.erase(rc);
         if (wait_data__.resource.empty())
         {
-            reset_flag(CO_CTX_FLAG_WAITING);
+            unset_flag(CO_CTX_FLAG_WAITING);
         }
     }
     if (!test_flag(CO_CTX_FLAG_WAITING))

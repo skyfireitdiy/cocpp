@@ -153,7 +153,7 @@ public:
     CoConstMemberMethodProxy(&state_manager__, state);
     CoConstMemberMethodProxy(&flag_manager__, test_flag);
     CoMemberMethodProxy(&flag_manager__, set_flag);
-    CoMemberMethodProxy(&flag_manager__, reset_flag);
+    CoMemberMethodProxy(&flag_manager__, unset_flag);
 
     friend class co_env_factory;
 };

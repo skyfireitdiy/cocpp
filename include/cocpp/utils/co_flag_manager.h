@@ -20,7 +20,7 @@ public:
         std::scoped_lock lock(mu__);
         flags__.set(flag);
     }
-    void reset_flag(size_t flag)
+    void unset_flag(size_t flag)
     {
         std::scoped_lock lock(mu__);
         flags__.reset(flag);

@@ -83,7 +83,7 @@ public:
     std::function<void(co_any &)> entry() const;
     static void real_entry(co_ctx *ctx);
     void set_flag(size_t flag);
-    void reset_flag(size_t flag);
+    void unset_flag(size_t flag);
     void check_and_rethrow_exception();
     void lock_finished_state();
     void unlock_finished_state();
