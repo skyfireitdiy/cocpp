@@ -6,7 +6,7 @@ _Pragma("once");
 #define CO_NAMESPACE cocpp
 #define CO_NAMESPACE_BEGIN \
     namespace CO_NAMESPACE \
-{
+    {
 
 #define CO_NAMESPACE_END }
 
@@ -41,18 +41,18 @@ constexpr unsigned short CO_SHRINK_STACK_COUNT = 1 << 10;
 CO_NAMESPACE_END
 
 #define CO_OUTPUT(level, fmt, ...)                                                     \
-{                                                                                  \
-    fprintf(stderr, "[%s] %s(%u) %s :[0x%llx] -> " fmt "\n",                       \
-            level, __FILE__, __LINE__, __FUNCTION__,                               \
-            static_cast<unsigned long long>(gettid()) __VA_OPT__(, ) __VA_ARGS__); \
-}
+    {                                                                                  \
+        fprintf(stderr, "[%s] %s(%u) %s :[0x%llx] -> " fmt "\n",                       \
+                level, __FILE__, __LINE__, __FUNCTION__,                               \
+                static_cast<unsigned long long>(gettid()) __VA_OPT__(, ) __VA_ARGS__); \
+    }
 
 #define CO_O_OUTPUT(level, fmt, ...)                                                         \
-{                                                                                        \
-    fprintf(stderr, "[%s] %s(%u) %s :[0x%llx] %p -> " fmt "\n",                          \
-            level, __FILE__, __LINE__, __FUNCTION__,                                     \
-            static_cast<unsigned long long>(gettid()), this __VA_OPT__(, ) __VA_ARGS__); \
-}
+    {                                                                                        \
+        fprintf(stderr, "[%s] %s(%u) %s :[0x%llx] %p -> " fmt "\n",                          \
+                level, __FILE__, __LINE__, __FUNCTION__,                                     \
+                static_cast<unsigned long long>(gettid()), this __VA_OPT__(, ) __VA_ARGS__); \
+    }
 
 #ifdef NDEBUG
 #define CO_DEBUG(...)
@@ -75,45 +75,45 @@ CO_NAMESPACE_END
 
 #define CoMemberMethodProxy(member, method)                   \
     template <typename... Args>                               \
-decltype(auto) method(Args &&...args)                     \
-{                                                         \
-    return (member)->method(std::forward<Args>(args)...); \
-}
+    decltype(auto) method(Args &&...args)                     \
+    {                                                         \
+        return (member)->method(std::forward<Args>(args)...); \
+    }
 
 #define CoConstMemberMethodProxy(member, method)              \
     template <typename... Args>                               \
-decltype(auto) method(Args &&...args) const               \
-{                                                         \
-    return (member)->method(std::forward<Args>(args)...); \
-}
+    decltype(auto) method(Args &&...args) const               \
+    {                                                         \
+        return (member)->method(std::forward<Args>(args)...); \
+    }
 
 #define CoMemberMethodProxyStatic(member, method)             \
     template <typename... Args>                               \
-static decltype(auto) method(Args &&...args)              \
-{                                                         \
-    return (member)->method(std::forward<Args>(args)...); \
-}
+    static decltype(auto) method(Args &&...args)              \
+    {                                                         \
+        return (member)->method(std::forward<Args>(args)...); \
+    }
 
 #define CoMemberMethodProxyWithPrefix(member, method, prefix) \
     template <typename... Args>                               \
-decltype(auto) prefix##method(Args &&...args)             \
-{                                                         \
-    return (member)->method(std::forward<Args>(args)...); \
-}
+    decltype(auto) prefix##method(Args &&...args)             \
+    {                                                         \
+        return (member)->method(std::forward<Args>(args)...); \
+    }
 
 #define CoConstMemberMethodProxyWithPrefix(member, method, prefix) \
     template <typename... Args>                                    \
-decltype(auto) prefix##method(Args &&...args) const            \
-{                                                              \
-    return (member)->method(std::forward<Args>(args)...);      \
-}
+    decltype(auto) prefix##method(Args &&...args) const            \
+    {                                                              \
+        return (member)->method(std::forward<Args>(args)...);      \
+    }
 
 #define CoMemberMethodProxyStaticWithPrefix(member, method, prefix) \
     template <typename... Args>                                     \
-static decltype(auto) prefix##method(Args &&...args)            \
-{                                                               \
-    return (member)->method(std::forward<Args>(args)...);       \
-}
+    static decltype(auto) prefix##method(Args &&...args)            \
+    {                                                               \
+        return (member)->method(std::forward<Args>(args)...);       \
+    }
 
 #define CoCurrentEnv() co_manager::instance()->current_env()
 #define CoCurrentCtx() CoCurrentEnv()->current_ctx()

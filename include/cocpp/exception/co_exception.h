@@ -49,7 +49,7 @@ std::string time_info();
 std::string regs_info(const sigcontext_64 *ctx);
 std::string dump_memory(const co_byte *addr, size_t size);
 
-FILE* set_exec_file(FILE *file);
+FILE *set_exec_file(FILE *file);
 
 void set_up_signal_handler(const std::vector<int> &signals);
 

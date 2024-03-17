@@ -68,10 +68,10 @@ concept Array = requires(ArrayType a)
 {
     {
         std::begin(a)
-        } -> Iterator;
+    } -> Iterator;
     {
         std::end(a)
-        } -> Iterator;
+    } -> Iterator;
 };
 
 template <typename ItemType, typename IncrementType>
@@ -79,10 +79,10 @@ concept Incrementable = requires(const ItemType &i, const IncrementType &inc)
 {
     {
         i + inc
-        } -> std::same_as<ItemType>;
+    } -> std::same_as<ItemType>;
     {
         i == i
-        } -> std::same_as<bool>;
+    } -> std::same_as<bool>;
 };
 
 }
