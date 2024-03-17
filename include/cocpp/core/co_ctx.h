@@ -19,6 +19,16 @@ class co_stack;
 
 class co_ctx final : private co_noncopyable
 {
+private:
+#ifdef __GNUC__
+#ifdef __x86_64__
+    co_byte *regs__[32] {}; // 放在最前面
+    co_ctx *pre_ctx__ = {nullptr};
+#else
+#error only supported x86_64
+#endif
+#endif
+
     RegCoEvent(finished);
     RegCoEvent(priority_changed, int, int);
 
@@ -52,13 +62,6 @@ private:
 
     unsigned short shrink_stack_counter__ = {0};
 
-#ifdef __GNUC__
-#ifdef __x86_64__
-    co_byte *regs__[32] {};
-#else
-#error only supported x86_64
-#endif
-#endif
     co_ctx(co_stack *stack, const co_ctx_config &config, std::function<void(co_any &)> entry);
 
 public:
@@ -88,6 +91,8 @@ public:
     void lock_finished_state();
     void unlock_finished_state();
     std::string ctx_info() const;
+    co_ctx *pre_ctx() const;
+    void clear_pre_ctx();
     void shrink_stack();
 
     template <typename T>

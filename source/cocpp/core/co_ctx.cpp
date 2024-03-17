@@ -287,6 +287,16 @@ string co_ctx::ctx_info() const
     return ss.str();
 }
 
+co_ctx *co_ctx::pre_ctx() const
+{
+    return pre_ctx__;
+}
+
+void co_ctx::clear_pre_ctx()
+{
+    pre_ctx__ = nullptr;
+}
+
 void co_ctx::shrink_stack()
 {
     if (nullptr == stack__->stack())

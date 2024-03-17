@@ -294,8 +294,6 @@ void co_env::switch_normal_ctx__()
         return;
     }
 
-    next->shrink_stack(); // 收缩栈空间
-
     unlock_schedule();
     switch_to(curr->regs(), next->regs());
     lock_schedule();
@@ -313,6 +311,11 @@ void co_env::schedule_switch()
     else
     {
         switch_normal_ctx__();
+    }
+    if (current_ctx()->pre_ctx() != nullptr)
+    {
+        current_ctx()->pre_ctx()->shrink_stack();
+        current_ctx()->clear_pre_ctx();
     }
 }
 

@@ -9,6 +9,7 @@
 #include "cocpp/utils/co_defer.h"
 
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
@@ -62,6 +63,8 @@ __attribute__((naked)) void switch_to(co_byte **curr, co_byte **next)
     __asm volatile("popq 128(%rdi)");
     __asm volatile("pushf");
     __asm volatile("popq 136(%rdi)");
+
+    __asm volatile("movq %rdi, 256(%rsi)"); // 32*8=256 ，放在reg后面一个字段
 
     __asm volatile("movq %rsp, 120(%rdi)"); // rsp必须在rip后保存，先恢复
     /////////////////////////////////////////////////
@@ -155,6 +158,7 @@ void switch_from_outside(sigcontext_64 *context)
     }
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);
+    printf("switch from %p to %p\n", context, next);
 }
 
 bool set_mem_dontneed(void *ptr, size_t size)
