@@ -14,9 +14,9 @@ co_stack *co_stack_factory::create_stack(size_t size)
     if (size != 0)
     {
         mem = reinterpret_cast<co_byte *>(alloc_mem_by_mmap(size));
-        if (nullptr == mem)
+        if (nullptr == mem || reinterpret_cast<co_byte *>(-1) == mem)
         {
-            // todo 处理mem为nullptr
+            throw std::runtime_error("mmap mem failed");
         }
         if (!set_mem_dontneed(mem, size))
         {
