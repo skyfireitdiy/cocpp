@@ -31,6 +31,7 @@ co_byte *co_stack::stack_top() const
 string co_stack::stack_info() const
 {
     stringstream ss;
+    ss << "stack:" << this << endl;
     ss << "  size: " << stack_size() << endl;
     ss << "  stack: 0x" << hex << (void *)stack() << dec << endl;
     ss << "  stack top: 0x" << hex << (void *)stack_top() << dec

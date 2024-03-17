@@ -220,6 +220,7 @@ string co_ctx::ctx_info() const
 {
     stringstream ss;
     ss << "------------ ctx start -----------" << endl;
+    ss << "ctx:" << this << endl;
     // config
     ss << "name:" << config__.name << endl;
     ss << "stack size:" << config__.stack_size << endl;
@@ -264,7 +265,7 @@ string co_ctx::ctx_info() const
         }
         else
         {
-            ss << "stack ok" << endl;
+            ss << "stack dump failed" << endl;
         }
     }
     else

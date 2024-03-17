@@ -118,7 +118,11 @@ co_tid gettid()
 
 void send_switch_from_outside_signal(co_env *env)
 {
-    tkill(getpid(), gettid(), CO_SWITCH_SIGNAL);
+    bool ret = tkill(getpid(), env->schedule_thread_tid(), CO_SWITCH_SIGNAL);
+    if (!ret)
+    {
+        CO_DEBUG("kill failed, errno: %d", errno);
+    }
 }
 
 static void save_context_to_ctx(sigcontext_64 *context, co_ctx *ctx)
@@ -158,7 +162,6 @@ void switch_from_outside(sigcontext_64 *context)
     }
     save_context_to_ctx(context, curr);
     restore_context_from_ctx(context, next);
-    printf("switch from %p to %p\n", context, next);
 }
 
 bool set_mem_dontneed(void *ptr, size_t size)

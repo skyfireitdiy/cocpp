@@ -692,6 +692,7 @@ std::string co_env::env_info()
     stringstream ss;
 
     ss << "------------ env start -----------" << endl;
+    ss << "env:" << this << endl;
     // flags
     ss << "flags: \n";
     for (auto i = 0; i < CO_ENV_FLAG_MAX; ++i)
@@ -735,6 +736,8 @@ std::string co_env::env_info()
     ss << "min priority: " << min_priority__ << endl;
 
     // normal ctx
+    ss << "ctx count:" << ctx_count__ << endl;
+    ss << "current ctx: " << curr_ctx__ << endl;
     ss << "normal ctx: " << endl;
     for (size_t i = 0; i < all_normal_ctx__.size(); ++i)
     {
