@@ -1,6 +1,8 @@
 #include <atomic>
 #include <chrono>
+#include <future>
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <unistd.h>
 #include "cocpp/cocpp.h"
 #include <vector>
@@ -23,25 +25,32 @@ TEST(core, id)
     auto f = []() {
         for (int i = 0; i < 10; ++i)
         {
-            printf("%s %llu %d\n", this_co::name().c_str(), this_co::id(), i);
             this_co::yield();
         }
     };
     co c1({with_name("test1")}, f);
-    co c2({with_name("test1")}, f);
+    co c2({with_name("test2")}, f);
+    EXPECT_EQ("test1", c1.name());
+    EXPECT_EQ("test2", c2.name());
     c1.join();
     c2.join();
 }
 
 TEST(core, thread_convert)
 {
-    thread th([]() {
-        printf("new thread: %u\n", ::gettid());
+    std::promise<co_env *> env;
+    std::promise<co_tid> tid;
+    thread th([&env, &tid]() {
+        env.set_value(co::current_env());
+        tid.set_value(::gettid());
         co::schedule_in_this_thread();
     });
 
-    co c1([]() {
-        printf("new co %llu in thread %u\n", this_co::id(), ::gettid());
+    auto penv = env.get_future().get();
+    auto rtid = tid.get_future().get();
+
+    co c1({with_bind_env(penv)}, [rtid]() {
+        EXPECT_EQ(::gettid(), rtid);
     });
 
     c1.join();
@@ -53,11 +62,10 @@ TEST(core, detach)
     co c1([]() {
         for (int i = 0; i < 100; ++i)
         {
-            printf("count %d\n", i);
             this_co::yield();
         }
     });
-    c1.detach();
+    EXPECT_NO_THROW(c1.detach());
 }
 
 TEST(core, ref)
@@ -140,9 +148,11 @@ TEST(core, co_wait_priority)
     });
 
     co c2({with_priority(0), with_bind_env(env)}, [&] {
+        EXPECT_EQ(c1.ctx_priority(), 99);
         c1.join();
     });
 
+    EXPECT_EQ(c2.ctx_priority(), 0);
     c2.join();
 }
 
@@ -232,4 +242,12 @@ TEST(core, pipeline_group)
     EXPECT_EQ(ret[2], 11);
     EXPECT_EQ(ret[3], 15);
     EXPECT_EQ(ret[4], 19);
+}
+
+TEST(core, wait_self)
+{
+    co c([&c] {
+        c.wait<void>();
+    });
+    EXPECT_THROW(c.join(), std::runtime_error);
 }
