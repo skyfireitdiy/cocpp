@@ -2,9 +2,9 @@
 #include <chrono>
 #include <gtest/gtest.h>
 #include <unistd.h>
+#include "cocpp/cocpp.h"
 #include <vector>
 #define private public
-#include "cocpp/cocpp.h"
 
 using namespace cocpp;
 using namespace std;
@@ -80,7 +80,7 @@ TEST(core, return_value)
     EXPECT_EQ(c1.wait<int>(), 35);
 }
 
-TEST(core, wait_timeout)
+TEST(core, wait_for_timeout)
 {
     co c1([]() {
         this_co::sleep_for(100ms);
@@ -88,6 +88,19 @@ TEST(core, wait_timeout)
     auto ret = c1.wait_for(1ms);
     EXPECT_FALSE(ret);
     ret = c1.wait_for(1s);
+    EXPECT_TRUE(ret);
+}
+
+TEST(core, wait_until_timeout)
+{
+    co c1([]() {
+        this_co::sleep_for(100ms);
+    });
+    auto timepoint = std::chrono::steady_clock::now() + 1ms;
+    auto ret = c1.wait_until(timepoint);
+    EXPECT_FALSE(ret);
+    timepoint += 1s;
+    ret = c1.wait_until(timepoint);
     EXPECT_TRUE(ret);
 }
 

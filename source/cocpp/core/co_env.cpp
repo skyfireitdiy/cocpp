@@ -98,6 +98,11 @@ void co_env::move_ctx_to_here(co_ctx *ctx)
 
 optional<co_return_value> co_env::wait_ctx(co_ctx *ctx, const chrono::nanoseconds &timeout)
 {
+    if (curr_ctx__ == ctx)
+    {
+        throw std::runtime_error("can't wait self");
+    }
+
     // Priority inversion prevents high priorities from being kept waiting and low priorities from being executed
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());
@@ -148,6 +153,10 @@ optional<co_return_value> co_env::wait_ctx(co_ctx *ctx, const chrono::nanosecond
 
 co_return_value co_env::wait_ctx(co_ctx *ctx)
 {
+    if (curr_ctx__ == ctx)
+    {
+        throw std::runtime_error("can't wait self");
+    }
 
     auto old_priority = current_ctx()->priority();
     current_ctx()->set_priority(ctx->priority());

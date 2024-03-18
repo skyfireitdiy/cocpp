@@ -72,6 +72,8 @@ public:
     Ret wait() const;
     template <class Rep, class Period>
     std::optional<co_return_value> wait_for(const std::chrono::duration<Rep, Period> &wait_duration) const;
+    template <typename Clock, typename Duration>
+    std::optional<co_return_value> wait_until(const std::chrono::time_point<Clock, Duration> &time_point) const;
     void detach();
     void join();
 
@@ -155,6 +157,13 @@ template <typename Rep, typename Period>
 std::optional<co_return_value> co::wait_for(const std::chrono::duration<Rep, Period> &wait_duration) const
 {
     return CoCurrentEnv()->wait_ctx(ctx__, std::chrono::duration_cast<std::chrono::nanoseconds>(wait_duration));
+}
+
+template <typename Clock, typename Duration>
+std::optional<co_return_value> co::wait_until(const std::chrono::time_point<Clock, Duration> &time_point) const
+{
+    auto duration = time_point - std::chrono::steady_clock::now();
+    return wait_for(duration);
 }
 
 template <class Rep, class Period>
