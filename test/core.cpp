@@ -12,7 +12,7 @@ using namespace cocpp;
 using namespace std;
 using namespace chrono_literals;
 
-TEST(core, name)
+TEST(core, self_name)
 {
     co c1({with_name("test1")}, []() {
         EXPECT_EQ(this_co::name(), "test1");
@@ -20,7 +20,7 @@ TEST(core, name)
     c1.join();
 }
 
-TEST(core, id)
+TEST(core, other_name)
 {
     auto f = []() {
         for (int i = 0; i < 10; ++i)
