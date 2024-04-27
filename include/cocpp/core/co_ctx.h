@@ -65,8 +65,11 @@ private:
     co_ctx(co_stack *stack, const co_ctx_config &config, std::function<void(co_any &)> entry);
 
 public:
+    static void real_entry(co_ctx *ctx);
+
     void set_priority(int priority);
     size_t priority() const;
+
     bool can_schedule() const;
     co_stack *stack() const;
     co_byte **regs();
@@ -84,7 +87,6 @@ public:
     void enter_wait_resource_state(void *rc);
     void leave_wait_resource_state(void *rc);
     std::function<void(co_any &)> entry() const;
-    static void real_entry(co_ctx *ctx);
     void set_flag(size_t flag);
     void unset_flag(size_t flag);
     void check_and_rethrow_exception();
