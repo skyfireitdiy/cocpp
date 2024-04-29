@@ -20,7 +20,7 @@ CO_NAMESPACE_BEGIN
 class co_ctx;
 class co_stack;
 
-class co_recursive_mutex_with_count : public std::recursive_mutex
+class co_recursive_mutex_with_count final : public std::recursive_mutex
 {
 private:
     std::atomic<long long int> count__;

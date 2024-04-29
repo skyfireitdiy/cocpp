@@ -7,7 +7,7 @@ CO_NAMESPACE_BEGIN
 
 class co_env;
 
-struct co_ctx_config
+struct co_ctx_config final
 {
     size_t stack_size {CO_DEFAULT_STACK_SIZE};
     std::string name {"__unknown__"};
