@@ -11,7 +11,7 @@ CO_NAMESPACE_BEGIN
 
 void co_spinlock::lock()
 {
-    while (locked__.test_and_set(memory_order::acquire))
+    while (locked__.test_and_set(memory_order::acq_rel))
     {
         CoYield();
     }
@@ -19,7 +19,7 @@ void co_spinlock::lock()
 
 bool co_spinlock::try_lock()
 {
-    return !locked__.test_and_set(memory_order::acquire);
+    return !locked__.test_and_set(memory_order::acq_rel);
 }
 
 void co_spinlock::unlock()
