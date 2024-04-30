@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
+#include "cocpp/core/co_error.h"
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -12,9 +13,9 @@ private:
     int fd__ = {-1};
 
 public:
-    co_io();
+    co_io() = default;
 
-    int init_fd(int fd);
+    co_error init_fd(int fd);
 
     // virtual int open(const char *pathname, int flags, mode_t mode = 0);
 
