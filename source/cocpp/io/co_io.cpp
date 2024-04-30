@@ -1,9 +1,15 @@
+#include <sys/stat.h>
+#include <stdarg.h>
+#include <sys/ioctl.h>
+
 #include "cocpp/io/co_io.h"
 #include "cocpp/core/co_error.h"
+#include "cocpp/core/co_manager.h"
+#include "cocpp/core/co_env.h"
 
 CO_NAMESPACE_BEGIN
 
-int co_in::init_fd(int fd)
+int co_io::init_fd(int fd)
 {
     // 设置fd为非阻塞
     int flags = fcntl(fd, F_GETFL, 0);
@@ -17,7 +23,7 @@ int co_in::init_fd(int fd)
         flags |= O_NONBLOCK;
         if (fcntl(fd, F_SETFL, flags) == -1)
         {
-            return co_error(co_error_code::set_fd_flags_failed, "set fd flags failed", errno);
+            return -1;
         }
     }
 
@@ -27,7 +33,7 @@ int co_in::init_fd(int fd)
 
 int co_io::close()
 {
-    int ret = close(fd__);
+    int ret = ::close(fd__);
     if (ret == -1)
     {
         return -1;
@@ -40,7 +46,7 @@ int co_io::read(void *buf, size_t count)
 {
     for (;;)
     {
-        int ret = read(fd__, buf, count);
+        int ret = ::read(fd__, buf, count);
         if (ret == -1)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -57,11 +63,11 @@ int co_io::read(void *buf, size_t count)
     }
 }
 
-int co_io::write(void *buf, size_t count)
+int co_io::write(const void *buf, size_t count)
 {
     for (;;)
     {
-        int ret = write(fd__, buf, count);
+        int ret = ::write(fd__, buf, count);
         if (ret == -1)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -93,7 +99,7 @@ int co_io::fchown(uid_t owner, gid_t group)
     return ::fchown(fd__, owner, group);
 }
 
-int co_io::fnctl(int cmd, ...)
+int co_io::fcntl(int cmd, ...)
 {
     va_list args;
     va_start(args, cmd);

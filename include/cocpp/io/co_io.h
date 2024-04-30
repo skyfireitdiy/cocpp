@@ -7,17 +7,15 @@ _Pragma("once");
 
 CO_NAMESPACE_BEGIN
 
-class co_io : private co_noncopyable
+class co_io
 {
-private:
+protected:
     int fd__ = {-1};
 
 public:
     co_io() = default;
 
-    co_error init_fd(int fd);
-
-    // virtual int open(const char *pathname, int flags, mode_t mode = 0);
+    int init_fd(int fd);
 
     virtual int close();
     virtual int read(void *buf, size_t count);

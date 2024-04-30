@@ -9,7 +9,7 @@ CO_NAMESPACE_BEGIN
 enum class co_error_code
 {
     ok = 0,
-}
+};
 
 class co_error final
 {
@@ -19,7 +19,7 @@ private:
     std::any data__;
 
 public:
-    co_error(int code = co_error_code::ok,
+    co_error(co_error_code code = co_error_code::ok,
              const std::string &msg = "",
              const std::any &data = nullptr)
         : code__(code)
@@ -27,7 +27,7 @@ public:
         , data__(data)
     {
     }
-    int code() const
+    co_error_code code() const
     {
         return code__;
     }

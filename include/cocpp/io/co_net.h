@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include "cocpp/core/co_define.h"
+#include "cocpp/io/co_io.h"
 
 CO_NAMESPACE_BEGIN
 

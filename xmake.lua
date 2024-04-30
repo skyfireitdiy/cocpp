@@ -135,3 +135,5 @@ add_files("example/pipeline.cpp")
 add_deps("cocpp")
 on_install(function(target) print("ignore install example") end)
 target_end()
+
+

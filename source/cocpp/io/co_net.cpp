@@ -1,4 +1,7 @@
+#include <sys/socket.h>
 #include "cocpp/io/co_net.h"
+#include "cocpp/core/co_manager.h"
+#include "cocpp/core/co_env.h"
 
 CO_NAMESPACE_BEGIN
 
@@ -62,7 +65,7 @@ int co_net::connect(const struct sockaddr *addr, socklen_t addrlen)
         return ret;
     }
 
-    if (errno != EINPROPRESS)
+    if (errno != EINPROGRESS)
     {
         return -1;
     }
@@ -102,25 +105,6 @@ int co_net::send(const void *buf, size_t len, int flags)
     for (;;)
     {
         int ret = ::send(fd__, buf, len, flags);
-
-        if (ret == -1)
-        {
-            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
-            {
-                CoYield();
-                continue;
-            }
-            return -1;
-        }
-        return ret;
-    }
-}
-
-int co_net::recv(void *buf, size_t len, int flags)
-{
-    for (;;)
-    {
-        int ret = ::recv(fd__, buf, len, flags);
 
         if (ret == -1)
         {
