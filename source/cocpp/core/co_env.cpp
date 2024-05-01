@@ -263,7 +263,7 @@ bool co_env::prepare_to_switch(co_ctx *&from, co_ctx *&to)
         lock_schedule();
     }
 
-    // no need to switch
+    // don't need to switch
     if (curr == next)
     {
         return false;

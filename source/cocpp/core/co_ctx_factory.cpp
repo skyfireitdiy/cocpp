@@ -1,5 +1,6 @@
 #include "cocpp/core/co_ctx_factory.h"
 #include "cocpp/core/co_ctx.h"
+#include "cocpp/core/co_define.h"
 #include "cocpp/core/co_env.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_stack_factory.h"
@@ -14,7 +15,11 @@ CO_NAMESPACE_BEGIN
 co_ctx *co_ctx_factory ::create_ctx(const co_ctx_config &config, function<void(co_any &)> entry)
 {
     auto ret = new co_ctx(config.shared_stack ? nullptr : co_stack_factory::create_stack(config.stack_size), config, entry);
-    assert(ret != nullptr);
+    if (ret == nullptr)
+    {
+        CO_ERROR("create ctx failed, stack size: %ld", config.stack_size);
+        throw std::bad_alloc();
+    }
     if (config.bind_env != nullptr)
     {
         ret->set_flag(CO_CTX_FLAG_BIND);
