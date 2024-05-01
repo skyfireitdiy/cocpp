@@ -54,14 +54,14 @@ co_any::real_type<T>::real_type(const T &value)
 
 template <typename T>
 co_any::co_any(const T &value)
-    : data__(std::shared_ptr<real_type<T> >(new real_type<T>(value)))
 {
+    data__ = std::make_shared<real_type<T> >(value);
 }
 
 template <typename T>
 co_any &co_any::operator=(const T &value)
 {
-    data__ = std::shared_ptr<real_type<T> >(new real_type<T>(value));
+    data__ = std::make_shared<real_type<T> >(value);
     return *this;
 }
 

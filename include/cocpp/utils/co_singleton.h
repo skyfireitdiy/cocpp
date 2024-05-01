@@ -1,5 +1,6 @@
 _Pragma("once");
 #include <utility>
+#include <memory>
 
 #include "cocpp/core/co_define.h"
 #include "cocpp/utils/co_noncopyable.h"
@@ -33,6 +34,10 @@ template <typename T>
 T *co_singleton<T>::instance()
 {
     static T *inst = new T;
+    if (inst == nullptr)
+    {
+        throw std::bad_alloc();
+    }
     return inst;
 }
 

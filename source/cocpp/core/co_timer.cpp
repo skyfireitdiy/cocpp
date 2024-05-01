@@ -30,12 +30,12 @@ co_timer::co_timer(const function<void()> &func, chrono::steady_clock::time_poin
 
 shared_ptr<co_timer> co_timer::create(const function<void()> &func, co_expire_type type, unsigned long long interval_ms)
 {
-    return shared_ptr<co_timer>(new co_timer(func, type, interval_ms));
+    return std::make_shared<co_timer>(func, type, interval_ms);
 }
 
 shared_ptr<co_timer> co_timer::create(const function<void()> &func, chrono::steady_clock::time_point expire_time)
 {
-    return shared_ptr<co_timer>(new co_timer(func, expire_time));
+    return std::make_shared<co_timer>(func, expire_time);
 }
 
 co_expire_type co_timer::expire_type() const

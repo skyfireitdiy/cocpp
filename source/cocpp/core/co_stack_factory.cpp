@@ -24,6 +24,11 @@ co_stack *co_stack_factory::create_stack(size_t size)
         }
     }
     auto ret = new co_stack(mem, size);
+    if (ret == nullptr)
+    {
+        free_mem_by_munmap(mem, size);
+        throw std::bad_alloc();
+    }
     return ret;
 }
 

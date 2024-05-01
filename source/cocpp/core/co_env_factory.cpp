@@ -15,7 +15,12 @@ co_env *co_env_factory::create_env(size_t stack_size)
 {
     auto idle_ctx = create_idle_ctx__();
     auto ret = new co_env(stack_size, idle_ctx, true);
-    assert(ret != nullptr);
+    if (ret == nullptr)
+    {
+        co_ctx_factory::destroy_ctx(idle_ctx);
+        CO_ERROR("create env failed, stack size: %ld", stack_size);
+        throw std::bad_alloc();
+    }
     idle_ctx->set_state(co_state::running);
     return ret;
 }
@@ -38,6 +43,12 @@ co_env *co_env_factory::create_env_from_this_thread(size_t stack_size)
 {
     auto idle_ctx = create_idle_ctx__();
     auto ret = new co_env(stack_size, idle_ctx, false);
+    if (ret == nullptr)
+    {
+        co_ctx_factory::destroy_ctx(idle_ctx);
+        CO_ERROR("create env failed, stack size: %ld", stack_size);
+        throw std::bad_alloc();
+    }
     idle_ctx->set_state(co_state::running);
     return ret;
 }

@@ -43,14 +43,13 @@ private:
     co_timer_status status__;
     mutable std::recursive_mutex mutex__;
 
-    co_timer(const std::function<void()> &func, co_expire_type type, unsigned long long interval_ms);
-    co_timer(const std::function<void()> &func, std::chrono::steady_clock::time_point expire_time);
-
     void insert_to_timer_queue__();
     void remove_from_timer_queue__();
     void update_timeout_time__();
 
 public:
+    co_timer(const std::function<void()> &func, co_expire_type type, unsigned long long interval_ms);
+    co_timer(const std::function<void()> &func, std::chrono::steady_clock::time_point expire_time);
     void start();
     void stop();
     void reset();

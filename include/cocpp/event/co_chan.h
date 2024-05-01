@@ -100,15 +100,15 @@ co_chan<ValueType>::co_chan(int max_size)
 {
     if (max_size < 0)
     {
-        impl__ = std::shared_ptr<co_chan<ValueType>::unlimited_chan>(new co_chan<ValueType>::unlimited_chan());
+        impl__ = std::make_shared<co_chan<ValueType>::unlimited_chan>();
     }
     else if (max_size == 0)
     {
-        impl__ = std::shared_ptr<co_chan<ValueType>::sync_chan>(new co_chan<ValueType>::sync_chan());
+        impl__ = std::make_shared<co_chan<ValueType>::sync_chan>();
     }
     else
     {
-        impl__ = std::shared_ptr<co_chan<ValueType>::fixed_chan>(new co_chan<ValueType>::fixed_chan(max_size));
+        impl__ = std::make_shared<co_chan<ValueType>::fixed_chan>(max_size);
     }
 }
 
