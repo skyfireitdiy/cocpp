@@ -20,7 +20,7 @@ co_stack *co_stack_factory::create_stack(size_t size)
         }
         if (!set_mem_dontneed(mem, size))
         {
-            // todo 处理madvise失败
+            CO_WARN("set mem dontneed failed");
         }
     }
     auto ret = new co_stack(mem, size);
