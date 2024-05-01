@@ -24,7 +24,6 @@ public:
 
     int sendmsg(const struct msghdr *msg, int flags);
     int recvmsg(struct msghdr *msg, int flags);
-    int socketpair(int domain, int type, int protocol, int sv[2]);
 };
 
 CO_NAMESPACE_END
