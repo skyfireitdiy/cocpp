@@ -1,6 +1,7 @@
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <sys/ioctl.h>
+#include <string.h>
 
 #include "cocpp/io/co_io.h"
 #include "cocpp/core/co_error.h"
@@ -12,17 +13,19 @@ CO_NAMESPACE_BEGIN
 int co_io::init_fd(int fd)
 {
     // 设置fd为非阻塞
-    int flags = fcntl(fd, F_GETFL, 0);
+    int flags = ::fcntl(fd, F_GETFL, 0);
     if (flags == -1)
     {
+        CO_O_ERROR("fcntl error: %s", strerror(errno));
         return -1;
     }
 
     if (0 == (flags & O_NONBLOCK))
     {
         flags |= O_NONBLOCK;
-        if (fcntl(fd, F_SETFL, flags) == -1)
+        if (::fcntl(fd, F_SETFL, flags) == -1)
         {
+            CO_O_ERROR("fcntl error: %s", strerror(errno));
             return -1;
         }
     }
@@ -36,6 +39,7 @@ int co_io::close()
     int ret = ::close(fd__);
     if (ret == -1)
     {
+        CO_O_ERROR("close error: %s", strerror(errno));
         return -1;
     }
     fd__ = -1;
@@ -56,6 +60,7 @@ int co_io::read(void *buf, size_t count)
             }
             else
             {
+                CO_O_ERROR("read error: %s", strerror(errno));
                 return -1;
             }
         }
@@ -77,6 +82,7 @@ int co_io::write(const void *buf, size_t count)
             }
             else
             {
+                CO_O_ERROR("write error: %s", strerror(errno));
                 return -1;
             }
         }

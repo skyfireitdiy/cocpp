@@ -1,5 +1,7 @@
 #include <sys/socket.h>
+#include <string.h>
 #include "cocpp/io/co_net.h"
+#include "cocpp/core/co_define.h"
 #include "cocpp/core/co_manager.h"
 #include "cocpp/core/co_env.h"
 
@@ -11,25 +13,37 @@ int co_net::socket(int domain, int type, int protocol)
 
     if (fd__ == -1)
     {
+        CO_O_ERROR("socket error: %s", strerror(errno));
         return -1;
     }
 
-    int flags = fcntl(fd__, F_GETFL, 0);
+    int flags = ::fcntl(fd__, F_GETFL, 0);
     if (flags == -1)
     {
+        CO_O_ERROR("fcntl error: %s", strerror(errno));
+        ::close(fd__);
+        fd__ = -1;
         return -1;
     }
 
     if (0 == (flags & O_NONBLOCK))
     {
         flags |= O_NONBLOCK;
-        if (fcntl(fd__, F_SETFL, flags) == -1)
+        if (::fcntl(fd__, F_SETFL, flags) == -1)
         {
+            CO_O_ERROR("fcntl error: %s", strerror(errno));
+            ::close(fd__);
+            fd__ = -1;
             return -1;
         }
     }
 
     return 0;
+}
+
+int co_net::listen(int backlog)
+{
+    return ::listen(fd__, backlog);
 }
 
 int co_net::accept(struct sockaddr *addr, socklen_t *addrlen)
@@ -45,6 +59,7 @@ int co_net::accept(struct sockaddr *addr, socklen_t *addrlen)
                 CoYield();
                 continue;
             }
+            CO_O_ERROR("accept error: %s", strerror(errno));
             return -1;
         }
         return fd;
@@ -67,6 +82,7 @@ int co_net::connect(const struct sockaddr *addr, socklen_t addrlen)
 
     if (errno != EINPROGRESS)
     {
+        CO_O_ERROR("connect error: %s", strerror(errno));
         return -1;
     }
 
@@ -83,6 +99,7 @@ int co_net::connect(const struct sockaddr *addr, socklen_t addrlen)
 
         if (result < 0)
         {
+            CO_O_ERROR("select error: %s", strerror(errno));
             return -1;
         }
         else if (result == 0)
@@ -113,6 +130,7 @@ int co_net::send(const void *buf, size_t len, int flags)
                 CoYield();
                 continue;
             }
+            CO_O_ERROR("send error: %s", strerror(errno));
             return -1;
         }
         return ret;
@@ -121,21 +139,7 @@ int co_net::send(const void *buf, size_t len, int flags)
 
 int co_net::sendto(const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen)
 {
-    for (;;)
-    {
-        int ret = ::sendto(fd__, buf, len, flags, dest_addr, addrlen);
-
-        if (ret == -1)
-        {
-            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
-            {
-                CoYield();
-                continue;
-            }
-            return -1;
-        }
-        return ret;
-    }
+    return ::sendto(fd__, buf, len, flags, dest_addr, addrlen);
 }
 
 int co_net::recv(void *buf, size_t len, int flags)
@@ -151,6 +155,7 @@ int co_net::recv(void *buf, size_t len, int flags)
                 CoYield();
                 continue;
             }
+            CO_O_ERROR("recv error: %s", strerror(errno));
             return -1;
         }
         return ret;
@@ -170,6 +175,7 @@ int co_net::recvfrom(void *buf, size_t len, int flags, struct sockaddr *src_addr
                 CoYield();
                 continue;
             }
+            CO_O_ERROR("recvfrom error: %s", strerror(errno));
             return -1;
         }
         return ret;
@@ -189,6 +195,44 @@ int co_net::setsockopt(int level, int optname, const void *optval, socklen_t opt
 int co_net::shutdown(int how)
 {
     return ::shutdown(fd__, how);
+}
+
+int co_net::sendmsg(const struct msghdr *msg, int flags)
+{
+    for (;;)
+    {
+        int ret = ::sendmsg(fd__, msg, flags);
+        if (ret == -1)
+        {
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                CoYield();
+                continue;
+            }
+            CO_O_ERROR("sendmsg error: %s", strerror(errno));
+            return -1;
+        }
+        return ret;
+    }
+}
+
+int co_net::recvmsg(struct msghdr *msg, int flags)
+{
+    for (;;)
+    {
+        int ret = ::recvmsg(fd__, msg, flags);
+        if (ret == -1)
+        {
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                CoYield();
+                continue;
+            }
+            CO_O_ERROR("recvmsg error: %s", strerror(errno));
+            return -1;
+        }
+        return ret;
+    }
 }
 
 CO_NAMESPACE_END

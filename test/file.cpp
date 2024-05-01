@@ -16,6 +16,20 @@ int get_file_mode(const char *filename)
     return st.st_mode;
 }
 
+int get_file_group(const char *filename)
+{
+    struct stat st;
+    stat(filename, &st);
+    return st.st_gid;
+}
+
+int get_file_user(const char *filename)
+{
+    struct stat st;
+    stat(filename, &st);
+    return st.st_uid;
+}
+
 TEST(file, open_null)
 {
     co_file f;
@@ -116,5 +130,6 @@ TEST(file, fchown)
     EXPECT_EQ(ret, 0);
     f.close();
 
-    // todo
+    EXPECT_EQ(get_file_user("test_chown_file"), 1000);
+    EXPECT_EQ(get_file_group("test_chown_file"), 1000);
 }

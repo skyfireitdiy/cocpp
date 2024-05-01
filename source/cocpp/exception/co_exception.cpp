@@ -138,6 +138,11 @@ void signal_handler(int signo)
     {
         switch_from_outside(context);
     }
+    else if (signo == SIGPIPE)
+    {
+        // 忽略SIGPIPE
+        return;
+    }
     else
     {
         handle_exception(context, signo);

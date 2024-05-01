@@ -49,7 +49,7 @@ CO_NAMESPACE_END
 
 #define CO_O_OUTPUT(level, fmt, ...)                                                         \
     {                                                                                        \
-        fprintf(stderr, "[%s] %s(%u) %s :[0x%llx] %p -> " fmt "\n",                          \
+        fprintf(stderr, "[%s] %s(%u) %s :[0x%llx] [%p] -> " fmt "\n",                        \
                 level, __FILE__, __LINE__, __FUNCTION__,                                     \
                 static_cast<unsigned long long>(gettid()), this __VA_OPT__(, ) __VA_ARGS__); \
     }
