@@ -1,3 +1,4 @@
+#include <optional>
 #include <sys/socket.h>
 #include <string.h>
 #include "cocpp/io/co_net.h"
@@ -7,38 +8,19 @@
 
 CO_NAMESPACE_BEGIN
 
-int co_net::socket(int domain, int type, int protocol)
+std::optional<co_net> co_net::socket(int domain, int type, int protocol)
 {
-    fd__ = ::socket(domain, type, protocol);
+    auto fd = ::socket(domain, type, protocol);
 
-    if (fd__ == -1)
+    if (fd == -1)
     {
-        CO_O_ERROR("socket error: %s", strerror(errno));
-        return -1;
+        CO_ERROR("socket error: %s", strerror(errno));
+        return std::nullopt;
     }
 
-    int flags = ::fcntl(fd__, F_GETFL, 0);
-    if (flags == -1)
-    {
-        CO_O_ERROR("fcntl error: %s", strerror(errno));
-        ::close(fd__);
-        fd__ = -1;
-        return -1;
-    }
-
-    if (0 == (flags & O_NONBLOCK))
-    {
-        flags |= O_NONBLOCK;
-        if (::fcntl(fd__, F_SETFL, flags) == -1)
-        {
-            CO_O_ERROR("fcntl error: %s", strerror(errno));
-            ::close(fd__);
-            fd__ = -1;
-            return -1;
-        }
-    }
-
-    return 0;
+    co_net net;
+    net.init_fd(fd);
+    return net;
 }
 
 int co_net::listen(int backlog)
@@ -46,7 +28,7 @@ int co_net::listen(int backlog)
     return ::listen(fd__, backlog);
 }
 
-int co_net::accept(struct sockaddr *addr, socklen_t *addrlen)
+std::optional<co_net> co_net::accept(struct sockaddr *addr, socklen_t *addrlen)
 {
     for (;;)
     {
@@ -60,9 +42,11 @@ int co_net::accept(struct sockaddr *addr, socklen_t *addrlen)
                 continue;
             }
             CO_O_ERROR("accept error: %s", strerror(errno));
-            return -1;
+            return std::nullopt;
         }
-        return fd;
+        co_net net;
+        net.init_fd(fd);
+        return net;
     }
 }
 

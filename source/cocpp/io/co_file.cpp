@@ -2,16 +2,18 @@
 
 CO_NAMESPACE_BEGIN
 
-int co_file::open(const char *pathname, int flags, mode_t mode)
+std::optional<co_file> co_file::open(const char *pathname, int flags, mode_t mode)
 {
-    fd__ = ::open(pathname, flags | O_NONBLOCK, mode);
+    auto fd = ::open(pathname, flags | O_NONBLOCK, mode);
 
-    if (fd__ == -1)
+    if (fd == -1)
     {
-        return -1;
+        return std::nullopt;
     }
 
-    return 0;
+    co_file file;
+    file.init_fd(fd);
+    return file;
 }
 
 CO_NAMESPACE_END

@@ -3,14 +3,16 @@ _Pragma("once");
 #include "cocpp/core/co_define.h"
 #include "cocpp/io/co_io.h"
 
+#include <optional>
+
 CO_NAMESPACE_BEGIN
 
 class co_net : public co_io
 {
 public:
     co_net() = default;
-    int socket(int domain, int type, int protocol);
-    int accept(struct sockaddr *addr, socklen_t *addrlen);
+    static std::optional<co_net> socket(int domain, int type, int protocol);
+    std::optional<co_net> accept(struct sockaddr *addr, socklen_t *addrlen);
     int bind(const struct sockaddr *addr, socklen_t addrlen);
     int listen(int backlog);
     int connect(const struct sockaddr *addr, socklen_t addrlen);
