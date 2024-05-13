@@ -64,7 +64,7 @@ void handle_exception(sigcontext_64 *context, int sig)
     if (in_exception)
     {
         fprintf(exec_file, "exception occurs in exception handler\n");
-        exit(128 - sig);
+        _exit(128 - sig);
     }
     in_exception = true;
     print_debug_info("time info", time_info);

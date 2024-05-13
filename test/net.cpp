@@ -331,7 +331,7 @@ TEST(net, tcp_socket_send_first)
         EXPECT_EQ(ret, 0);
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
-        addr.sin_port = htons(8888);
+        addr.sin_port = htons(8893);
         addr.sin_addr.s_addr = htonl(INADDR_ANY);
         ret = server->bind((struct sockaddr *)&addr, sizeof(addr));
         EXPECT_EQ(ret, 0);
@@ -362,7 +362,7 @@ TEST(net, tcp_socket_send_first)
         EXPECT_NE(client, std::nullopt);
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
-        addr.sin_port = htons(8888);
+        addr.sin_port = htons(8893);
         addr.sin_addr.s_addr = inet_addr("127.0.0.1");
         int ret = client->connect((struct sockaddr *)&addr, sizeof(addr));
         EXPECT_EQ(ret, 0);
