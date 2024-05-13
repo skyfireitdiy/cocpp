@@ -5,6 +5,7 @@ _Pragma("once");
 #include <condition_variable>
 #include <mutex>
 #include <set>
+#include <vector>
 
 CO_NAMESPACE_BEGIN
 
@@ -12,6 +13,8 @@ using co_byte = unsigned char;
 using co_id = unsigned long long;
 using co_tid = unsigned long long;
 using co_pid = unsigned long long;
+
+using co_buffer = std::vector<co_byte>;
 
 enum class co_state : unsigned char
 {
