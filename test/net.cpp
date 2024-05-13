@@ -319,3 +319,65 @@ TEST(net, sendmsg_on_udp)
     server_co.join();
     client_co.join();
 }
+
+TEST(net, tcp_socket_send_first)
+{
+
+    co server_co({with_bind_env(net_test_env)}, [&]() {
+        auto server = co_net::socket(AF_INET, SOCK_STREAM, 0);
+        EXPECT_NE(server, std::nullopt);
+        int reuse_addr = 1;
+        int ret = server->setsockopt(SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr));
+        EXPECT_EQ(ret, 0);
+        struct sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(8888);
+        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        ret = server->bind((struct sockaddr *)&addr, sizeof(addr));
+        EXPECT_EQ(ret, 0);
+        ret = server->listen(128);
+        EXPECT_EQ(ret, 0);
+
+        struct sockaddr_in client_addr;
+        socklen_t len = sizeof(client_addr);
+        auto client = server->accept((struct sockaddr *)&client_addr, &len);
+        EXPECT_NE(client, std::nullopt);
+
+        ret = client->send("world", 5, 0);
+        EXPECT_EQ(ret, 5);
+
+        char buf[1024] = {0};
+        ret = client->recv(buf, sizeof(buf), 0);
+        EXPECT_EQ(ret, 5);
+        EXPECT_STREQ(buf, "hello");
+
+        server->shutdown(SHUT_RDWR);
+        server->close();
+        client->shutdown(SHUT_RDWR);
+        client->close();
+    });
+
+    co client_co({with_bind_env(net_test_env)}, [&]() {
+        auto client = co_net::socket(AF_INET, SOCK_STREAM, 0);
+        EXPECT_NE(client, std::nullopt);
+        struct sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(8888);
+        addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+        int ret = client->connect((struct sockaddr *)&addr, sizeof(addr));
+        EXPECT_EQ(ret, 0);
+
+        char buf[1024] = {0};
+        ret = client->recv(buf, sizeof(buf), 0);
+        EXPECT_EQ(ret, 5);
+        EXPECT_STREQ(buf, "world");
+
+        ret = client->send("hello", 5, 0);
+        EXPECT_EQ(ret, 5);
+        client->shutdown(SHUT_RDWR);
+        client->close();
+    });
+
+    server_co.join();
+    client_co.join();
+}
