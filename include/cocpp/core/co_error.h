@@ -9,6 +9,9 @@ CO_NAMESPACE_BEGIN
 enum class co_error_code
 {
     ok = 0,
+    co_server_listen_error,
+    co_server_accept_error,
+    co_server_close_error,
 };
 
 class co_error final

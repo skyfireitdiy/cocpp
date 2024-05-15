@@ -19,6 +19,7 @@ public:
     virtual co_error listen(int backlog) = 0;
     virtual std::tuple<std::shared_ptr<co_client>, co_error> accept();
     virtual co_error close();
+    virtual co_net get_endpoint() = 0;
 
     virtual ~co_server() = default;
 };
