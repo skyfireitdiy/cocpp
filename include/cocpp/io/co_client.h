@@ -20,7 +20,7 @@ public:
     virtual std::tuple<size_t, co_error> read(co_buffer &buffer) = 0;
     virtual co_error read_n(co_buffer &buffer) = 0;
     virtual std::tuple<size_t, co_error> write(const co_buffer &buffer) = 0;
-    virtual co_error write_n(const co_buffer &buffer, size_t size) = 0;
+    virtual co_error write_n(const co_buffer &buffer) = 0;
     virtual co_error close() = 0;
     virtual co_net get_endpoint() = 0;
 };

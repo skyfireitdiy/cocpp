@@ -12,6 +12,9 @@ enum class co_error_code
     co_server_listen_error,
     co_server_accept_error,
     co_server_close_error,
+    co_client_read_error,
+    co_client_write_error,
+    co_client_close_error,
 };
 
 class co_error final
